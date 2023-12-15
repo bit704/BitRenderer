@@ -26,5 +26,11 @@
     <ClInclude Include="..\tools\image.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\tools\logger.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tools\singleton.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,6 +1,4 @@
-#include<memory>
-
-#include"../tools/image.h"
+#include "../tools/image.h"
 
 int main() 
 {
@@ -9,7 +7,6 @@ int main()
     int channel = 3;
 
     std::unique_ptr<Image> image(new Image("image.png", imageWidth, imageHeight, channel));
-
 
     for (int i = 0; i < imageHeight; ++i) 
     {
