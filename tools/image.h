@@ -10,6 +10,7 @@
 #include <new>
 
 #include "logger.h"
+#include "color.h"
 
 class Image 
 {
@@ -23,6 +24,7 @@ public:
 	Image(std::string imageName = "image.png", int imageWidth = 256, int imageHeight = 256, int channel = 3);
 	~Image();
 
+	void setPixel(int row, int col, color c);
 	void setPixel(int row, int col, int r, int g, int b);
 	void write();
 

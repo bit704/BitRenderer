@@ -25,6 +25,11 @@ void Image::setPixel(int row, int col, int r, int g, int b)
 	imageData[(row * imageWidth + col) * channel + 2] = b;
 }
 
+void Image::setPixel(int row, int col, color c)
+{
+	setPixel(row, col, (int)c.e[0], (int)c.e[1], (int)c.e[2]);
+}
+
 // –¥»Î÷∏∂®Õº∆¨
 void Image::write()
 {

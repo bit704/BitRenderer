@@ -32,5 +32,11 @@
     <ClInclude Include="..\tools\singleton.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\tools\vec3.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tools\color.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

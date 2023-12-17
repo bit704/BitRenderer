@@ -131,9 +131,11 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\tools\color.h" />
     <ClInclude Include="..\tools\image.h" />
     <ClInclude Include="..\tools\logger.h" />
     <ClInclude Include="..\tools\singleton.h" />
+    <ClInclude Include="..\tools\vec3.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
