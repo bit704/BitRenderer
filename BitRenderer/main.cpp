@@ -10,6 +10,7 @@ int main()
 
     for (int i = 0; i < imageHeight; ++i) 
     {
+        std::clog << "\rScanlines remaining: " << (imageHeight - i) << ' ' << std::flush;
         for (int j = 0; j < imageWidth; ++j) 
         {
             auto r = double(j) / (imageWidth - 1);
@@ -22,6 +23,7 @@ int main()
             image->setPixel(i, j, ir, ig, ib);
         }
     }
+    std::clog << "\rDone.                 \n";
 
     image->write();
     return 0;
