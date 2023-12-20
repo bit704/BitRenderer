@@ -134,6 +134,7 @@
     <ClInclude Include="..\tools\color.h" />
     <ClInclude Include="..\tools\image.h" />
     <ClInclude Include="..\tools\logger.h" />
+    <ClInclude Include="..\tools\ray.h" />
     <ClInclude Include="..\tools\singleton.h" />
     <ClInclude Include="..\tools\vec3.h" />
   </ItemGroup>

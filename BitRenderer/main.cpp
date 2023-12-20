@@ -1,5 +1,4 @@
 #include "../tools/image.h"
-#include "../tools/color.h"
 
 int main() 
 {
@@ -14,7 +13,7 @@ int main()
         std::clog << "\rScanlines remaining: " << (imageHeight - i) << ' ' << std::flush;
         for (int j = 0; j < imageWidth; ++j) 
         {
-            auto pixelColor = color(double(i) / (imageWidth - 1), double(j) / (imageHeight - 1), 0).rescale();
+            auto pixelColor = Color(double(i) / (imageWidth - 1), double(j) / (imageHeight - 1), 0).rescale();
             image->setPixel(i, j, pixelColor);
         }
     }

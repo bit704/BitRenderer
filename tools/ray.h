@@ -10,14 +10,14 @@ class Ray
 {
 public:
 
-	Ray(const point3& origin, const vec3& direction) : ori(origin), dir(direction) {};
+	Ray(const point3& origin, const Vec3& direction) : ori(origin), dir(direction) {};
 
 	point3 origin() const
 	{
 		return ori;
 	}
 
-	vec3 direction() const
+	Vec3 direction() const
 	{
 		return dir;
 	}
@@ -31,7 +31,7 @@ public:
 private:
 
 	point3 ori;
-	vec3 dir;
+	Vec3 dir;
 };
 
 #endif // !RAY_H
