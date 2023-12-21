@@ -4,34 +4,34 @@
 #ifndef RAY_H
 #define RAY_H
 
-#include "vec3.h"
+#include "point.h"
 
 class Ray
 {
 public:
 
-	Ray(const point3& origin, const Vec3& direction) : ori(origin), dir(direction) {};
+	Ray(const Point3& get_origin, const Vec3& get_direction) : origin(get_origin), direction(get_direction) {};
 
-	point3 origin() const
+	Point3 get_origin() const
 	{
-		return ori;
+		return origin;
 	}
 
-	Vec3 direction() const
+	Vec3 get_direction() const
 	{
-		return dir;
+		return direction;
 	}
 	
 	// p = o + t * d
-	point3 at(double t) const
+	Point3 at(double t) const
 	{
-		return ori + t * dir;
+		return origin + t * direction;
 	}
 
 private:
 
-	point3 ori;
-	Vec3 dir;
+	Point3 origin;
+	Vec3 direction;
 };
 
 #endif // !RAY_H

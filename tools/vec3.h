@@ -56,17 +56,15 @@ public:
 		return sqrt(length_squared());
 	}
 
-	Vec3& rescale()
+	void rescale()
 	{
 		// ÑÕÉ«[0,256)
 		e[0] *= 255.999;
 		e[1] *= 255.999;
 		e[2] *= 255.999;
-		return *this;
+		return;
 	}
 };
-
-using point3 = Vec3;
 
 inline std::ostream& operator<<(std::ostream& out, const Vec3& v)
 {

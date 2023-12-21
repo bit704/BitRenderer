@@ -127,13 +127,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\tools\image.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="..\tools\image.cc" />
+    <ClCompile Include="main.cc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\tools\color.h" />
     <ClInclude Include="..\tools\image.h" />
     <ClInclude Include="..\tools\logger.h" />
+    <ClInclude Include="..\tools\point.h" />
     <ClInclude Include="..\tools\ray.h" />
     <ClInclude Include="..\tools\singleton.h" />
     <ClInclude Include="..\tools\vec3.h" />

@@ -6,18 +6,17 @@
 #define LOGGER_H
 
 #include <iostream>
-#include <memory>
 
 #include "singleton.h"
 
 #define PRINT_LOCATION std::cout << __FILE__ << "第" << __LINE__ << "行（" << __FUNCTION__ << "）：";
-#define LOG(X) PRINT_LOCATION Logger::getInstance().printInfo(X);
+#define LOG(X) PRINT_LOCATION Logger::get_instance().print_info(X);
 
 class Logger : public Singleton<Logger>
 {
 public:
 	// 输出信息
-	inline void printInfo(std::string info)
+	inline void print_info(std::string info)
 	{
 		std::cout << info << std::endl;
 	}

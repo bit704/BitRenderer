@@ -12,7 +12,7 @@ class Singleton
 {
 public:
 
-    static T& getInstance()
+    static T& get_instance()
     {
         static T instance;
         return instance;
