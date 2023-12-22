@@ -4859,14 +4859,14 @@ static int stbi__create_png_image_raw(stbi__png *a, stbi_uc *raw, stbi__uint32 r
    return 1;
 }
 
-static int stbi__create_png_image(stbi__png *a, stbi_uc *image_data, stbi__uint32 image_data_len, int out_n, int depth, int color, int interlaced)
+static int stbi__create_png_image(stbi__png *a, stbi_uc *image_data_, stbi__uint32 image_data_len, int out_n, int depth, int color, int interlaced)
 {
    int bytes = (depth == 16 ? 2 : 1);
    int out_bytes = out_n * bytes;
    stbi_uc *final;
    int p;
    if (!interlaced)
-      return stbi__create_png_image_raw(a, image_data, image_data_len, out_n, a->s->img_x, a->s->img_y, depth, color);
+      return stbi__create_png_image_raw(a, image_data_, image_data_len, out_n, a->s->img_x, a->s->img_y, depth, color);
 
    // de-interlacing
    final = (stbi_uc *) stbi__malloc_mad3(a->s->img_x, a->s->img_y, out_bytes, 0);
@@ -4882,7 +4882,7 @@ static int stbi__create_png_image(stbi__png *a, stbi_uc *image_data, stbi__uint3
       y = (a->s->img_y - yorig[p] + yspc[p]-1) / yspc[p];
       if (x && y) {
          stbi__uint32 img_len = ((((a->s->img_n * x * depth) + 7) >> 3) + 1) * y;
-         if (!stbi__create_png_image_raw(a, image_data, image_data_len, out_n, x, y, depth, color)) {
+         if (!stbi__create_png_image_raw(a, image_data_, image_data_len, out_n, x, y, depth, color)) {
             STBI_FREE(final);
             return 0;
          }
@@ -4895,7 +4895,7 @@ static int stbi__create_png_image(stbi__png *a, stbi_uc *image_data, stbi__uint3
             }
          }
          STBI_FREE(a->out);
-         image_data += img_len;
+         image_data_ += img_len;
          image_data_len -= img_len;
       }
    }
@@ -6126,7 +6126,7 @@ static void *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int req
 {
    int pixelCount;
    int channelCount, compression;
-   int channel, i;
+   int channel_, i;
    int bitdepth;
    int w,h;
    stbi_uc *out;
@@ -6223,14 +6223,14 @@ static void *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int req
       stbi__skip(s, h * channelCount * 2 );
 
       // Read the RLE data by channel.
-      for (channel = 0; channel < 4; channel++) {
+      for (channel_ = 0; channel_ < 4; channel_++) {
          stbi_uc *p;
 
-         p = out+channel;
-         if (channel >= channelCount) {
+         p = out+channel_;
+         if (channel_ >= channelCount) {
             // Fill this channel with default data.
             for (i = 0; i < pixelCount; i++, p += 4)
-               *p = (channel == 3 ? 255 : 0);
+               *p = (channel_ == 3 ? 255 : 0);
          } else {
             // Read the RLE data.
             if (!stbi__psd_decode_rle(s, p, pixelCount)) {
@@ -6245,27 +6245,27 @@ static void *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int req
       // where each channel consists of an 8-bit (or 16-bit) value for each pixel in the image.
 
       // Read the data by channel.
-      for (channel = 0; channel < 4; channel++) {
-         if (channel >= channelCount) {
+      for (channel_ = 0; channel_ < 4; channel_++) {
+         if (channel_ >= channelCount) {
             // Fill this channel with default data.
             if (bitdepth == 16 && bpc == 16) {
-               stbi__uint16 *q = ((stbi__uint16 *) out) + channel;
-               stbi__uint16 val = channel == 3 ? 65535 : 0;
+               stbi__uint16 *q = ((stbi__uint16 *) out) + channel_;
+               stbi__uint16 val = channel_ == 3 ? 65535 : 0;
                for (i = 0; i < pixelCount; i++, q += 4)
                   *q = val;
             } else {
-               stbi_uc *p = out+channel;
-               stbi_uc val = channel == 3 ? 255 : 0;
+               stbi_uc *p = out+channel_;
+               stbi_uc val = channel_ == 3 ? 255 : 0;
                for (i = 0; i < pixelCount; i++, p += 4)
                   *p = val;
             }
          } else {
             if (ri->bits_per_channel == 16) {    // output bpc
-               stbi__uint16 *q = ((stbi__uint16 *) out) + channel;
+               stbi__uint16 *q = ((stbi__uint16 *) out) + channel_;
                for (i = 0; i < pixelCount; i++, q += 4)
                   *q = (stbi__uint16) stbi__get16be(s);
             } else {
-               stbi_uc *p = out+channel;
+               stbi_uc *p = out+channel_;
                if (bitdepth == 16) {  // input bpc
                   for (i = 0; i < pixelCount; i++, p += 4)
                      *p = (stbi_uc) (stbi__get16be(s) >> 8);
@@ -6360,15 +6360,15 @@ static int stbi__pic_test_core(stbi__context *s)
 
 typedef struct
 {
-   stbi_uc size,type,channel;
+   stbi_uc size,type,channel_;
 } stbi__pic_packet;
 
-static stbi_uc *stbi__readval(stbi__context *s, int channel, stbi_uc *dest)
+static stbi_uc *stbi__readval(stbi__context *s, int channel_, stbi_uc *dest)
 {
    int mask=0x80, i;
 
    for (i=0; i<4; ++i, mask>>=1) {
-      if (channel & mask) {
+      if (channel_ & mask) {
          if (stbi__at_eof(s)) return stbi__errpuc("bad file","PIC file too short");
          dest[i]=stbi__get8(s);
       }
@@ -6377,12 +6377,12 @@ static stbi_uc *stbi__readval(stbi__context *s, int channel, stbi_uc *dest)
    return dest;
 }
 
-static void stbi__copyval(int channel,stbi_uc *dest,const stbi_uc *src)
+static void stbi__copyval(int channel_,stbi_uc *dest,const stbi_uc *src)
 {
    int mask=0x80,i;
 
    for (i=0;i<4; ++i, mask>>=1)
-      if (channel&mask)
+      if (channel_&mask)
          dest[i]=src[i];
 }
 
@@ -6404,9 +6404,9 @@ static stbi_uc *stbi__pic_load_core(stbi__context *s,int width,int height,int *c
       chained = stbi__get8(s);
       packet->size    = stbi__get8(s);
       packet->type    = stbi__get8(s);
-      packet->channel = stbi__get8(s);
+      packet->channel_ = stbi__get8(s);
 
-      act_comp |= packet->channel;
+      act_comp |= packet->channel_;
 
       if (stbi__at_eof(s))          return stbi__errpuc("bad file","file too short (reading packets)");
       if (packet->size != 8)  return stbi__errpuc("bad format","packet isn't 8bpp");
@@ -6429,7 +6429,7 @@ static stbi_uc *stbi__pic_load_core(stbi__context *s,int width,int height,int *c
                int x;
 
                for(x=0;x<width;++x, dest+=4)
-                  if (!stbi__readval(s,packet->channel,dest))
+                  if (!stbi__readval(s,packet->channel_,dest))
                      return 0;
                break;
             }
@@ -6447,10 +6447,10 @@ static stbi_uc *stbi__pic_load_core(stbi__context *s,int width,int height,int *c
                      if (count > left)
                         count = (stbi_uc) left;
 
-                     if (!stbi__readval(s,packet->channel,value))  return 0;
+                     if (!stbi__readval(s,packet->channel_,value))  return 0;
 
                      for(i=0; i<count; ++i,dest+=4)
-                        stbi__copyval(packet->channel,dest,value);
+                        stbi__copyval(packet->channel_,dest,value);
                      left -= count;
                   }
                }
@@ -6472,17 +6472,17 @@ static stbi_uc *stbi__pic_load_core(stbi__context *s,int width,int height,int *c
                      if (count > left)
                         return stbi__errpuc("bad file","scanline overrun");
 
-                     if (!stbi__readval(s,packet->channel,value))
+                     if (!stbi__readval(s,packet->channel_,value))
                         return 0;
 
                      for(i=0;i<count;++i, dest += 4)
-                        stbi__copyval(packet->channel,dest,value);
+                        stbi__copyval(packet->channel_,dest,value);
                   } else { // Raw
                      ++count;
                      if (count>left) return stbi__errpuc("bad file","scanline overrun");
 
                      for(i=0;i<count;++i, dest+=4)
-                        if (!stbi__readval(s,packet->channel,dest))
+                        if (!stbi__readval(s,packet->channel_,dest))
                            return 0;
                   }
                   left-=count;
@@ -7458,8 +7458,8 @@ static int stbi__pic_info(stbi__context *s, int *x, int *y, int *comp)
       chained = stbi__get8(s);
       packet->size    = stbi__get8(s);
       packet->type    = stbi__get8(s);
-      packet->channel = stbi__get8(s);
-      act_comp |= packet->channel;
+      packet->channel_ = stbi__get8(s);
+      act_comp |= packet->channel_;
 
       if (stbi__at_eof(s)) {
           stbi__rewind( s );

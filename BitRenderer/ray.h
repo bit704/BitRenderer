@@ -10,28 +10,28 @@ class Ray
 {
 public:
 
-	Ray(const Point3& get_origin, const Vec3& get_direction) : origin(get_origin), direction(get_direction) {};
+	Ray(const Point3& origin, const Vec3& direction) : origin_(origin), direction_(direction) {};
 
 	Point3 get_origin() const
 	{
-		return origin;
+		return origin_;
 	}
 
 	Vec3 get_direction() const
 	{
-		return direction;
+		return direction_;
 	}
 	
 	// p = o + t * d
 	Point3 at(double t) const
 	{
-		return origin + t * direction;
+		return origin_ + t * direction_;
 	}
 
 private:
 
-	Point3 origin;
-	Vec3 direction;
+	Point3 origin_;
+	Vec3 direction_;
 };
 
 #endif // !RAY_H

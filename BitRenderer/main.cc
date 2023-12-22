@@ -1,5 +1,5 @@
-#include "../tools/image.h"
-#include "../tools/ray.h"
+#include "image.h"
+#include "ray.h"
 
 Color ray_color(const Ray& r)
 {

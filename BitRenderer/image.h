@@ -11,12 +11,7 @@ class Image
 {
 public:
 
-	std::string image_path;
-	int image_width;
-	int image_height;
-	int channel;
-
-	Image(std::string image_name = "image.png", int image_width = 256, int image_height = 256, int channel = 3);
+	Image(std::string image_name = "image.png", int image_width_ = 256, int image_height_ = 256, int channel_ = 3);
 	~Image();
 
 	void set_pixel(int row, int col, Color c);
@@ -25,8 +20,12 @@ public:
 
 private:
 
-	static const std::string output_path;
-	unsigned char* image_data;
+	static const std::string output_path_;
+	unsigned char* image_data_;
+	std::string image_path_;
+	int image_width_;
+	int image_height_;
+	int channel_;
 };
 
 #endif // !IMAGE_H

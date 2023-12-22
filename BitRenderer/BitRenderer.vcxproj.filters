@@ -18,30 +18,30 @@
     <ClCompile Include="main.cc">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\tools\image.cc">
+    <ClCompile Include="image.cc">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\tools\image.h">
+    <ClInclude Include="image.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\tools\logger.h">
+    <ClInclude Include="logger.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\tools\singleton.h">
+    <ClInclude Include="point.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\tools\vec3.h">
+    <ClInclude Include="ray.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\tools\color.h">
+    <ClInclude Include="singleton.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\tools\ray.h">
+    <ClInclude Include="vec3.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\tools\point.h">
+    <ClInclude Include="color.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
