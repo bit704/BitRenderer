@@ -14,10 +14,10 @@
 #include "logger.h"
 
 // static 关键字只能用于类定义体内部的声明中，定义时不能标示为 static
-const std::string Image::output_path_ = "../output/";
+const std::string Image::kOutputPath = "../output/";
 
 Image::Image(std::string imageName, int image_width, int image_height, int channel)
-	: image_path_(output_path_ + imageName), image_width_(image_width), image_height_(image_height), channel_(channel)
+	: image_path_(kOutputPath + imageName), image_width_(image_width), image_height_(image_height), channel_(channel)
 {
 	// 使用stbi_image_free()释放，不能用new
 	image_data_ = (unsigned char*)malloc(this->image_width_ * this->image_height_ * this->channel_); // 初始化图片内存

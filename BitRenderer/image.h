@@ -20,7 +20,7 @@ public:
 
 private:
 
-	static const std::string output_path_;
+	static const std::string kOutputPath;
 	unsigned char* image_data_;
 	std::string image_path_;
 	int image_width_;
