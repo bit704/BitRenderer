@@ -1,17 +1,25 @@
 #include "image.h"
 #include "sphere.h"
 #include "hittable_list.h"
+#include "common.h"
+
+static HittableList hittablelist;
+
+void init_world()
+{
+    hittablelist.add(make_shared<Sphere>(Point3(0, 0, -1), 0.5));
+    hittablelist.add(make_shared<Sphere>(Point3(0, -100.5, -1), 100));
+}
 
 Color ray_color(const Ray& r)
 {
-	static HittableList hittablelist(make_shared<Sphere>(Point3(0, 0, -1), 0.5));
     HitRecord hr;
-    if (hittablelist.hit(r, 0.1, 1000, hr)) // 如果光线击中物体，返回最近击中点
+    if (hittablelist.hit(r, 0, kInfinitDouble, hr)) // 如果光线击中物体，返回最近击中点
     {
         // 击中处法线
         Vec3 N = hr.normal;
         // 将法线向量每个值从[-1,1]缩放到[0,1]，供颜色用
-        return 0.5 * Color(N.x() + 1, N.y() + 1, N.z() + 1);
+        return 0.5 * (N + Vec3(1,1,1));
     }
 
     // 背景颜色
@@ -46,8 +54,9 @@ int main()
     auto viewport_upper_left = camera_center - Vec3(0, 0, focal_length) - viewport_u / 2 - viewport_v / 2;
     auto pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
-
     std::unique_ptr<Image> image(new Image("image.png", image_width, image_height, channel));
+
+    init_world();
 
     for (int i = 0; i < image_height; ++i) 
     {
