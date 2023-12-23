@@ -1,33 +1,15 @@
 #include "image.h"
-#include "ray.h"
-
-double hit_sphere(const Point3& center, double radius, const Ray& r)
-{
-    Vec3 oc = r.get_origin() - center;
-    // 光线方程r=o+td和球面方程联立解t的一元二次方程求根公式的判别式,将b替换为2h
-    auto a = r.get_direction().length_squared();
-    auto half_b = dot(oc, r.get_direction());
-    auto c = oc.length_squared() - radius * radius;
-    auto discriminant = half_b * half_b - a * c;
-    
-    if (discriminant < 0)
-    {
-        return -1.0;
-    }
-    else // 若有根，返回正数解 
-    {
-        return (-half_b - sqrt(discriminant)) / a;
-    }
-}
+#include "sphere.h"
+#include "hittable_list.h"
 
 Color ray_color(const Ray& r)
 {
-    Vec3 sphere_center = Point3(0, 0, -1);
-    auto t = hit_sphere(sphere_center, 0.5, r);
-    if (t > 0.0) // 如果光线击中球
+	static HittableList hittablelist(make_shared<Sphere>(Point3(0, 0, -1), 0.5));
+    HitRecord hr;
+    if (hittablelist.hit(r, 0.1, 1000, hr)) // 如果光线击中物体，返回最近击中点
     {
         // 击中处法线
-        Vec3 N = unit_vector(r.at(t) - sphere_center);
+        Vec3 N = hr.normal;
         // 将法线向量每个值从[-1,1]缩放到[0,1]，供颜色用
         return 0.5 * Color(N.x() + 1, N.y() + 1, N.z() + 1);
     }
