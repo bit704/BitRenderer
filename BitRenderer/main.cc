@@ -4,12 +4,11 @@
 double hit_sphere(const Point3& center, double radius, const Ray& r)
 {
     Vec3 oc = r.get_origin() - center;
-    // 光线方程r=o+td和球面方程联立解t的一元二次方程求根公式的判别式
-    auto a = dot(r.get_direction(), r.get_direction());
-    auto b = 2.0 * dot(oc, r.get_direction());
-    auto c = dot(oc, oc) - radius * radius;
-    auto discriminant = b * b - 4 * a * c;
-    
+    // 光线方程r=o+td和球面方程联立解t的一元二次方程求根公式的判别式,将b替换为2h
+    auto a = r.get_direction().length_squared();
+    auto half_b = dot(oc, r.get_direction());
+    auto c = oc.length_squared() - radius * radius;
+    auto discriminant = half_b * half_b - a * c;
     
     if (discriminant < 0)
     {
@@ -17,7 +16,7 @@ double hit_sphere(const Point3& center, double radius, const Ray& r)
     }
     else // 若有根，返回正数解 
     {
-        return (-b - sqrt(discriminant)) / (2.0 * a);
+        return (-half_b - sqrt(discriminant)) / a;
     }
 }
 
