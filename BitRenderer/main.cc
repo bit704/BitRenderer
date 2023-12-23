@@ -1,7 +1,7 @@
 #include "image.h"
 #include "ray.h"
 
-bool hit_sphere(const Point3& center, double radius, const Ray& r)
+double hit_sphere(const Point3& center, double radius, const Ray& r)
 {
     Vec3 oc = r.get_origin() - center;
     // 光线方程r=o+td和球面方程联立解t的一元二次方程求根公式的判别式
@@ -9,14 +9,29 @@ bool hit_sphere(const Point3& center, double radius, const Ray& r)
     auto b = 2.0 * dot(oc, r.get_direction());
     auto c = dot(oc, oc) - radius * radius;
     auto discriminant = b * b - 4 * a * c;
-    return (discriminant >= 0);
+    
+    
+    if (discriminant < 0)
+    {
+        return -1.0;
+    }
+    else // 若有根，返回正数解 
+    {
+        return (-b - sqrt(discriminant)) / (2.0 * a);
+    }
 }
 
 Color ray_color(const Ray& r)
 {
-    // 如果光线击中球
-    if (hit_sphere(Point3(0, 0, -1), 0.5, r))
-        return Color(1, 0, 0);
+    Vec3 sphere_center = Point3(0, 0, -1);
+    auto t = hit_sphere(sphere_center, 0.5, r);
+    if (t > 0.0) // 如果光线击中球
+    {
+        // 击中处法线
+        Vec3 N = unit_vector(r.at(t) - sphere_center);
+        // 将法线向量每个值从[-1,1]缩放到[0,1]，供颜色用
+        return 0.5 * Color(N.x() + 1, N.y() + 1, N.z() + 1);
+    }
 
     // 背景颜色
     Vec3 unit_direction = unit_vector(r.get_direction());

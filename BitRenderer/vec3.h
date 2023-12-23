@@ -56,7 +56,7 @@ public:
 		return sqrt(length_squared());
 	}
 
-	void rescale()
+	void rescale_as_color()
 	{
 		// ÑÕÉ«[0,256)
 		e_[0] *= 255.999;

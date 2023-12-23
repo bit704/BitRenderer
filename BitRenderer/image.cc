@@ -33,7 +33,8 @@ void Image::set_pixel(int row, int col, int r, int g, int b)
 
 void Image::set_pixel(int row, int col, Color c)
 {
-	c.rescale();
+	// 颜色需要缩放到[0,256)，再向下取整
+	c.rescale_as_color();
 	set_pixel(row, col, (int)c.e_[0], (int)c.e_[1], (int)c.e_[2]);
 }
 
