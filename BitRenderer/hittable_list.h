@@ -9,15 +9,12 @@
 
 #include "hittable.h"
 
-using std::shared_ptr;
-using std::make_shared;
-
 class HittableList : public HitTable
 {
 public:
 
     HittableList() = default;
-    HittableList(shared_ptr<HitTable> object) 
+    HittableList(std::shared_ptr<HitTable> object) 
     { 
         add(object);
     }
@@ -27,7 +24,7 @@ public:
         objects_.clear(); 
     }
 
-    void add(shared_ptr<HitTable> object) 
+    void add(std::shared_ptr<HitTable> object)
     {
         objects_.push_back(object);
     }
@@ -53,7 +50,7 @@ public:
 
 private:
 
-    std::vector<shared_ptr<HitTable>> objects_;
+    std::vector<std::shared_ptr<HitTable>> objects_;
 };
 
 #endif // !HITTABLE_LIST_H
