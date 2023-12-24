@@ -1,5 +1,5 @@
 /*
-* 相机
+* 相机类
 */
 #ifndef CAMERA_H
 #define CAMERA_H
@@ -31,7 +31,7 @@ public:
                 for (int sample = 0; sample < samples_per_pixel_; ++sample)
                 {
                     Ray r = get_ray(i, j);
-                    pixel_color += ray_color(r, world);
+                    pixel_color += ray_color(r, world, max_depth_);
                 }
                 image_->set_pixel(i, j, pixel_color, samples_per_pixel_);
             }
@@ -50,6 +50,16 @@ public:
         aspect_ratio_ = aspect_ratio;
     }
 
+    void set_samples_per_pixel(int samples_per_pixel)
+    {
+        samples_per_pixel_ = samples_per_pixel;
+    }
+
+    void set_max_depth(int max_depth)
+    {
+        max_depth_ = max_depth;
+    }
+
 private:
 
     double aspect_ratio_ = 1.;
@@ -61,7 +71,8 @@ private:
     Vec3   pixel_delta_u_;
     Vec3   pixel_delta_v_;
     std::unique_ptr<Image> image_;
-    int    samples_per_pixel_ = 10;
+    int    samples_per_pixel_ = 10; // 每像素采样数
+    int    max_depth_ = 10; // 光线最大弹射次数
 
     // 初始化
     void initialize() 
@@ -89,14 +100,24 @@ private:
     }
 
     // 获取光线击中处的颜色
-    Color ray_color(const Ray& r, const HitTable& world) const
+    Color ray_color(const Ray& r, const HitTable& world, int depth) const
     {
+        if (depth < 0)
+        {
+            return Color(0, 0, 0);
+        }
+
         HitRecord rec;
 
-        if (world.hit(r, Interval(0, kInfinitDouble), rec)) 
+        // Interval最小值不能为0，否则当数值误差导致光线与物体交点在物体内部时，光线无法正常弹射
+        if (world.hit(r, Interval(0.001, kInfinitDouble), rec)) 
         {
-            // 将法线向量每个值从[-1,1]缩放到[0,1]，供颜色用
-            return 0.5 * (rec.normal + Color(1, 1, 1));
+            // 随机在半球上采样方向
+            //Vec3 direction = random_on_hemisphere(rec.normal);
+            // 朗伯分布，靠近法线的方向上反射可能性更大
+            Vec3 direction = rec.normal + random_unit_vector();
+
+            return 0.7 * ray_color(Ray(rec.p, direction), world, depth-1);
         }
 
         // 背景颜色

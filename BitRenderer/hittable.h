@@ -1,5 +1,5 @@
 /*
-* 抽象可击中物体
+* 光线可击中物体类
 */
 #ifndef HITTABLE_H
 #define HITTABLE_H

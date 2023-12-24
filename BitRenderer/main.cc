@@ -11,7 +11,9 @@ int main()
 
     Camera cam;
     cam.set_aspect_ratio(16. / 9.);
-    cam.set_image_width(512);
+    cam.set_image_width(256);
+    cam.set_samples_per_pixel(100);
+    cam.set_max_depth(50);
     cam.render(hittablelist);
 
     return 0;

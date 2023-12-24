@@ -1,5 +1,5 @@
 /*
-* 与光线相交物体总列表
+* 光线可击中物体总列表类
 */
 #ifndef HITTABLE_LIST_H
 #define HITTABLE_LIST_H

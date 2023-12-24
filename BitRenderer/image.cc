@@ -32,14 +32,28 @@ void Image::set_pixel(int row, int col, int r, int g, int b)
 	image_data_[(row * image_width_ + col) * channel_ + 2] = b;
 }
 
+// 伽马校正
+inline double linear_to_gamma(double linear_component)
+{
+	// 采用通用伽马值2.2
+	return pow(linear_component, 1 / 2.2);
+}
+
 void Image::set_pixel(int row, int col, Color c, int samples_per_pixel)
 {
+	// 一个像素采样几次就叠加了几个颜色，根据采样次数缩放回去
 	double scale = 1. / samples_per_pixel;
 	c *= scale;
-	// 一个像素采样几次就叠加了几个颜色，根据采样次数缩放回去
-	c.e_[0] = std::clamp(c.e_[0], 0., 1.);
-	c.e_[0] = std::clamp(c.e_[0], 0., 1.);
-	c.e_[0] = std::clamp(c.e_[0], 0., 1.);
+
+	// 伽马校正
+	double r = linear_to_gamma(c.e_[0]);
+	double g = linear_to_gamma(c.e_[1]);
+	double b = linear_to_gamma(c.e_[2]);
+	
+	// 将值限制在[0,1]
+	r = std::clamp(r, 0., 1.);
+	g = std::clamp(g, 0., 1.);
+	b = std::clamp(b, 0., 1.);
 
 	// 颜色需要缩放到[0,256)，再向下取整
 	c.rescale_as_color();

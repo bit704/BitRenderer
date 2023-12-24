@@ -1,5 +1,5 @@
 /*
-* 球
+* 球类
 */
 #ifndef SPHERE_H
 #define SPHERE_H
@@ -21,8 +21,9 @@ public:
         auto c = oc.length_squared() - radius_ * radius_;
 
         auto discriminant = half_b * half_b - a * c;
-        if (discriminant < 0) return false;
-        auto sqrtd = sqrt(discriminant);
+        if (discriminant < 0) 
+            return false;
+        auto sqrtd = std::sqrt(discriminant);
 
         auto root = (-half_b - sqrtd) / a; // 更近的根
         if (root <= interval.get_min() || interval.get_max() <= root)
