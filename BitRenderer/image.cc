@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <new>
+#include <algorithm>
 
 // 以下头文件包含函数定义，不能包含在image.h中，否则当image.h被包含时会导致重定义错误LNK2005、LNK1169
 #define STB_IMAGE_IMPLEMENTATION
@@ -31,10 +32,18 @@ void Image::set_pixel(int row, int col, int r, int g, int b)
 	image_data_[(row * image_width_ + col) * channel_ + 2] = b;
 }
 
-void Image::set_pixel(int row, int col, Color c)
+void Image::set_pixel(int row, int col, Color c, int samples_per_pixel)
 {
+	double scale = 1. / samples_per_pixel;
+	c *= scale;
+	// 一个像素采样几次就叠加了几个颜色，根据采样次数缩放回去
+	c.e_[0] = std::clamp(c.e_[0], 0., 1.);
+	c.e_[0] = std::clamp(c.e_[0], 0., 1.);
+	c.e_[0] = std::clamp(c.e_[0], 0., 1.);
+
 	// 颜色需要缩放到[0,256)，再向下取整
 	c.rescale_as_color();
+
 	set_pixel(row, col, (int)c.e_[0], (int)c.e_[1], (int)c.e_[2]);
 }
 

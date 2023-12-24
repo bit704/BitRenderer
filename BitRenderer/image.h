@@ -14,7 +14,7 @@ public:
 	Image(std::string image_name = "image.png", int image_width_ = 256, int image_height_ = 256, int channel_ = 3);
 	~Image();
 
-	void set_pixel(int row, int col, Color c);
+	void set_pixel(int row, int col, Color c, int samples_per_pixel = 1);
 	void set_pixel(int row, int col, int r, int g, int b);
 	void write();
 

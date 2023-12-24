@@ -27,7 +27,13 @@ public:
                 // 得到从相机发出的光线
                 Ray r(camera_center_, ray_direction);
 
-                image_->set_pixel(i, j, ray_color(r, world));
+                Color pixel_color(0, 0, 0);
+                for (int sample = 0; sample < samples_per_pixel_; ++sample)
+                {
+                    Ray r = get_ray(i, j);
+                    pixel_color += ray_color(r, world);
+                }
+                image_->set_pixel(i, j, pixel_color, samples_per_pixel_);
             }
         }
         std::clog << "\rDone.                 \n";
@@ -46,7 +52,7 @@ public:
 
 private:
 
-    double aspect_ratio_ = 1.0;
+    double aspect_ratio_ = 1.;
     int    image_width_ = 100;
     int channel_ = 3;
     int    image_height_;
@@ -55,6 +61,7 @@ private:
     Vec3   pixel_delta_u_;
     Vec3   pixel_delta_v_;
     std::unique_ptr<Image> image_;
+    int    samples_per_pixel_ = 10;
 
     // 初始化
     void initialize() 
@@ -98,6 +105,28 @@ private:
         auto a = 0.5 * (unit_direction.y() + 1.0);
         return (1.0 - a) * Color(1.0, 1.0, 1.0) + a * Color(0.5, 0.7, 1.0);
     }
+
+    // 采样随机光线
+    Ray get_ray(int i, int j) const 
+    {
+        // 返回长度为1的像素块上一随机采样点位置
+        auto pixel_sample_square = [=]() -> Vec3
+        {
+            auto px = -0.5 + random_double();
+            auto py = -0.5 + random_double();
+            return (px * pixel_delta_u_) + (py * pixel_delta_v_);
+        };
+
+        // 从(i,j)处像素随机采样一条光线
+        auto pixel_center = pixel00_loc_ + (j * pixel_delta_u_) + (i * pixel_delta_v_);
+        auto pixel_sample = pixel_center + pixel_sample_square();
+
+        auto ray_origin = camera_center_;
+        auto ray_direction = pixel_sample - ray_origin;
+
+        return Ray(ray_origin, ray_direction);
+    }
+
 };
 
 #endif // !CAMERA_H
