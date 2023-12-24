@@ -32,15 +32,15 @@ public:
         objects_.push_back(object);
     }
 
-    bool hit(const Ray& r, double ray_tmin, double ray_tmax, HitRecord& rec) const override
+    bool hit(const Ray& r, Interval interval, HitRecord& rec) const override
     {
         HitRecord temp_rec;
         bool hit_anything = false;
-        auto closest_so_far = ray_tmax;
+        auto closest_so_far = interval.get_max();
 
         for (const auto& object : objects_)
         {
-            if (object->hit(r, ray_tmin, closest_so_far, temp_rec)) 
+            if (object->hit(r, Interval(interval.get_min(), closest_so_far), temp_rec))
             {
                 hit_anything = true;
                 closest_so_far = temp_rec.t; // 更新当前击中时候的光线投射距离为下次光线投射的最大距离

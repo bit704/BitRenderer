@@ -136,6 +136,7 @@
     <ClInclude Include="hittable.h" />
     <ClInclude Include="hittable_list.h" />
     <ClInclude Include="image.h" />
+    <ClInclude Include="interval.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="point.h" />
     <ClInclude Include="ray.h" />

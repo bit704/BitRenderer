@@ -13,7 +13,7 @@ public:
 
     Sphere(Point3 _center, double _radius) : center_(_center), radius_(_radius) {}
 
-    bool hit(const Ray& r, double ray_tmin, double ray_tmax, HitRecord& rec) const override 
+    bool hit(const Ray& r, Interval interval, HitRecord& rec) const override
     {
         Vec3 oc = r.get_origin() - center_;
         auto a = r.get_direction().length_squared();
@@ -25,10 +25,10 @@ public:
         auto sqrtd = sqrt(discriminant);
 
         auto root = (-half_b - sqrtd) / a; // 更近的根
-        if (root <= ray_tmin || ray_tmax <= root)
+        if (root <= interval.get_min() || interval.get_max() <= root)
         {
             root = (-half_b + sqrtd) / a; // 更远的根
-            if (root <= ray_tmin || ray_tmax <= root)
+            if (root <= interval.get_min() || interval.get_max() <= root)
                 return false;
         }
 

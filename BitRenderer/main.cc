@@ -14,7 +14,7 @@ void init_world()
 Color ray_color(const Ray& r)
 {
     HitRecord hr;
-    if (hittablelist.hit(r, 0, kInfinitDouble, hr)) // 如果光线击中物体，返回最近击中点
+    if (hittablelist.hit(r, Interval(0, kInfinitDouble), hr)) // 如果光线击中物体，返回最近击中点
     {
         // 击中处法线
         Vec3 N = hr.normal;
