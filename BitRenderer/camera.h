@@ -7,6 +7,7 @@
 #include "color.h"
 #include "hittable.h"
 #include "image.h"
+#include "material.h"
 
 class Camera
 {
@@ -116,12 +117,11 @@ private:
         // Interval最小值不能为0，否则当数值误差导致光线与物体交点在物体内部时，光线无法正常弹射
         if (world.hit(r, Interval(0.001, kInfinitDouble), rec)) 
         {
-            // 随机在半球上采样方向
-            //Vec3 direction = random_on_hemisphere(rec.normal);
-            // 朗伯分布，靠近法线的方向上反射可能性更大
-            Vec3 direction = rec.normal + random_unit_vector();
-
-            return 0.7 * ray_color(Ray(rec.p, direction), world, depth-1);
+            Ray scattered; // 此次入射后散射出去的光线
+            Color attenuation; // 衰减系数
+            if (rec.material->scatter(r, rec, attenuation, scattered))
+                return attenuation * ray_color(scattered, world, depth - 1);
+            return Color(0, 0, 0); // 停止条件，目前无法到达
         }
 
         // 背景颜色

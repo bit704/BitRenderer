@@ -10,6 +10,8 @@ class Ray
 {
 public:
 
+	Ray() = default;
+
 	Ray(const Point3& origin, const Vec3& direction) : origin_(origin), direction_(direction) {};
 
 	Point3 get_origin() const

@@ -11,7 +11,8 @@ class Sphere : public HitTable
 {
 public:
 
-    Sphere(Point3 _center, double _radius) : center_(_center), radius_(_radius) {}
+    Sphere(Point3 center, double radius, std::shared_ptr<Material> material) 
+        : center_(center), radius_(radius), material_(material) {}
 
     bool hit(const Ray& r, Interval interval, HitRecord& rec) const override
     {
@@ -37,6 +38,7 @@ public:
         rec.p = r.at(rec.t);
         Vec3 outward_normal = (rec.p - center_) / radius_; // µ¥Î»»¯
         rec.set_face_normal(r, outward_normal);
+        rec.material = material_;
 
         return true;
     }
@@ -45,6 +47,8 @@ private:
 
     Point3 center_;
     double radius_;
+    std::shared_ptr<Material> material_;
+
 };
 
 #endif // !SPHERE_H

@@ -7,10 +7,14 @@
 #include "ray.h"
 #include "interval.h"
 
+// 前向声明，避免头文件循环引用
+class Material;
+
 struct HitRecord
 {
     Point3 p;
     Vec3 normal;
+    std::shared_ptr<Material> material;
     double t;
     bool front_face;
 

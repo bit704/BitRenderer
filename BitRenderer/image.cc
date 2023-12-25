@@ -20,7 +20,7 @@ const std::string Image::kOutputPath = "../output/";
 Image::Image(std::string imageName, int image_width, int image_height, int channel)
 	: image_path_(kOutputPath + imageName), image_width_(image_width), image_height_(image_height), channel_(channel)
 {
-	// 使用stbi_image_free()释放，不能用new
+	// 使用stbi_image_free()释放，因此不用new
 	image_data_ = (unsigned char*)malloc(this->image_width_ * this->image_height_ * this->channel_); // 初始化图片内存
 }
 
@@ -50,15 +50,11 @@ void Image::set_pixel(int row, int col, Color c, int samples_per_pixel)
 	double g = linear_to_gamma(c.e_[1]);
 	double b = linear_to_gamma(c.e_[2]);
 	
-	// 将值限制在[0,1]
-	r = std::clamp(r, 0., 1.);
-	g = std::clamp(g, 0., 1.);
-	b = std::clamp(b, 0., 1.);
-
-	// 颜色需要缩放到[0,256)，再向下取整
-	c.rescale_as_color();
-
-	set_pixel(row, col, (int)c.e_[0], (int)c.e_[1], (int)c.e_[2]);
+	// 将值限制在[0,1]，缩放到[0,256)，再向下取整
+	r = std::clamp(r, 0., 1.) * 255.999;
+	g = std::clamp(g, 0., 1.) * 255.999;
+	b = std::clamp(b, 0., 1.) * 255.999;
+	set_pixel(row, col, (int)r, (int)g, (int)b);
 }
 
 // 写入指定图片

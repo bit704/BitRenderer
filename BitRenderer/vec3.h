@@ -55,13 +55,10 @@ public:
 		return std::sqrt(length_squared());
 	}
 
-	void rescale_as_color()
+	bool near_zero() const
 	{
-		// 颜色[0,256)
-		e_[0] *= 255.999;
-		e_[1] *= 255.999;
-		e_[2] *= 255.999;
-		return;
+		double s = 1e-8;
+		return (fabs(e_[0]) < s) && (fabs(e_[1]) < s) && (fabs(e_[2]) < s);
 	}
 
 	static Vec3 random() 
@@ -73,6 +70,7 @@ public:
 	{
 		return Vec3(random_double(min, max), random_double(min, max), random_double(min, max));
 	}
+
 };
 
 inline std::ostream& operator<<(std::ostream& out, const Vec3& v)
@@ -131,7 +129,8 @@ inline Vec3 unit_vector(Vec3 v)
 
 inline Vec3 random_in_unit_sphere() 
 {
-	while (true) {
+	while (true)
+	{
 		auto p = Vec3::random(-1., 1.);
 		if (p.length_squared() < 1)
 			return p;
@@ -144,13 +143,20 @@ inline Vec3 random_unit_vector()
 	return unit_vector(random_in_unit_sphere());
 }
 
-inline Vec3 random_on_hemisphere(const Vec3& normal) {
+inline Vec3 random_on_hemisphere(const Vec3& normal) 
+{
 	Vec3 on_unit_sphere = random_unit_vector();
 	// 在法向量所在的半球
 	if (dot(on_unit_sphere, normal) > 0.) 
 		return on_unit_sphere;
 	else
 		return -on_unit_sphere;
+}
+
+// 反射，v是入射光线方向，n是反射方向
+inline Vec3 reflect(const Vec3& v, const Vec3& n)
+{
+	return v - 2 * dot(v, n) * n;
 }
 
 #endif // !Vec3_H
