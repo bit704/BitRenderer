@@ -70,6 +70,9 @@ private:
     Point3 pixel00_loc_; // (0,0)处像素的位置
     Vec3   pixel_delta_u_;
     Vec3   pixel_delta_v_;
+    // 若使用Image image_，会报错 0xc0000005 访问冲突。
+    // 初始化image_使用的临时Image对象会被立刻析构，其持有的image_data_指针在析构函数中释放，
+    // image_的image_data_指针是从临时Image对象浅拷贝而来，成为悬空指针，故访问冲突。
     std::unique_ptr<Image> image_;
     int    samples_per_pixel_ = 10; // 每像素采样数
     int    max_depth_ = 10; // 光线最大弹射次数
@@ -80,8 +83,9 @@ private:
         image_height_ = static_cast<int>(image_width_ / aspect_ratio_);
         image_height_ = (image_height_ < 1) ? 1 : image_height_;
 
+         //image_ = Image("image.png", image_width_, image_height_, channel_);
         image_ = std::make_unique<Image>("image.png", image_width_, image_height_, channel_);
-
+        
         camera_center_ = Point3(0, 0, 0);
 
         // 相机属性
