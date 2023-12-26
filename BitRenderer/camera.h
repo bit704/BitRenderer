@@ -121,7 +121,7 @@ private:
             Color attenuation; // 衰减系数
             if (rec.material->scatter(r, rec, attenuation, scattered))
                 return attenuation * ray_color(scattered, world, depth - 1);
-            return Color(0, 0, 0); // 停止条件，目前无法到达
+            return Color(0, 0, 0);
         }
 
         // 背景颜色
