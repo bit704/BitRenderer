@@ -25,7 +25,7 @@ Image::Image(std::string imageName, int image_width, int image_height, int chann
 }
 
 // 设置像素
-void Image::set_pixel(int row, int col, int r, int g, int b)
+void Image::set_pixel(const int& row, const int& col, const int& r, const int& g, const int& b)
 {
 	image_data_[(row * image_width_ + col) * channel_] = r;
 	image_data_[(row * image_width_ + col) * channel_ + 1] = g;
@@ -39,7 +39,7 @@ inline double linear_to_gamma(double linear_component)
 	return pow(linear_component, 1 / 2.2);
 }
 
-void Image::set_pixel(int row, int col, Color c, int samples_per_pixel)
+void Image::set_pixel(const int& row, const int& col, Color c, const int& samples_per_pixel)
 {
 	// 一个像素采样几次就叠加了几个颜色，根据采样次数缩放回去
 	double scale = 1. / samples_per_pixel;

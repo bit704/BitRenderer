@@ -22,12 +22,6 @@ public:
             std::clog << "\rScanlines remaining: " << (image_height_ - i) << ' ' << std::flush;
             for (int j = 0; j < image_width_; ++j)
             {
-                // 该像素位置
-                auto pixel_center = pixel00_loc_ + (i * pixel_delta_v_) + (j * pixel_delta_u_);
-                auto ray_direction = pixel_center - camera_center_;
-                // 得到从相机发出的光线
-                Ray r(camera_center_, ray_direction);
-
                 Color pixel_color(0, 0, 0);
                 for (int sample = 0; sample < samples_per_pixel_; ++sample)
                 {
@@ -41,60 +35,71 @@ public:
         image_->write();
     }
 
-    void set_image_width(int image_width)
+    void set_image_width(const int& image_width)
     {
         image_width_ = image_width;
     }
 
-    void set_aspect_ratio(double aspect_ratio)
+    void set_aspect_ratio(const double& aspect_ratio)
     {
         aspect_ratio_ = aspect_ratio;
     }
 
-    void set_samples_per_pixel(int samples_per_pixel)
+    void set_samples_per_pixel(const int& samples_per_pixel)
     {
         samples_per_pixel_ = samples_per_pixel;
     }
 
-    void set_max_depth(int max_depth)
+    void set_max_depth(const int& max_depth)
     {
         max_depth_ = max_depth;
     }
 
-    void set_vfov(double vfov)
+    void set_vfov(const double& vfov)
     {
         vfov_ = vfov;
     }
 
-    void set_lookfrom(Vec3 lookfrom)
+    void set_lookfrom(const Vec3& lookfrom)
     {
         lookfrom_ = lookfrom;
     }
 
-    void set_lookat(Vec3 lookat)
+    void set_lookat(const Vec3& lookat)
     {
         lookat_ = lookat;
     }
 
-    void set_vup(Vec3 vup)
+    void set_vup(const Vec3& vup)
     {
         vup_ = vup;
     }
 
+    void set_defocus_angle(const double& defocus_angle)
+    {
+        defocus_angle_ = defocus_angle;
+    }
+
+    void set_focus_dist(const double& focus_dist)
+    {
+        focus_dist_ = focus_dist;
+    }
+
 private:
+
+    // 若使用Image image_，会报错 0xc0000005 访问冲突。
+    // 初始化image_使用的临时Image对象会被立刻析构，其持有的image_data_指针在析构函数中释放，
+    // image_的image_data_指针是从临时Image对象浅拷贝而来，成为悬空指针，故访问冲突。
+    std::unique_ptr<Image> image_;
 
     double aspect_ratio_ = 1.;
     int    image_width_ = 100;
-    int channel_ = 3;
+    int    channel_ = 3;
     int    image_height_;
     Point3 camera_center_;
     Point3 pixel00_loc_; // (0,0)处像素的位置
     Vec3   pixel_delta_u_;
     Vec3   pixel_delta_v_;
-    // 若使用Image image_，会报错 0xc0000005 访问冲突。
-    // 初始化image_使用的临时Image对象会被立刻析构，其持有的image_data_指针在析构函数中释放，
-    // image_的image_data_指针是从临时Image对象浅拷贝而来，成为悬空指针，故访问冲突。
-    std::unique_ptr<Image> image_;
     int    samples_per_pixel_ = 10; // 每像素采样数
     int    max_depth_ = 10; // 光线最大弹射次数
 
@@ -104,8 +109,14 @@ private:
     Point3 lookat_ = Point3(0, 0, 0);
     Vec3   vup_ = Point3(0, 1, 0);
     // 相机坐标系
-    Vec3   u, v, w; 
+    Vec3   u_; // 指向相机右方
+    Vec3   v_; // 指向相机上方
+    Vec3   w_; // 与相机视点方向相反 
 
+    double defocus_angle_ = 0;  // 光线经过每个像素的变化
+    double focus_dist_ = 10;    // 相机原点到完美聚焦平面的距离，这里与焦距相同
+    Vec3 defocus_disk_u_;  // 散焦横向半径
+    Vec3 defocus_disk_v_;  // 散焦纵向半径
 
     // 初始化
     void initialize() 
@@ -119,28 +130,31 @@ private:
         camera_center_ = lookfrom_;
 
         // 相机属性
-        auto focal_length = (lookfrom_ - lookat_).length();;
-
         auto theta = degrees_to_radians(vfov_);
         auto h = tan(theta / 2);
-        auto viewport_height = 2 * h * focal_length;
+        auto viewport_height = 2 * h * focus_dist_;
 
         auto viewport_width = viewport_height * (static_cast<double>(image_width_) / image_height_);
         
-        // 计算相机坐标系，右手系
-        w = unit_vector(lookfrom_ - lookat_); // 与视点方向相反 (0,0,-1)
-        u = unit_vector(cross(vup_, w)); // 指向相机右方 (-1,0,0)
-        v = cross(w, u); // 指向相机上方 (0,1,0)
+        // 计算相机坐标系，右手系(z轴指向屏幕外)
+        w_ = unit_vector(lookfrom_ - lookat_); // 与相机视点方向相反 (0,0,-1)
+        u_ = unit_vector(cross(vup_, w_)); // 指向相机右方 (-1,0,0)
+        v_ = cross(w_, u_); // 指向相机上方 (0,1,0)
 
-        Vec3 viewport_u = viewport_width * u;
-        Vec3 viewport_v = viewport_height * -v;
+        Vec3 viewport_u = viewport_width * u_;
+        Vec3 viewport_v = viewport_height * -v_;
 
         // 每像素对应的视口长度
         pixel_delta_u_ = viewport_u / image_width_;
         pixel_delta_v_ = viewport_v / image_height_;
         // 左上角像素的位置，像素位置以中心点表示
-        auto viewport_upper_left = camera_center_ - (focal_length * w) - viewport_u / 2 - viewport_v / 2;
+        auto viewport_upper_left = camera_center_ - (focus_dist_ * w_) - viewport_u / 2 - viewport_v / 2;
         pixel00_loc_ = viewport_upper_left + 0.5 * (pixel_delta_u_ + pixel_delta_v_);
+
+        // 相机散焦平面的基向量
+        auto defocus_radius = focus_dist_ * tan(degrees_to_radians(defocus_angle_ / 2));
+        defocus_disk_u_ = u_ * defocus_radius;
+        defocus_disk_v_ = v_ * defocus_radius;
     }
 
     // 获取光线击中处的颜色
@@ -185,10 +199,18 @@ private:
         auto pixel_center = pixel00_loc_ + (j * pixel_delta_u_) + (i * pixel_delta_v_);
         auto pixel_sample = pixel_center + pixel_sample_square();
 
-        auto ray_origin = camera_center_;
+        // auto ray_origin = camera_center_;
+        auto ray_origin = (defocus_angle_ <= 0) ? camera_center_ : defocus_disk_sample();
         auto ray_direction = pixel_sample - ray_origin;
 
         return Ray(ray_origin, ray_direction);
+    }
+
+    // 返回圆形透镜上随机一点
+    Point3 defocus_disk_sample() const 
+    {
+        auto p = random_in_unit_disk();
+        return camera_center_ + (p[0] * defocus_disk_u_) + (p[1] * defocus_disk_v_);
     }
 
 };
