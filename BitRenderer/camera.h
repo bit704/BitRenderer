@@ -200,6 +200,7 @@ private:
         auto pixel_sample = pixel_center + pixel_sample_square();
 
         // auto ray_origin = camera_center_;
+        // 散焦，在圆形透镜上随机采样，光线原点不再是相机原点
         auto ray_origin = (defocus_angle_ <= 0) ? camera_center_ : defocus_disk_sample();
         auto ray_direction = pixel_sample - ray_origin;
 
