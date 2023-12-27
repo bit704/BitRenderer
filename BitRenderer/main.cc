@@ -25,6 +25,12 @@ int main()
     cam.set_image_width(256);
     cam.set_samples_per_pixel(100);
     cam.set_max_depth(50);
+
+    cam.set_vfov(30);
+    cam.set_lookfrom(Point3(-2, 2, 1));
+    cam.set_lookat(Point3(0, 0, -1));
+    cam.set_vup(Vec3(0, 1, 0));
+
     cam.render(hittablelist);
 
     return 0;

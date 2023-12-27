@@ -61,6 +61,26 @@ public:
         max_depth_ = max_depth;
     }
 
+    void set_vfov(double vfov)
+    {
+        vfov_ = vfov;
+    }
+
+    void set_lookfrom(Vec3 lookfrom)
+    {
+        lookfrom_ = lookfrom;
+    }
+
+    void set_lookat(Vec3 lookat)
+    {
+        lookat_ = lookat;
+    }
+
+    void set_vup(Vec3 vup)
+    {
+        vup_ = vup;
+    }
+
 private:
 
     double aspect_ratio_ = 1.;
@@ -78,6 +98,15 @@ private:
     int    samples_per_pixel_ = 10; // 每像素采样数
     int    max_depth_ = 10; // 光线最大弹射次数
 
+    double vfov_ = 90;  // 垂直fov
+    
+    Point3 lookfrom_ = Point3(0, 0, -1);
+    Point3 lookat_ = Point3(0, 0, 0);
+    Vec3   vup_ = Point3(0, 1, 0);
+    // 相机坐标系
+    Vec3   u, v, w; 
+
+
     // 初始化
     void initialize() 
     {
@@ -87,20 +116,30 @@ private:
          //image_ = Image("image.png", image_width_, image_height_, channel_);
         image_ = std::make_unique<Image>("image.png", image_width_, image_height_, channel_);
         
-        camera_center_ = Point3(0, 0, 0);
+        camera_center_ = lookfrom_;
 
         // 相机属性
-        auto focal_length = 1.0;
-        auto viewport_height = 2.0;
+        auto focal_length = (lookfrom_ - lookat_).length();;
+
+        auto theta = degrees_to_radians(vfov_);
+        auto h = tan(theta / 2);
+        auto viewport_height = 2 * h * focal_length;
+
         auto viewport_width = viewport_height * (static_cast<double>(image_width_) / image_height_);
-        // 以左上角为原点，u沿x轴正轴，v沿y轴负轴
-        auto viewport_u = Vec3(viewport_width, 0, 0);
-        auto viewport_v = Vec3(0, -viewport_height, 0);
+        
+        // 计算相机坐标系，右手系
+        w = unit_vector(lookfrom_ - lookat_); // 与视点方向相反 (0,0,-1)
+        u = unit_vector(cross(vup_, w)); // 指向相机右方 (-1,0,0)
+        v = cross(w, u); // 指向相机上方 (0,1,0)
+
+        Vec3 viewport_u = viewport_width * u;
+        Vec3 viewport_v = viewport_height * -v;
+
         // 每像素对应的视口长度
         pixel_delta_u_ = viewport_u / image_width_;
         pixel_delta_v_ = viewport_v / image_height_;
         // 左上角像素的位置，像素位置以中心点表示
-        auto viewport_upper_left = camera_center_ - Vec3(0, 0, focal_length) - viewport_u / 2 - viewport_v / 2;
+        auto viewport_upper_left = camera_center_ - (focal_length * w) - viewport_u / 2 - viewport_v / 2;
         pixel00_loc_ = viewport_upper_left + 0.5 * (pixel_delta_u_ + pixel_delta_v_);
     }
 
