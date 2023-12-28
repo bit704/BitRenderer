@@ -204,7 +204,10 @@ private:
         auto ray_origin = (defocus_angle_ <= 0) ? camera_center_ : defocus_disk_sample();
         auto ray_direction = pixel_sample - ray_origin;
 
-        return Ray(ray_origin, ray_direction);
+        // 在[0,1)时间间隔之间随机生成光线
+        auto ray_time = random_double();
+
+        return Ray(ray_origin, ray_direction, ray_time);
     }
 
     // 返回圆形透镜上随机一点

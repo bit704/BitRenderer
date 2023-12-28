@@ -12,7 +12,14 @@ public:
 
 	Ray() = default;
 
-	Ray(const Point3& origin, const Vec3& direction) : origin_(origin), direction_(direction) {};
+	Ray(const Point3& origin, const Vec3& direction, double time = 0) 
+		: origin_(origin), direction_(direction), time_(time) {};
+	
+	// p = o + t * d
+	Point3 at(double t) const
+	{
+		return origin_ + t * direction_;
+	}
 
 	Point3 get_origin() const
 	{
@@ -23,17 +30,17 @@ public:
 	{
 		return direction_;
 	}
-	
-	// p = o + t * d
-	Point3 at(double t) const
+
+	double get_time() const
 	{
-		return origin_ + t * direction_;
+		return time_;
 	}
 
 private:
 
 	Point3 origin_;
 	Vec3 direction_;
+	double time_;
 };
 
 #endif // !RAY_H

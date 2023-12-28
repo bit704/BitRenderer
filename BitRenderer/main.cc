@@ -28,7 +28,9 @@ int main()
                 {
                     auto albedo = Color::random() * Color::random();
                     sphere_material = make_shared<Lambertian>(albedo);
-                    world.add(make_shared<Sphere>(center, 0.2, sphere_material));
+                    // 在0~1时间内从center运动到center_end，向上的弹跳效果
+                    auto center_end = center + Vec3(0, random_double(0, .5), 0);
+                    world.add(make_shared<Sphere>(center, center_end, 0.2, sphere_material));
                 }
                 else if (choose_mat < 0.95)
                 {
@@ -57,11 +59,11 @@ int main()
 
     Camera cam;
     cam.set_aspect_ratio(16. / 9.);
-    cam.set_image_width(256);
+    cam.set_image_width(400);
     cam.set_samples_per_pixel(100);
     cam.set_max_depth(50);
 
-    cam.set_vfov(30);
+    cam.set_vfov(20);
     cam.set_lookfrom(Point3(13, 2, 3));
     cam.set_lookat(Point3(0, 0, 0));
     cam.set_vup(Vec3(0, 1, 0));
