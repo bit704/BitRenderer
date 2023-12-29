@@ -6,19 +6,35 @@
 
 #include <cmath>
 #include <iostream>
+#include <algorithm>
 #include "common.h"
 
 class Vec3
 {
 public:
-	double e_[3];
-
-	Vec3() : e_{0,0,0} {}
-	Vec3(double e0, double e1, double e2) : e_{e0,e1,e2} {}
 
 	double x() const { return e_[0]; }
 	double y() const { return e_[1]; }
 	double z() const { return e_[2]; }
+
+	Vec3() : e_{0,0,0} {}
+	Vec3(double e0, double e1, double e2) : e_{e0,e1,e2} {}
+
+	Vec3(const Vec3& v) : e_{ v.e_[0],v.e_[1], v.e_[2] } {}
+
+	Vec3(Vec3&& v) noexcept : e_{ v.e_[0],v.e_[1], v.e_[2] } {}
+
+	Vec3& operator=(const Vec3& v) 
+	{
+		std::copy(std::begin(v.e_),std::end(v.e_),std::begin(e_));
+		return *this;
+	}
+
+	Vec3& operator=(Vec3&& v) noexcept
+	{
+		std::copy(std::begin(v.e_), std::end(v.e_), std::begin(e_));
+		return *this;
+	}
 
 	Vec3 operator-() const { return Vec3(-e_[0], -e_[1], -e_[2]); }
 	double operator[](int i) const { return e_[i]; }
@@ -71,31 +87,34 @@ public:
 		return Vec3(random_double(min, max), random_double(min, max), random_double(min, max));
 	}
 
+private:
+
+	double e_[3];
 };
 
 inline std::ostream& operator<<(std::ostream& out, const Vec3& v)
 {
-	return out << v.e_[0] << ' ' << v.e_[1] << ' ' << v.e_[2];
+	return out << v.x() << ' ' << v.y() << ' ' << v.z();
 }
 
 inline Vec3 operator+(const Vec3& u, const Vec3& v)
 {
-	return Vec3(u.e_[0] + v.e_[0], u.e_[1] + v.e_[1], u.e_[2] + v.e_[2]);
+	return Vec3(u.x() + v.x(), u.y() + v.y(), u.z() + v.z());
 }
 
 inline Vec3 operator-(const Vec3& u, const Vec3& v)
 {
-	return Vec3(u.e_[0] - v.e_[0], u.e_[1] - v.e_[1], u.e_[2] - v.e_[2]);
+	return Vec3(u.x() - v.x(), u.y() - v.y(), u.z() - v.z());
 }
 
 inline Vec3 operator*(const Vec3& u, const Vec3& v)
 {
-	return Vec3(u.e_[0] * v.e_[0], u.e_[1] * v.e_[1], u.e_[2] * v.e_[2]);
+	return Vec3(u.x() * v.x(), u.y() * v.y(), u.z() * v.z());
 }
 
 inline Vec3 operator*(double t, const Vec3& v)
 {
-	return Vec3(t * v.e_[0], t * v.e_[1], t * v.e_[2]);
+	return Vec3(t * v.x(), t * v.y(), t * v.z());
 }
 
 inline Vec3 operator*(const Vec3& v, double t) 
@@ -110,17 +129,17 @@ inline Vec3 operator/(Vec3 v, double t)
 
 inline double dot(const Vec3& u, const Vec3& v) 
 {
-	return u.e_[0] * v.e_[0]
-		 + u.e_[1] * v.e_[1]
-		 + u.e_[2] * v.e_[2];
+	return u.x() * v.x()
+		 + u.y() * v.y()
+		 + u.z() * v.z();
 }
 
 inline Vec3 cross(const Vec3& u, const Vec3& v)
 {
 	return Vec3(
-		u.e_[1] * v.e_[2] - u.e_[2] * v.e_[1],
-		u.e_[2] * v.e_[0] - u.e_[0] * v.e_[2],
-		u.e_[0] * v.e_[1] - u.e_[1] * v.e_[0]);
+		u.y() * v.z() - u.z() * v.y(),
+		u.z() * v.x() - u.x() * v.z(),
+		u.x() * v.y() - u.y() * v.x());
 }
 
 inline Vec3 unit_vector(Vec3 v) 

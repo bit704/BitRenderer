@@ -132,6 +132,8 @@
     <ClCompile Include="main.cc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="aabb.h" />
+    <ClInclude Include="bvh_node.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="color.h" />
     <ClInclude Include="common.h" />

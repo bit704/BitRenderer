@@ -46,9 +46,9 @@ void Image::set_pixel(const int& row, const int& col, Color c, const int& sample
 	c *= scale;
 
 	// 伽马校正
-	double r = linear_to_gamma(c.e_[0]);
-	double g = linear_to_gamma(c.e_[1]);
-	double b = linear_to_gamma(c.e_[2]);
+	double r = linear_to_gamma(c.x());
+	double g = linear_to_gamma(c.y());
+	double b = linear_to_gamma(c.z());
 	
 	// 将值限制在[0,1]，缩放到[0,256)，再向下取整
 	r = std::clamp(r, 0., 1.) * 255.999;

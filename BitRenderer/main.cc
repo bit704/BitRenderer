@@ -1,13 +1,25 @@
+#include <chrono>
+#include <string>
 #include "image.h"
 #include "sphere.h"
 #include "hittable_list.h"
 #include "camera.h"
+#include "logger.h"
+#include "bvh_node.h"
 
 using std::make_shared;
 using std::shared_ptr;
+using std::chrono::steady_clock;
+using std::chrono::duration_cast;
+using std::chrono::minutes;
+using std::chrono::seconds;
+
+int cal_count = 0;
 
 int main() 
 {
+    auto start = steady_clock::now();
+
     HittableList world;
 
     auto ground_material = make_shared<Lambertian>(Color(0.5, 0.5, 0.5));
@@ -57,6 +69,8 @@ int main()
     auto material3 = make_shared<Metal>(Color(0.7, 0.6, 0.5), 0.0);
     world.add(make_shared<Sphere>(Point3(4, 1, 0), 1.0, material3));
 
+    world = HittableList(make_shared<BVHNode>(world));
+
     Camera cam;
     cam.set_aspect_ratio(16. / 9.);
     cam.set_image_width(400);
@@ -72,6 +86,16 @@ int main()
     cam.set_focus_dist(10.);
 
     cam.render(world);
+
+    LOG("总计算量：" + std::to_string(cal_count));
+
+    auto end = steady_clock::now();
+    auto duration = end - start;
+    auto duration_min = duration_cast<minutes>(duration);
+    auto duration_sec = duration_cast<seconds>(duration);
+
+    LOG("总计算时长：" + std::to_string(duration_min.count()) + "分钟");
+    LOG("计算速度：" + std::to_string(cal_count / duration_sec.count()) + "次/秒");
 
     return 0;
 }

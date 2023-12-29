@@ -9,11 +9,13 @@
 #include "image.h"
 #include "material.h"
 
+extern int cal_count;
+
 class Camera
 {
 public:
 
-    void render(const HitTable& world)
+    void render(const Hittable& world)
     {
         initialize();
 
@@ -158,7 +160,7 @@ private:
     }
 
     // 获取光线击中处的颜色
-    Color ray_color(const Ray& r, const HitTable& world, int depth) const
+    Color ray_color(const Ray& r, const Hittable& world, int depth) const
     {
         if (depth < 0)
         {
@@ -170,6 +172,8 @@ private:
         // Interval最小值不能为0，否则当数值误差导致光线与物体交点在物体内部时，光线无法正常弹射
         if (world.hit(r, Interval(0.001, kInfinitDouble), rec)) 
         {
+            ++cal_count;
+
             Ray scattered; // 此次入射后散射出去的光线
             Color attenuation; // 衰减系数
             if (rec.material->scatter(r, rec, attenuation, scattered))

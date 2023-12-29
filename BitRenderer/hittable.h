@@ -4,8 +4,7 @@
 #ifndef HITTABLE_H
 #define HITTABLE_H
 
-#include "ray.h"
-#include "interval.h"
+#include "aabb.h"
 
 // 前向声明，避免头文件循环引用
 class Material;
@@ -28,12 +27,13 @@ struct HitRecord
 };
 
 // 纯虚类
-class HitTable
+class Hittable
 {
 public:
 
-    virtual ~HitTable() = default;
+    virtual ~Hittable() = default;
     virtual bool hit(const Ray& r, Interval interval, HitRecord& rec) const = 0;
+    virtual AABB get_bbox() const = 0;
 };
 
 #endif // !HITTABLE_H

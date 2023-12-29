@@ -9,12 +9,12 @@
 
 #include "hittable.h"
 
-class HittableList : public HitTable
+class HittableList : public Hittable
 {
 public:
 
     HittableList() = default;
-    HittableList(std::shared_ptr<HitTable> object) 
+    HittableList(std::shared_ptr<Hittable> object) 
     { 
         add(object);
     }
@@ -24,9 +24,10 @@ public:
         objects_.clear(); 
     }
 
-    void add(std::shared_ptr<HitTable> object)
+    void add(std::shared_ptr<Hittable> object)
     {
         objects_.push_back(object);
+        bbox_ = AABB(bbox_, object->get_bbox()); // ≤¢ºØ‘ÀÀ„
     }
 
     bool hit(const Ray& r, Interval interval, HitRecord& rec) const override
@@ -48,9 +49,20 @@ public:
         return hit_anything;
     }
 
+    std::vector<std::shared_ptr<Hittable>> get_objects() const
+    {
+        return objects_;
+    }
+
+    AABB get_bbox() const override
+    {
+        return bbox_;
+    }
+
 private:
 
-    std::vector<std::shared_ptr<HitTable>> objects_;
+    std::vector<std::shared_ptr<Hittable>> objects_;
+    AABB bbox_;
 };
 
 #endif // !HITTABLE_LIST_H

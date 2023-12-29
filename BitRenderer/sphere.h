@@ -7,18 +7,27 @@
 #include "hittable.h"
 #include "vec3.h"
 
-class Sphere : public HitTable
+class Sphere : public Hittable
 {
 public:
 
     // æ≤Ã¨«Ú
     Sphere(Point3 center, double radius, std::shared_ptr<Material> material) 
-        : center_(center), radius_(radius), material_(material), is_moving_(false) {}
+        : center_(center), radius_(radius), material_(material), is_moving_(false) 
+    {
+        auto rvec = Vec3(radius, radius, radius);
+        bbox_ = AABB(center - rvec, center + rvec);
+    }
 
     // ‘À∂Ø«Ú
     Sphere(Point3 center, Point3 center_end, double radius, std::shared_ptr<Material> material)
         : center_(center), radius_(radius), material_(material), is_moving_(true)
     {
+        auto rvec = Vec3(radius, radius, radius);
+        AABB box1(center - rvec, center_end + rvec);
+        AABB box2(center - rvec, center_end + rvec);
+        bbox_ = AABB(box1, box2);
+
         center_move_vec_ = center_end - center;
     }
 
@@ -52,11 +61,17 @@ public:
         return true;
     }
 
+    AABB get_bbox() const override
+    { 
+        return bbox_;
+    }
+
 private:
 
     Point3 center_;
     Vec3 center_move_vec_; // «Ú“∆∂Øæ‡¿Î
     bool is_moving_; //«Ú «∑Ò‘⁄“∆∂Ø
+    AABB bbox_;
 
     double radius_;
     std::shared_ptr<Material> material_;
