@@ -180,7 +180,7 @@ inline Vec3 reflect(const Vec3& v, const Vec3& n)
 }
 
 // 折射，uv入射光线方向，n是法线方向，etai_over_etat是折射率比值
-// 计算公式参见RayTracingInOneWeekend的11.2节
+// 参见RayTracingInOneWeekend 11.2
 inline Vec3 refract(const Vec3& uv, const Vec3& n, double etai_over_etat) 
 {
 	auto cos_theta = fmin(dot(-uv, n), 1.0);

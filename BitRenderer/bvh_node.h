@@ -1,3 +1,6 @@
+/*
+* BVHÊ÷½ÚµãÀà
+*/
 #ifndef BVH_NODE_H
 #define BVH_NODE_H
 

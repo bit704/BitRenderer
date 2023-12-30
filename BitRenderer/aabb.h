@@ -1,6 +1,6 @@
 /*
 * АќЮЇКа
-* Axis-Aligned Bounding Boxe
+* Axis-Aligned Bounding Box
 */
 #ifndef AABB_H
 #define AABB_H
