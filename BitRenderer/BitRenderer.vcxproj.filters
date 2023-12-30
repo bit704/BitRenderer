@@ -71,5 +71,8 @@
     <ClInclude Include="bvh_node.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="texture.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

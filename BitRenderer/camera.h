@@ -19,10 +19,10 @@ public:
     {
         initialize();
 
-        for (int i = 0; i < image_height_; ++i)
+        for (int i = 0; i < height_; ++i)
         {
-            std::clog << "\rScanlines remaining: " << (image_height_ - i) << ' ' << std::flush;
-            for (int j = 0; j < image_width_; ++j)
+            std::clog << "\rScanlines remaining: " << (height_ - i) << ' ' << std::flush;
+            for (int j = 0; j < width_; ++j)
             {
                 Color pixel_color(0, 0, 0);
                 for (int sample = 0; sample < samples_per_pixel_; ++sample)
@@ -39,7 +39,7 @@ public:
 
     void set_image_width(const int& image_width)
     {
-        image_width_ = image_width;
+        width_ = image_width;
     }
 
     void set_aspect_ratio(const double& aspect_ratio)
@@ -89,15 +89,15 @@ public:
 
 private:
 
-    // 若使用Image image_，会报错 0xc0000005 访问冲突。
-    // 初始化image_使用的临时Image对象会被立刻析构，其持有的image_data_指针在析构函数中释放，
-    // image_的image_data_指针是从临时Image对象浅拷贝而来，成为悬空指针，故访问冲突。
-    std::unique_ptr<Image> image_;
+    // 若使用ImageWrite image_，会报错 0xc0000005 访问冲突。
+    // 初始化image_使用的临时ImageWrite对象会被立刻析构，其持有的image_data_指针在析构函数中释放，
+    // image_的image_data_指针是从临时ImageWrite对象浅拷贝而来，成为悬空指针，故访问冲突。
+    std::unique_ptr<ImageWrite> image_;
 
     double aspect_ratio_ = 1.;
-    int    image_width_ = 100;
+    int    width_ = 100;
     int    channel_ = 3;
-    int    image_height_;
+    int    height_;
     Point3 camera_center_;
     Point3 pixel00_loc_; // (0,0)处像素的位置
     Vec3   pixel_delta_u_;
@@ -123,11 +123,11 @@ private:
     // 初始化
     void initialize() 
     {
-        image_height_ = static_cast<int>(image_width_ / aspect_ratio_);
-        image_height_ = (image_height_ < 1) ? 1 : image_height_;
+        height_ = static_cast<int>(width_ / aspect_ratio_);
+        height_ = (height_ < 1) ? 1 : height_;
 
-         //image_ = Image("image.png", image_width_, image_height_, channel_);
-        image_ = std::make_unique<Image>("image.png", image_width_, image_height_, channel_);
+         //image_ = ImageWrite("image.png", width_, height_, channel_);
+        image_ = std::make_unique<ImageWrite>("image.png", width_, height_, channel_);
         
         camera_center_ = lookfrom_;
 
@@ -136,7 +136,7 @@ private:
         auto h = tan(theta / 2);
         auto viewport_height = 2 * h * focus_dist_;
 
-        auto viewport_width = viewport_height * (static_cast<double>(image_width_) / image_height_);
+        auto viewport_width = viewport_height * (static_cast<double>(width_) / height_);
         
         // 计算相机坐标系，右手系(z轴指向屏幕外)
         w_ = unit_vector(lookfrom_ - lookat_); // 与相机视点方向相反 (0,0,-1)
@@ -147,8 +147,8 @@ private:
         Vec3 viewport_v = viewport_height * -v_;
 
         // 每像素对应的视口长度
-        pixel_delta_u_ = viewport_u / image_width_;
-        pixel_delta_v_ = viewport_v / image_height_;
+        pixel_delta_u_ = viewport_u / width_;
+        pixel_delta_v_ = viewport_v / height_;
         // 左上角像素的位置，像素位置以中心点表示
         auto viewport_upper_left = camera_center_ - (focus_dist_ * w_) - viewport_u / 2 - viewport_v / 2;
         pixel00_loc_ = viewport_upper_left + 0.5 * (pixel_delta_u_ + pixel_delta_v_);

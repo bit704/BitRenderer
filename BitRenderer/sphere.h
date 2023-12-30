@@ -56,6 +56,7 @@ public:
         rec.p = r.at(rec.t);
         Vec3 outward_normal = (rec.p - center_) / radius_; // 单位化
         rec.set_face_normal(r, outward_normal);
+        get_sphere_uv(outward_normal, rec.u, rec.v);
         rec.material = material_;
 
         return true;
@@ -64,6 +65,21 @@ public:
     AABB get_bbox() const override
     { 
         return bbox_;
+    }
+
+    // 参见RayTracingTheNextWeek 4.4
+    // p: 球上一点
+    // u: returned value [0,1] of angle around the Y axis from X=-1.
+    // v: returned value [0,1] of angle from Y=-1 to Y=+1.
+    static void get_sphere_uv(const Point3& p, double& u, double& v)
+    {
+        //     <1 0 0> yields <0.50 0.50>       <-1  0  0> yields <0.00 0.50>
+        //     <0 1 0> yields <0.50 1.00>       < 0 -1  0> yields <0.50 0.00>
+        //     <0 0 1> yields <0.25 0.50>       < 0  0 -1> yields <0.75 0.50>
+        double theta = acos(-p.y());
+        double phi = atan2(-p.z(), p.x()) + kPI;
+        u = phi / (2 * kPI);
+        v = theta / kPI;
     }
 
 private:

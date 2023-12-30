@@ -16,10 +16,9 @@ using std::chrono::seconds;
 
 int cal_count = 0;
 
-int main() 
+// 多球弹跳
+void scene_1()
 {
-    auto start = steady_clock::now();
-
     HittableList world;
 
     auto ground_material = make_shared<Lambertian>(Color(0.5, 0.5, 0.5));
@@ -69,7 +68,8 @@ int main()
     auto material3 = make_shared<Metal>(Color(0.7, 0.6, 0.5), 0.0);
     world.add(make_shared<Sphere>(Point3(4, 1, 0), 1.0, material3));
 
-    world = HittableList(make_shared<BVHNode>(world));
+    // BVH加速结构
+    auto world_bvh = BVHNode(world);
 
     Camera cam;
     cam.set_aspect_ratio(16. / 9.);
@@ -85,7 +85,38 @@ int main()
     cam.set_defocus_angle(0.6);
     cam.set_focus_dist(10.);
 
-    cam.render(world);
+    cam.render(world_bvh);
+}
+
+// 地球
+void scene_2()
+{
+    auto earth_texture = make_shared<ImageTexture>("../texture/earthmap.jpg");
+    auto earth_surface = make_shared<Lambertian>(earth_texture);
+    auto globe = Sphere(Point3(0, 0, 0), 2, earth_surface);
+
+    Camera cam;
+    cam.set_aspect_ratio(16. / 9.);
+    cam.set_image_width(400);
+    cam.set_samples_per_pixel(100);
+    cam.set_max_depth(50);
+
+    cam.set_vfov(20);
+    cam.set_lookfrom(Point3(0, 0, 12));
+    cam.set_lookat(Point3(0, 0, 0));
+    cam.set_vup(Vec3(0, 1, 0));
+
+    cam.set_defocus_angle(0.);
+    cam.set_focus_dist(10.);
+
+    cam.render(globe);
+}
+
+int main() 
+{
+    auto start = steady_clock::now();
+
+    scene_2();
 
     LOG("总计算量：" + std::to_string(cal_count));
 

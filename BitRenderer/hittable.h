@@ -16,6 +16,7 @@ struct HitRecord
     std::shared_ptr<Material> material;
     double t;
     bool front_face;
+    double u, v;
 
     // 确保法线面向观察者
     // outward_normal为从球心指向光线击中点方向的法线
