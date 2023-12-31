@@ -143,6 +143,7 @@
     <ClInclude Include="interval.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="material.h" />
+    <ClInclude Include="perlin.h" />
     <ClInclude Include="point.h" />
     <ClInclude Include="ray.h" />
     <ClInclude Include="singleton.h" />

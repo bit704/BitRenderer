@@ -112,11 +112,43 @@ void scene_2()
     cam.render(globe);
 }
 
+// ¡Ω∏ˆ∞ÿ¡÷‘Î…˘«Ú
+void scene_3()
+{
+    HittableList world;
+
+    auto pertext = make_shared<NoiseTexture>();
+    world.add(make_shared<Sphere>(Point3(0, -1000, 0), 1000, make_shared<Lambertian>(pertext)));
+    world.add(make_shared<Sphere>(Point3(0, 2, 0), 2, make_shared<Lambertian>(pertext)));
+
+    Camera cam;
+    cam.set_aspect_ratio(16. / 9.);
+    cam.set_image_width(400);
+    cam.set_samples_per_pixel(100);
+    cam.set_max_depth(50);
+
+    cam.set_vfov(20);
+    cam.set_lookfrom(Point3(13, 2, 3));
+    cam.set_lookat(Point3(0, 0, 0));
+    cam.set_vup(Vec3(0, 1, 0));
+
+    cam.set_defocus_angle(0.);
+    cam.set_focus_dist(10.);
+
+    cam.render(world);
+}
+
+
 int main() 
 {
     auto start = steady_clock::now();
 
-    scene_2();
+    switch (3)
+    {
+        case 1: scene_1(); break;
+        case 2: scene_2(); break;
+        case 3: scene_3(); break;
+    }
 
     auto end = steady_clock::now();
 

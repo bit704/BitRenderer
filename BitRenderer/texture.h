@@ -8,6 +8,7 @@
 
 #include "color.h"
 #include "point.h"
+#include "perlin.h"
 
 class Texture
 {
@@ -89,6 +90,22 @@ public:
 private:
 
     ImageRead image_read_;
+};
+
+class NoiseTexture : public Texture
+{
+public:
+
+    NoiseTexture() {}
+
+    Color value(double u, double v, const Point3& p) const override
+    {
+        return Color(1, 1, 1) * noise_.noise(p);
+    }
+
+private:
+
+    Perlin noise_;
 };
 
 #endif // !TEXTURE_H
