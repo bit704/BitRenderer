@@ -118,9 +118,10 @@ int main()
 
     scene_2();
 
+    auto end = steady_clock::now();
+
     LOG("×Ü¼ÆËãÁ¿£º" + std::to_string(cal_count));
 
-    auto end = steady_clock::now();
     auto duration = end - start;
     auto duration_min = duration_cast<minutes>(duration);
     auto duration_sec = duration_cast<seconds>(duration);
