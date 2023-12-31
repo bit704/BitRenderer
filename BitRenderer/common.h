@@ -9,6 +9,7 @@
 
 const double kInfinitDouble = std::numeric_limits<double>::infinity();
 const double kPI = 3.1415926535897932385;
+const double kEpsilon = 1e-8; // 比较浮点数的阈值
 
 inline double degrees_to_radians(double degrees) {
     return degrees * kPI / 180.0;

@@ -75,6 +75,18 @@ public:
         return true;
     }
 
+    // ±ÜÃâ¹ýÕ­
+    AABB pad()
+    {
+        double delta = 1e-4;
+
+        Interval new_x = (x_.get_size() >= delta) ? x_ : x_.expand(delta);
+        Interval new_y = (y_.get_size() >= delta) ? y_ : y_.expand(delta);
+        Interval new_z = (z_.get_size() >= delta) ? z_ : z_.expand(delta);
+
+        return AABB(new_x, new_y, new_z);
+    }
+
 private:
 
     Interval x_, y_, z_;

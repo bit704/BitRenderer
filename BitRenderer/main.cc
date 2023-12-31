@@ -6,6 +6,7 @@
 #include "camera.h"
 #include "logger.h"
 #include "bvh_node.h"
+#include "quad.h"
 
 using std::make_shared;
 using std::shared_ptr;
@@ -16,7 +17,7 @@ using std::chrono::seconds;
 
 int cal_count = 0;
 
-// 多球弹跳
+// 多球随机弹跳
 void scene_1()
 {
     HittableList world;
@@ -88,8 +89,35 @@ void scene_1()
     cam.render(world_bvh);
 }
 
-// 地球
+// 3D棋盘格纹理
 void scene_2()
+{
+    HittableList world;
+
+    auto checker = make_shared<CheckerTexture>(0.8, Color(.2, .3, .1), Color(.9, .9, .9));
+
+    world.add(make_shared<Sphere>(Point3(0, -10, 0), 10, make_shared<Lambertian>(checker)));
+    world.add(make_shared<Sphere>(Point3(0, 10, 0), 10, make_shared<Lambertian>(checker)));
+
+    Camera cam;
+    cam.set_aspect_ratio(16. / 9.);
+    cam.set_image_width(400);
+    cam.set_samples_per_pixel(100);
+    cam.set_max_depth(50);
+
+    cam.set_vfov(20);
+    cam.set_lookfrom(Point3(13, 2, 3));
+    cam.set_lookat(Point3(0, 0, 0));
+    cam.set_vup(Vec3(0, 1, 0));
+
+    cam.set_defocus_angle(0.);
+    cam.set_focus_dist(10.);
+
+    cam.render(world);
+}
+
+// 地球
+void scene_3()
 {
     auto earth_texture = make_shared<ImageTexture>("../texture/earthmap.jpg");
     auto earth_surface = make_shared<Lambertian>(earth_texture);
@@ -113,7 +141,7 @@ void scene_2()
 }
 
 // 两个柏林噪声球
-void scene_3()
+void scene_4()
 {
     HittableList world;
 
@@ -138,16 +166,52 @@ void scene_3()
     cam.render(world);
 }
 
+// 五个四边形
+void scene_5()
+{
+    HittableList world;
+
+    auto left_red = make_shared<Lambertian>(Color(1.0, 0.2, 0.2));
+    auto back_green = make_shared<Lambertian>(Color(0.2, 1.0, 0.2));
+    auto right_blue = make_shared<Lambertian>(Color(0.2, 0.2, 1.0));
+    auto upper_orange = make_shared<Lambertian>(Color(1.0, 0.5, 0.0));
+    auto lower_teal = make_shared<Lambertian>(Color(0.2, 0.8, 0.8));
+
+    world.add(make_shared<Quad>(Point3(-3, -2, 5), Vec3(0, 0, -4), Vec3(0, 4, 0), left_red));
+    world.add(make_shared<Quad>(Point3(-2, -2, 0), Vec3(4, 0, 0), Vec3(0, 4, 0), back_green));
+    world.add(make_shared<Quad>(Point3(3, -2, 1), Vec3(0, 0, 4), Vec3(0, 4, 0), right_blue));
+    world.add(make_shared<Quad>(Point3(-2, 3, 1), Vec3(4, 0, 0), Vec3(0, 0, 4), upper_orange));
+    world.add(make_shared<Quad>(Point3(-2, -3, 5), Vec3(4, 0, 0), Vec3(0, 0, -4), lower_teal));
+
+    Camera cam;
+    cam.set_aspect_ratio(1.);
+    cam.set_image_width(400);
+    cam.set_samples_per_pixel(100);
+    cam.set_max_depth(50);
+
+    cam.set_vfov(80);
+    cam.set_lookfrom(Point3(0, 0, 9));
+    cam.set_lookat(Point3(0, 0, 0));
+    cam.set_vup(Vec3(0, 1, 0));
+
+    cam.set_defocus_angle(0.);
+    cam.set_focus_dist(10.);
+
+    cam.render(world);
+}
+
 
 int main() 
 {
     auto start = steady_clock::now();
 
-    switch (3)
+    switch (5)
     {
         case 1: scene_1(); break;
         case 2: scene_2(); break;
         case 3: scene_3(); break;
+        case 4: scene_4(); break;
+        case 5: scene_5(); break;
     }
 
     auto end = steady_clock::now();

@@ -73,8 +73,7 @@ public:
 
 	bool near_zero() const
 	{
-		double s = 1e-8;
-		return (fabs(e_[0]) < s) && (fabs(e_[1]) < s) && (fabs(e_[2]) < s);
+		return (fabs(e_[0]) < kEpsilon) && (fabs(e_[1]) < kEpsilon) && (fabs(e_[2]) < kEpsilon);
 	}
 
 	static Vec3 random() 
