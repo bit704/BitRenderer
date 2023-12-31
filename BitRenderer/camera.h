@@ -87,6 +87,11 @@ public:
         focus_dist_ = focus_dist;
     }
 
+    void set_background(const Color& background)
+    {
+        background_ = background;
+    }
+
 private:
 
     // 若使用ImageWrite image_，会报错 0xc0000005 访问冲突。
@@ -119,6 +124,8 @@ private:
     double focus_dist_ = 10;    // 相机原点到完美聚焦平面的距离，这里与焦距相同
     Vec3 defocus_disk_u_;  // 散焦横向半径
     Vec3 defocus_disk_v_;  // 散焦纵向半径
+
+    Color background_ = Color(.7, .8, 1.);
 
     // 初始化
     void initialize() 
@@ -162,6 +169,7 @@ private:
     // 获取光线击中处的颜色
     Color ray_color(const Ray& r, const Hittable& world, int depth) const
     {
+        // 到达弹射次数上限，不再累加任何颜色
         if (depth < 0)
         {
             return Color(0, 0, 0);
@@ -170,22 +178,22 @@ private:
         HitRecord rec;
 
         // Interval最小值不能为0，否则当数值误差导致光线与物体交点在物体内部时，光线无法正常弹射
-        if (world.hit(r, Interval(0.001, kInfinitDouble), rec)) 
-        {
-            ++cal_count;
+        if (!world.hit(r, Interval(0.001, kInfinitDouble), rec))
+            return background_;
 
-            Ray scattered; // 此次入射后散射出去的光线
-            Color attenuation; // 衰减系数
-            if (rec.material->scatter(r, rec, attenuation, scattered))
-                return attenuation * ray_color(scattered, world, depth - 1);
-            return Color(0, 0, 0);
-        }
+        ++cal_count;
 
-        // 背景颜色
-        Vec3 unit_direction = unit_vector(r.get_direction());
-        // 按y轴蓝白渐变
-        auto a = 0.5 * (unit_direction.y() + 1.0);
-        return (1.0 - a) * Color(1.0, 1.0, 1.0) + a * Color(0.5, 0.7, 1.0);
+        Ray scattered; // 此次入射后散射出去的光线
+        Color attenuation; // 衰减系数
+        Color color_from_emission = rec.material->emitted(rec.u, rec.v, rec.p); // 自发光颜色
+
+        // 只有自发光颜色
+        if (!rec.material->scatter(r, rec, attenuation, scattered))
+            return color_from_emission;
+
+        Color color_from_scatter = attenuation * ray_color(scattered, world, depth - 1);
+        
+        return color_from_scatter + color_from_emission;
     }
 
     // 采样随机光线

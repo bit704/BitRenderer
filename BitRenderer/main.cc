@@ -73,6 +73,7 @@ void scene_1()
     auto world_bvh = BVHNode(world);
 
     Camera cam;
+
     cam.set_aspect_ratio(16. / 9.);
     cam.set_image_width(400);
     cam.set_samples_per_pixel(100);
@@ -84,7 +85,6 @@ void scene_1()
     cam.set_vup(Vec3(0, 1, 0));
 
     cam.set_defocus_angle(0.6);
-    cam.set_focus_dist(10.);
 
     cam.render(world_bvh);
 }
@@ -100,6 +100,7 @@ void scene_2()
     world.add(make_shared<Sphere>(Point3(0, 10, 0), 10, make_shared<Lambertian>(checker)));
 
     Camera cam;
+
     cam.set_aspect_ratio(16. / 9.);
     cam.set_image_width(400);
     cam.set_samples_per_pixel(100);
@@ -111,7 +112,6 @@ void scene_2()
     cam.set_vup(Vec3(0, 1, 0));
 
     cam.set_defocus_angle(0.);
-    cam.set_focus_dist(10.);
 
     cam.render(world);
 }
@@ -124,6 +124,7 @@ void scene_3()
     auto globe = Sphere(Point3(0, 0, 0), 2, earth_surface);
 
     Camera cam;
+
     cam.set_aspect_ratio(16. / 9.);
     cam.set_image_width(400);
     cam.set_samples_per_pixel(100);
@@ -135,7 +136,6 @@ void scene_3()
     cam.set_vup(Vec3(0, 1, 0));
 
     cam.set_defocus_angle(0.);
-    cam.set_focus_dist(10.);
 
     cam.render(globe);
 }
@@ -150,6 +150,7 @@ void scene_4()
     world.add(make_shared<Sphere>(Point3(0, 2, 0), 2, make_shared<Lambertian>(pertext)));
 
     Camera cam;
+
     cam.set_aspect_ratio(16. / 9.);
     cam.set_image_width(400);
     cam.set_samples_per_pixel(100);
@@ -161,7 +162,6 @@ void scene_4()
     cam.set_vup(Vec3(0, 1, 0));
 
     cam.set_defocus_angle(0.);
-    cam.set_focus_dist(10.);
 
     cam.render(world);
 }
@@ -184,6 +184,7 @@ void scene_5()
     world.add(make_shared<Quad>(Point3(-2, -3, 5), Vec3(4, 0, 0), Vec3(0, 0, -4), lower_teal));
 
     Camera cam;
+
     cam.set_aspect_ratio(1.);
     cam.set_image_width(400);
     cam.set_samples_per_pixel(100);
@@ -195,7 +196,38 @@ void scene_5()
     cam.set_vup(Vec3(0, 1, 0));
 
     cam.set_defocus_angle(0.);
-    cam.set_focus_dist(10.);
+
+    cam.render(world);
+}
+
+// 自发光物体
+void scene_6()
+{
+    HittableList world;
+
+    auto perlin_texture = make_shared<NoiseTexture>();
+    world.add(make_shared<Sphere>(Point3(0, -1000, 0), 1000, make_shared<Lambertian>(perlin_texture)));
+    world.add(make_shared<Sphere>(Point3(0, 2, 0), 2, make_shared<Lambertian>(perlin_texture)));
+
+    auto diff_light = make_shared<DiffuseLight>(Color(4, 4, 4));
+    world.add(make_shared<Sphere>(Point3(0, 7, 0), 2, diff_light));
+    world.add(make_shared<Quad>(Point3(3, 1, -2), Vec3(2, 0, 0), Vec3(0, 2, 0), diff_light));
+
+    Camera cam;
+
+    cam.set_aspect_ratio(16./9.);
+    cam.set_image_width(400);
+    cam.set_samples_per_pixel(100);
+    cam.set_max_depth(50);
+
+    cam.set_vfov(20);
+    cam.set_lookfrom(Point3(26, 3, 6));
+    cam.set_lookat(Point3(0, 2, 0));
+    cam.set_vup(Vec3(0, 1, 0));
+
+    cam.set_defocus_angle(0.);
+
+    cam.set_background(Color(0. ,0. ,0.));
 
     cam.render(world);
 }
@@ -205,13 +237,14 @@ int main()
 {
     auto start = steady_clock::now();
 
-    switch (5)
+    switch (6)
     {
         case 1: scene_1(); break;
         case 2: scene_2(); break;
         case 3: scene_3(); break;
         case 4: scene_4(); break;
         case 5: scene_5(); break;
+        case 6: scene_6(); break;
     }
 
     auto end = steady_clock::now();
