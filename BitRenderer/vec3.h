@@ -13,10 +13,6 @@ class Vec3
 {
 public:
 
-	double x() const { return e_[0]; }
-	double y() const { return e_[1]; }
-	double z() const { return e_[2]; }
-
 	Vec3() : e_{0,0,0} {}
 	Vec3(double e0, double e1, double e2) : e_{e0,e1,e2} {}
 
@@ -84,6 +80,21 @@ public:
 	static Vec3 random(double min, double max) 
 	{
 		return Vec3(random_double(min, max), random_double(min, max), random_double(min, max));
+	}
+
+	double x() const
+	{
+		return e_[0];
+	}
+
+	double y() const
+	{
+		return e_[1];
+	}
+
+	double z() const
+	{
+		return e_[2];
 	}
 
 private:

@@ -8,6 +8,9 @@
 
 class Interval 
 {
+    friend Interval operator+(const Interval& ival, double displacement);
+    friend Interval operator+(double displacement, const Interval& ival);
+
 public:
 
     Interval() : min_(+kInfinitDouble), max_(-kInfinitDouble) {}
@@ -63,5 +66,15 @@ private:
 
     double min_, max_;
 };
+
+inline Interval operator+(const Interval& ival, double displacement)
+{
+    return Interval(ival.min_ + displacement, ival.max_ + displacement);
+}
+
+inline Interval operator+(double displacement, const Interval& ival)
+{
+    return ival + displacement;
+}
 
 #endif // !INTERVAL_H

@@ -11,6 +11,10 @@
 
 class AABB
 {
+
+    friend AABB operator+(const AABB& bbox, const Vec3& offset);
+    friend AABB operator+(const Vec3& offset, const AABB& bbox);
+
 public:
 
     AABB() = default;
@@ -87,10 +91,35 @@ public:
         return AABB(new_x, new_y, new_z);
     }
 
+    Interval x() const
+    {
+        return x_;
+    }
+
+    Interval y() const
+    {
+        return y_;
+    }
+
+    Interval z() const
+    {
+        return z_;
+    }
+
 private:
 
     Interval x_, y_, z_;
 };
+
+inline AABB operator+(const AABB& bbox, const Vec3& offset)
+{
+    return AABB(bbox.x_ + offset.x(), bbox.y_ + offset.y(), bbox.z_ + offset.z());
+}
+
+inline AABB operator+(const Vec3& offset, const AABB& bbox)
+{
+    return bbox + offset;
+}
 
 #endif // !AABB_H
 
