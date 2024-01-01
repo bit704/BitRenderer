@@ -10,7 +10,7 @@
 #include "singleton.h"
 
 #define PRINT_LOCATION std::cout << __FILE__ << "µÚ" << __LINE__ << "ÐÐ£¨" << __FUNCTION__ << "£©£º";
-#define LOG(X) PRINT_LOCATION Logger::get_instance().print_info(X);
+#define LOG(X) { PRINT_LOCATION Logger::get_instance().print_info(X); }
 
 class Logger : public Singleton<Logger>
 {
