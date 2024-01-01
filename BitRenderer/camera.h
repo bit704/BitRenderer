@@ -178,7 +178,7 @@ private:
         HitRecord rec;
 
         // Interval最小值不能为0，否则当数值误差导致光线与物体交点在物体内部时，光线无法正常弹射
-        if (!world.hit(r, Interval(0.001, kInfinitDouble), rec))
+        if (!world.hit(r, Interval(1e-3, kInfinitDouble), rec))
             return background_;
 
         ++cal_count;
