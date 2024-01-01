@@ -15,10 +15,17 @@
 class Logger : public Singleton<Logger>
 {
 public:
-	// Êä³öĞÅÏ¢
+	
 	inline void print_info(std::string info)
 	{
 		std::cout << info << std::endl;
+	}
+
+	// C++17
+	template <typename... Types>
+	inline void print_info(const Types... args)
+	{
+		(std::cout << ... << args) << std::endl;
 	}
 };
 
