@@ -4,6 +4,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include <cmath>
 #include <iomanip>
 
 #include "color.h"
@@ -21,6 +22,8 @@ public:
     {
         initialize();
 
+        sqrt_spp_ = (int)std::sqrt(samples_per_pixel_);
+
         for (int i = 0; i < height_; ++i)
         {
             std::clog << std::fixed << std::setprecision(2);
@@ -31,10 +34,14 @@ public:
             for (int j = 0; j < width_; ++j)
             {
                 Color pixel_color(0, 0, 0);
-                for (int sample = 0; sample < samples_per_pixel_; ++sample)
+                // 对每个像素中的采样点进行分层，采样更均匀
+                for (int s_i = 0; s_i < sqrt_spp_; ++s_i)
                 {
-                    Ray r = get_ray(i, j);
-                    pixel_color += ray_color(r, world, max_depth_);
+                    for (int s_j = 0; s_j < sqrt_spp_; ++s_j)
+                    {
+                        Ray r = get_ray(i, j, s_i, s_j);
+                        pixel_color += ray_color(r, world, max_depth_);
+                    }
                 }
                 image_->set_pixel(i, j, pixel_color, samples_per_pixel_);
             }
@@ -113,7 +120,8 @@ private:
     Point3 pixel00_loc_; // (0,0)处像素的位置
     Vec3   pixel_delta_u_;
     Vec3   pixel_delta_v_;
-    int    samples_per_pixel_ = 10; // 每像素采样数
+    int    samples_per_pixel_ = 16; // 每像素采样数
+    int    sqrt_spp_ = 4;
     int    max_depth_ = 10; // 光线最大弹射次数
 
     double vfov_ = 90;  // 垂直fov
@@ -203,19 +211,19 @@ private:
     }
 
     // 采样随机光线
-    Ray get_ray(int i, int j) const 
+    Ray get_ray(int i, int j, int s_i, int s_j) const
     {
         // 返回长度为1的像素块上一随机采样点位置
-        auto pixel_sample_square = [=]() -> Vec3
+        auto pixel_sample_square = [=](int s_i, int s_j) -> Vec3
         {
-            auto px = -0.5 + random_double();
-            auto py = -0.5 + random_double();
+            auto px = -0.5 + 1 / sqrt_spp_ * (s_j + random_double());
+            auto py = -0.5 + 1 / sqrt_spp_ * (s_i + random_double());
             return (px * pixel_delta_u_) + (py * pixel_delta_v_);
         };
 
         // 从(i,j)处像素随机采样一条光线
         auto pixel_center = pixel00_loc_ + (j * pixel_delta_u_) + (i * pixel_delta_v_);
-        auto pixel_sample = pixel_center + pixel_sample_square();
+        auto pixel_sample = pixel_center + pixel_sample_square(s_i, s_j);
 
         // auto ray_origin = camera_center_;
         // 散焦，在圆形透镜上随机采样，光线原点不再是相机原点

@@ -35,7 +35,7 @@ void ImageWrite::set_pixel(const int& row, const int& col, const int& r, const i
 // 伽马校正
 inline double linear_to_gamma(double linear_component)
 {
-	// 采用通用伽马值2.2
+	// 采用通用伽马值2.2，即放大暗部
 	return pow(linear_component, 1 / 2.2);
 }
 

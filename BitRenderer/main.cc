@@ -422,7 +422,7 @@ int main()
 {
     auto start = steady_clock::now();
 
-    switch (9)
+    switch (7)
     {
         case 1: scene_1(); break;
         case 2: scene_2(); break;
