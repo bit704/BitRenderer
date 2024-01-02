@@ -4,6 +4,8 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include <iomanip>
+
 #include "color.h"
 #include "hittable.h"
 #include "image.h"
@@ -21,7 +23,8 @@ public:
 
         for (int i = 0; i < height_; ++i)
         {
-            std::clog << "\rScanlines remaining: " << (height_ - i) << ' ' << std::flush;
+            std::clog << std::fixed << std::setprecision(2);
+            std::clog << "\rtask remaining: " << (double)(height_ - i - 1) / height_ * 100 << "%" << std::flush;
             for (int j = 0; j < width_; ++j)
             {
                 Color pixel_color(0, 0, 0);

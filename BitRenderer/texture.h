@@ -98,14 +98,18 @@ public:
 
     NoiseTexture() {}
 
+    // ÆµÂÊ
+    NoiseTexture(double sc) : scale_(sc) {}
+
     Color value(double u, double v, const Point3& p) const override
     {
-        return Color(1, 1, 1) * noise_.noise(p);
+        return Color(1, 1, 1) * 0.5 * (1.0 + noise_.noise(scale_ * p));
     }
 
 private:
 
     Perlin noise_;
+    double scale_;
 };
 
 #endif // !TEXTURE_H

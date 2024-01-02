@@ -13,6 +13,7 @@
 using std::make_shared;
 using std::shared_ptr;
 using std::chrono::steady_clock;
+using std::chrono::system_clock;
 using std::chrono::duration_cast;
 using std::chrono::minutes;
 using std::chrono::seconds;
@@ -325,14 +326,103 @@ void scene_8()
     cam.set_background(Color(0., 0., 0.));
 
     cam.render(world);
+}
 
+// 总场景
+void scene_9()
+{
+    HittableList world;
+    
+    // 立方体组成的地板
+    HittableList boxes1;
+    auto ground_mat = make_shared<Lambertian>(Color(0.48, 0.83, 0.53));
+    int boxes_per_side = 20;
+    for (int i = 0; i < boxes_per_side; ++i)
+    {
+        for (int j = 0; j < boxes_per_side; ++j)
+        {
+            auto w = 100.;
+            auto x0 = -1000. + i * w;
+            auto z0 = -1000. + j * w;
+            auto y0 = 0.;
+            auto x1 = x0 + w;
+            auto y1 = random_double(1, 101);
+            auto z1 = z0 + w;
+
+            boxes1.add(construct_box(Point3(x0, y0, z0), Point3(x1, y1, z1), ground_mat));
+        }
+    }
+    world.add(make_shared<BVHNode>(boxes1));
+
+    // 光源
+    auto light_mat = make_shared<DiffuseLight>(Color(7, 7, 7));
+    world.add(make_shared<Quad>(Point3(123, 554, 147), Vec3(300, 0, 0), Vec3(0, 0, 265), light_mat));
+
+    // 运动球
+    auto center1 = Point3(400, 400, 200);
+    auto center2 = center1 + Vec3(30, 0, 0);
+    auto sphere_mat = make_shared<Lambertian>(Color(0.7, 0.3, 0.1));
+    world.add(make_shared<Sphere>(center1, center2, 50, sphere_mat));
+
+    // 玻璃球
+    world.add(make_shared<Sphere>(Point3(260, 150, 45), 50, make_shared<Dielectric>(1.5)));
+    // 金属球
+    world.add(make_shared<Sphere>(Point3(0, 150, 145), 50, make_shared<Metal>(Color(0.8, 0.8, 0.9), 1.0)));
+
+    // 内含蓝色雾效的玻璃球
+    auto boundary = make_shared<Sphere>(Point3(360, 150, 145), 70, make_shared<Dielectric>(1.5));
+    world.add(boundary);
+    world.add(make_shared<ConstantMedium>(boundary, 0.2, Color(0.2, 0.4, 0.9)));
+
+    // 全场景雾效
+    boundary = make_shared<Sphere>(Point3(0, 0, 0), 5000, make_shared<Dielectric>(1.5));
+    world.add(make_shared<ConstantMedium>(boundary, .0001, Color(1, 1, 1)));
+
+    // 地球
+    auto emat = make_shared<Lambertian>(make_shared<ImageTexture>("../texture/earthmap.jpg"));
+    world.add(make_shared<Sphere>(Point3(400, 200, 400), 100, emat));
+
+    // 柏林噪声球
+    auto pertext = make_shared<NoiseTexture>(8);
+    world.add(make_shared<Sphere>(Point3(220, 280, 300), 80, make_shared<Lambertian>(pertext)));
+
+    // 球组成的立方体
+    HittableList boxes2;
+    auto white = make_shared<Lambertian>(Color(.73, .73, .73));
+    int ns = 1000;
+    for (int j = 0; j < ns; j++)
+    {
+        boxes2.add(make_shared<Sphere>(Point3::random(0, 165), 10, white));
+    }
+    world.add(
+        make_shared<Translate>(
+        make_shared<RotateY>(make_shared<BVHNode>(boxes2), 15), 
+            Vec3(-100, 270, 395))
+    );
+
+    Camera cam;
+
+    cam.set_aspect_ratio(1);
+    cam.set_image_width(400);
+    cam.set_samples_per_pixel(500);
+    cam.set_max_depth(40);
+
+    cam.set_vfov(40);
+    cam.set_lookfrom(Point3(478, 278, -600));
+    cam.set_lookat(Point3(278, 278, 0));
+    cam.set_vup(Vec3(0, 1, 0));
+    cam.set_background(Color(0., 0., 0.));
+
+    cam.set_defocus_angle(0.);
+
+    cam.render(world);
 }
 
 int main() 
 {
     auto start = steady_clock::now();
 
-    switch (8)
+    switch (9)
     {
         case 1: scene_1(); break;
         case 2: scene_2(); break;
@@ -342,18 +432,19 @@ int main()
         case 6: scene_6(); break;
         case 7: scene_7(); break;
         case 8: scene_8(); break;
+        case 9: scene_9(); break;
     }
 
     auto end = steady_clock::now();
 
-    LOG("总计算量：" + std::to_string(cal_count));
+    LOG("总计算量：", std::to_string(cal_count));
 
     auto duration = end - start;
     auto duration_min = duration_cast<minutes>(duration);
     auto duration_sec = duration_cast<seconds>(duration);
 
-    LOG("总计算时长：" + std::to_string(duration_min.count()) + "分钟");
-    LOG("计算速度：" + std::to_string(cal_count / duration_sec.count()) + "次/秒");
+    LOG("总计算时长：", std::to_string(duration_min.count()), "分钟");
+    LOG("计算速度：", std::to_string(cal_count / duration_sec.count()), "次/秒");
 
     return 0;
 }

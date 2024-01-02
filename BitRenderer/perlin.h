@@ -14,10 +14,12 @@ public:
 
     Perlin()
     {
-        ranfloat_ = new double[point_count_];
+        ranvec_ = new Vec3[point_count_];
+        //ranfloat_ = new double[point_count_];
         for (int i = 0; i < point_count_; ++i)
         {
-            ranfloat_[i] = random_double();
+            //ranfloat_[i] = random_double();
+            ranvec_[i] = unit_vector(Vec3::random(-1, 1));
         }
 
         perm_x_ = perlin_generate_perm();
@@ -27,7 +29,8 @@ public:
 
     ~Perlin()
     {
-        delete[] ranfloat_;
+        //delete[] ranfloat_;
+        delete[] ranvec_;
         delete[] perm_x_;
         delete[] perm_y_;
         delete[] perm_z_;
@@ -35,21 +38,41 @@ public:
 
     double noise(const Point3& p) const
     {
-        auto i = static_cast<int>(4 * p.x()) & 255;
-        auto j = static_cast<int>(4 * p.y()) & 255;
-        auto k = static_cast<int>(4 * p.z()) & 255;
+        auto u = p.x() - floor(p.x());
+        auto v = p.y() - floor(p.y());
+        auto w = p.z() - floor(p.z());
 
-        return ranfloat_[perm_x_[i] ^ perm_y_[j] ^ perm_z_[k]];
+        // 使用Hermite cubic做平滑
+        //u = u * u * (3 - 2 * u);
+        //v = v * v * (3 - 2 * v);
+        //w = w * w * (3 - 2 * w);
+
+        auto i = static_cast<int>(floor(p.x()));
+        auto j = static_cast<int>(floor(p.y()));
+        auto k = static_cast<int>(floor(p.z()));
+        Vec3 c[2][2][2];
+
+        for (int di = 0; di < 2; di++)
+            for (int dj = 0; dj < 2; dj++)
+                for (int dk = 0; dk < 2; dk++)
+                    c[di][dj][dk] = ranvec_[
+                        perm_x_[(i + di) & 255] ^
+                        perm_y_[(j + dj) & 255] ^
+                        perm_z_[(k + dk) & 255]
+                    ];
+
+        return trilinear_interp(c, u, v, w);
     }
 
 private:
 
-    static const int point_count_ = 256;
+    static const unsigned int point_count_ = 256;
 
-    double* ranfloat_;
+    //double* ranfloat_;
     int* perm_x_;
     int* perm_y_;
     int* perm_z_;
+    Vec3* ranvec_;
 
     static int* perlin_generate_perm()
     {
@@ -70,6 +93,27 @@ private:
             p[i] = p[target];
             p[target] = tmp;
         }
+    }
+
+    // 三线性插值
+    static double trilinear_interp(Vec3 c[2][2][2], double u, double v, double w)
+    {
+        auto uu = u * u * (3 - 2 * u);
+        auto vv = v * v * (3 - 2 * v);
+        auto ww = w * w * (3 - 2 * w);
+        auto accum = 0.0;
+
+        for (int i = 0; i < 2; i++)
+            for (int j = 0; j < 2; j++)
+                for (int k = 0; k < 2; k++)
+                {
+                    Vec3 weight_v(u - i, v - j, w - k);
+                    accum += (i * uu + (1 - i) * (1 - uu))
+                        * (j * vv + (1 - j) * (1 - vv))
+                        * (k * ww + (1 - k) * (1 - ww))
+                        * dot(c[i][j][k], weight_v);
+                }
+        return accum;
     }
 };
 
