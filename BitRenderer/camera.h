@@ -25,6 +25,9 @@ public:
         {
             std::clog << std::fixed << std::setprecision(2);
             std::clog << "\rtask remaining: " << (double)(height_ - i - 1) / height_ * 100 << "%" << std::flush;
+
+#pragma omp parallel for
+
             for (int j = 0; j < width_; ++j)
             {
                 Color pixel_color(0, 0, 0);
