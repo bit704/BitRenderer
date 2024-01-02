@@ -10,16 +10,11 @@
 #include "singleton.h"
 
 #define PRINT_LOCATION std::cout << __FILE__ << "µÚ" << __LINE__ << "ÐÐ£¨" << __FUNCTION__ << "£©£º";
-#define LOG(X) { PRINT_LOCATION Logger::get_instance().print_info(X); }
+#define LOG(...) { PRINT_LOCATION Logger::get_instance().print_info(__VA_ARGS__); }
 
 class Logger : public Singleton<Logger>
 {
 public:
-	
-	inline void print_info(std::string info)
-	{
-		std::cout << info << std::endl;
-	}
 
 	// C++17
 	template <typename... Types>
