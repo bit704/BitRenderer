@@ -9,6 +9,7 @@
 #include "bvh_node.h"
 #include "quad.h"
 #include "constant_medium.h"
+#include "integral_lab.h"
 
 using std::make_shared;
 using std::shared_ptr;
@@ -422,7 +423,7 @@ int main()
 {
     auto start = steady_clock::now();
 
-    switch (7)
+    switch (10)
     {
         case 1: scene_1(); break;
         case 2: scene_2(); break;
@@ -433,6 +434,7 @@ int main()
         case 7: scene_7(); break;
         case 8: scene_8(); break;
         case 9: scene_9(); break;
+        case 10: integral_lab(); return 0;
     }
 
     auto end = steady_clock::now();

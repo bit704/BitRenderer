@@ -83,5 +83,8 @@
     <ClInclude Include="constant_medium.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="integral_lab.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
