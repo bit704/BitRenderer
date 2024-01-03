@@ -6,6 +6,7 @@
 
 #include "hittable.h"
 #include "vec3.h"
+#include "onb.h"
 
 class Sphere : public Hittable
 {
@@ -83,6 +84,28 @@ public:
         v = theta / kPI;
     }
 
+    double pdf_value(const Point3& o, const Vec3& v) const override
+    {
+        // 仅对静态球有效
+        HitRecord rec;
+        if (!this->hit(Ray(o, v), Interval(0.001, kInfinitDouble), rec))
+            return 0;
+
+        auto cos_theta_max = std::sqrt(1 - radius_ * radius_ / (center_ - o).length_squared());
+        auto solid_angle = 2 * kPI * (1 - cos_theta_max);
+
+        return  1 / solid_angle;
+    }
+
+    Vec3 random(const Point3& o) const override
+    {
+        Vec3 direction = center_ - o;
+        auto distance_squared = direction.length_squared();
+        ONB uvw;
+        uvw.build_from_w(direction);
+        return uvw.local(random_to_sphere(radius_, distance_squared));
+    }
+
 private:
 
     Point3 center_;
@@ -97,6 +120,19 @@ private:
     Point3 get_center(double t) const
     {
         return center_ + t * center_move_vec_;
+    }
+
+    static Vec3 random_to_sphere(double radius, double distance_squared)
+    {
+        auto r1 = random_double();
+        auto r2 = random_double();
+        auto z = 1 + r2 * (sqrt(1 - radius * radius / distance_squared) - 1);
+
+        auto phi = 2 * kPI * r1;
+        auto x = cos(phi) * sqrt(1 - z * z);
+        auto y = sin(phi) * sqrt(1 - z * z);
+
+        return Vec3(x, y, z);
     }
 
 };

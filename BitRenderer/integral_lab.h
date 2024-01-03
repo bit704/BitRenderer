@@ -53,7 +53,7 @@ void integral_lab()
         {
             auto x = f[k](random_double());
             auto tmp = x * x / pdf[k](x);
-            if (!std::isnan(tmp)) // ±‹√‚nan
+            if (std::isnormal(tmp)) // ±‹√‚nan°¢inf
                 sum += tmp;
         }
         std::cout << std::fixed << std::setprecision(12);

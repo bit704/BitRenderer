@@ -109,7 +109,7 @@ public:
 private:
 
     Perlin noise_;
-    double scale_;
+    double scale_ = 1.;
 };
 
 #endif // !TEXTURE_H

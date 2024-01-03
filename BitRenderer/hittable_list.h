@@ -14,6 +14,7 @@ class HittableList : public Hittable
 public:
 
     HittableList() = default;
+
     HittableList(std::shared_ptr<Hittable> object) 
     { 
         add(object);
@@ -52,6 +53,24 @@ public:
     std::vector<std::shared_ptr<Hittable>> get_objects() const
     {
         return objects_;
+    }
+
+    // 多个物体PDF加权
+    double pdf_value(const Point3& o, const Vec3& v) const override
+    {
+        auto weight = 1. / objects_.size();
+        auto sum = 0.;
+
+        for (const auto& object : objects_)
+            sum += weight * object->pdf_value(o, v);
+
+        return sum;
+    }
+
+    Vec3 random(const Vec3& o) const override
+    {
+        auto int_size = static_cast<int>(objects_.size());
+        return objects_[random_int(0, int_size - 1)]->random(o);
     }
 
     AABB get_bbox() const override

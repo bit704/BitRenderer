@@ -148,6 +148,8 @@
     <ClInclude Include="interval.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="material.h" />
+    <ClInclude Include="onb.h" />
+    <ClInclude Include="pdf.h" />
     <ClInclude Include="perlin.h" />
     <ClInclude Include="point.h" />
     <ClInclude Include="quad.h" />

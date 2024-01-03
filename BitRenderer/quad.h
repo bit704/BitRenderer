@@ -15,10 +15,29 @@ public:
         : Q_(Q), u_(u), v_(v), material_(m)
     {
         Vec3 n = cross(u, v);
+        area_ = n.length();
         normal_ = unit_vector(n);
         D_ = dot(normal_, Q);
         w_ = n / dot(n, n);
         set_bbox();
+    }
+
+    double pdf_value(const Point3& origin, const Vec3& v) const override
+    {
+        HitRecord rec;
+        if (!this->hit(Ray(origin, v), Interval(1e-3, kInfinitDouble), rec))
+            return 0;
+
+        auto distance_squared = rec.t * rec.t * v.length_squared();
+        auto cosine = fabs(dot(v, rec.normal) / v.length());
+
+        return distance_squared / (cosine * area_);
+    }
+
+    Vec3 random(const Point3& origin) const override
+    {
+        auto p = Q_ + (random_double() * u_) + (random_double() * v_);
+        return p - origin;
     }
 
     virtual void set_bbox()
@@ -71,6 +90,7 @@ private:
     Vec3 normal_;
     double D_; // Ax+By+Cz=D
     Vec3 w_; // 参见RayTracingTheNextWeek 6.4
+    double area_;
 
     // 判断平行四边形所在平面上一点是否在平行四边形内并设定uv坐标
     virtual bool is_interior(double a, double b, HitRecord& rec) const

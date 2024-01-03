@@ -35,6 +35,16 @@ public:
     virtual ~Hittable() = default;
     virtual bool hit(const Ray& r, Interval interval, HitRecord& rec) const = 0;
     virtual AABB get_bbox() const = 0;
+
+    virtual double pdf_value(const Point3& o, const Vec3& v) const
+    {
+        return 0.;
+    }
+
+    virtual Vec3 random(const Vec3& o) const
+    {
+        return Vec3(1, 0, 0);
+    }
 };
 
 // ²Î¼û RayTracingTheNextWeek 8.1

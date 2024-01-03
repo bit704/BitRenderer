@@ -11,6 +11,8 @@
 #include "hittable.h"
 #include "image.h"
 #include "material.h"
+#include "pdf.h"
+#include "logger.h"
 
 extern int cal_count;
 
@@ -18,7 +20,7 @@ class Camera
 {
 public:
 
-    void render(const Hittable& world)
+    void render(const std::shared_ptr<Hittable>& world, const std::shared_ptr<Hittable>& light = nullptr)
     {
         initialize();
 
@@ -40,7 +42,7 @@ public:
                     for (int s_j = 0; s_j < sqrt_spp_; ++s_j)
                     {
                         Ray r = get_ray(i, j, s_i, s_j);
-                        pixel_color += ray_color(r, world, max_depth_);
+                        pixel_color += ray_color(r, world, light, max_depth_);
                     }
                 }
                 image_->set_pixel(i, j, pixel_color, samples_per_pixel_);
@@ -105,12 +107,18 @@ public:
         background_ = background;
     }
 
+    void set_image_name(const std::string& image_name)
+    {
+        image_name_ = image_name;
+    }
+
 private:
 
     // 若使用ImageWrite image_，会报错 0xc0000005 访问冲突。
     // 初始化image_使用的临时ImageWrite对象会被立刻析构，其持有的image_data_指针在析构函数中释放，
     // image_的image_data_指针是从临时ImageWrite对象浅拷贝而来，成为悬空指针，故访问冲突。
     std::unique_ptr<ImageWrite> image_;
+    std::string image_name_;
 
     double aspect_ratio_ = 1.;
     int    width_ = 100;
@@ -147,8 +155,7 @@ private:
         height_ = static_cast<int>(width_ / aspect_ratio_);
         height_ = (height_ < 1) ? 1 : height_;
 
-         //image_ = ImageWrite("image.png", width_, height_, channel_);
-        image_ = std::make_unique<ImageWrite>("image.png", width_, height_, channel_);
+        image_ = std::make_unique<ImageWrite>(image_name_, width_, height_, channel_);
         
         camera_center_ = lookfrom_;
 
@@ -181,7 +188,7 @@ private:
     }
 
     // 获取光线击中处的颜色
-    Color ray_color(const Ray& r, const Hittable& world, int depth) const
+    Color ray_color(const Ray& r, const std::shared_ptr<Hittable>& world, const std::shared_ptr<Hittable>& light, int depth) const
     {
         // 到达弹射次数上限，不再累加任何颜色
         if (depth < 0)
@@ -192,21 +199,46 @@ private:
         HitRecord rec;
 
         // Interval最小值不能为0，否则当数值误差导致光线与物体交点在物体内部时，光线无法正常弹射
-        if (!world.hit(r, Interval(1e-3, kInfinitDouble), rec))
+        if (!world->hit(r, Interval(1e-3, kInfinitDouble), rec))
             return background_;
 
         ++cal_count;
 
-        Ray scattered; // 此次入射后散射出去的光线
-        Color attenuation; // 衰减系数
+        ScatterRecord srec;
+
         Color color_from_emission = rec.material->emitted(rec.u, rec.v, rec.p); // 自发光颜色
 
         // 只有自发光颜色
-        if (!rec.material->scatter(r, rec, attenuation, scattered))
+        if (!rec.material->scatter(r, rec, srec))
             return color_from_emission;
 
-        Color color_from_scatter = attenuation * ray_color(scattered, world, depth - 1);
-        
+        if (srec.skip_pdf)
+        {
+            return srec.attenuation * ray_color(srec.skip_pdf_ray, world, light, depth - 1);
+        }
+
+        Ray scattered;
+        double pdf_val;
+        // 有无光源采样
+        if (light != nullptr)
+        {
+            auto light_ptr = std::make_shared<HittablePDF>(*light, rec.p);
+            MixturePDF p(light_ptr, srec.pdf_ptr);
+
+            scattered = Ray(rec.p, p.generate(), r.get_time());
+            pdf_val = p.value(scattered.get_direction());
+        }
+        else
+        {
+            scattered = Ray(rec.p, srec.pdf_ptr->generate(), r.get_time());
+            pdf_val = srec.pdf_ptr->value(scattered.get_direction());
+        }
+
+        double scattering_pdf = rec.material->scattering_pdf(r, rec, scattered);
+
+        Color sample_color = ray_color(scattered, world, light, depth - 1);
+        Color color_from_scatter = (srec.attenuation * scattering_pdf * sample_color) / pdf_val;
+
         return color_from_scatter + color_from_emission;
     }
 
@@ -216,8 +248,8 @@ private:
         // 返回长度为1的像素块上一随机采样点位置
         auto pixel_sample_square = [=](int s_i, int s_j) -> Vec3
         {
-            auto px = -0.5 + 1 / sqrt_spp_ * (s_j + random_double());
-            auto py = -0.5 + 1 / sqrt_spp_ * (s_i + random_double());
+            auto px = -0.5 + 1. / sqrt_spp_ * (s_i + random_double());
+            auto py = -0.5 + 1. / sqrt_spp_ * (s_j + random_double());
             return (px * pixel_delta_u_) + (py * pixel_delta_v_);
         };
 
