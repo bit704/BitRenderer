@@ -1,5 +1,5 @@
 /*
-* ³¤¶ÈÎª3µÄÏòÁ¿Àà
+* é•¿åº¦ä¸º3çš„å‘é‡ç±»
 */
 #ifndef Vec3_H
 #define Vec3_H
@@ -167,7 +167,7 @@ inline Vec3 random_in_unit_sphere()
 	}
 }
 
-// µ¥Î»ÇòÉÏ²ÉÑùµ¥Î»ÏòÁ¿
+// å•ä½çƒä¸Šé‡‡æ ·å•ä½å‘é‡
 inline Vec3 random_unit_vector()
 {
 	return unit_vector(random_in_unit_sphere());
@@ -176,21 +176,21 @@ inline Vec3 random_unit_vector()
 inline Vec3 random_on_hemisphere(const Vec3& normal) 
 {
 	Vec3 on_unit_sphere = random_unit_vector();
-	// ÔÚ·¨ÏòÁ¿ËùÔÚµÄ°ëÇò
+	// åœ¨æ³•å‘é‡æ‰€åœ¨çš„åŠçƒ
 	if (dot(on_unit_sphere, normal) > 0.) 
 		return on_unit_sphere;
 	else
 		return -on_unit_sphere;
 }
 
-// ·´Éä£¬vÊÇÈëÉä¹âÏß·½Ïò£¬nÊÇ·¨Ïß·½Ïò
+// åå°„ï¼Œvæ˜¯å…¥å°„å…‰çº¿æ–¹å‘ï¼Œnæ˜¯æ³•çº¿æ–¹å‘
 inline Vec3 reflect(const Vec3& v, const Vec3& n)
 {
 	return v - 2 * dot(v, n) * n;
 }
 
-// ÕÛÉä£¬uvÈëÉä¹âÏß·½Ïò£¬nÊÇ·¨Ïß·½Ïò£¬etai_over_etatÊÇÕÛÉäÂÊ±ÈÖµ
-// ²Î¼ûRayTracingInOneWeekend 11.2
+// æŠ˜å°„ï¼Œuvå…¥å°„å…‰çº¿æ–¹å‘ï¼Œnæ˜¯æ³•çº¿æ–¹å‘ï¼Œetai_over_etatæ˜¯æŠ˜å°„ç‡æ¯”å€¼
+// å‚è§RayTracingInOneWeekend 11.2
 inline Vec3 refract(const Vec3& uv, const Vec3& n, double etai_over_etat) 
 {
 	auto cos_theta = fmin(dot(-uv, n), 1.0);
@@ -199,7 +199,7 @@ inline Vec3 refract(const Vec3& uv, const Vec3& n, double etai_over_etat)
 	return r_out_perp + r_out_parallel;
 }
 
-// Ä£ÄâÔ²ĞÎÍ¸¾µ£¬Ëæ»ú²ÉÑù
+// æ¨¡æ‹Ÿåœ†å½¢é€é•œï¼Œéšæœºé‡‡æ ·
 inline Vec3 random_in_unit_disk()
 {
 	while (true)
@@ -210,7 +210,7 @@ inline Vec3 random_in_unit_disk()
 	}
 }
 
-// °ëÇòcosine²ÉÑù
+// åŠçƒcosineé‡‡æ ·
 inline Vec3 random_cosine_direction()
 {
 	auto r1 = random_double();

@@ -1,6 +1,6 @@
 /*
-* ÈÕÖ¾Àà
-* ÓÃÓÚÊä³öÈÕÖ¾
+* æ—¥å¿—ç±»
+* ç”¨äºè¾“å‡ºæ—¥å¿—
 */
 #ifndef LOGGER_H
 #define LOGGER_H
@@ -9,7 +9,7 @@
 
 #include "singleton.h"
 
-#define PRINT_LOCATION std::cout << __FILE__ << "µÚ" << __LINE__ << "ĞĞ£¨" << __FUNCTION__ << "£©£º";
+#define PRINT_LOCATION std::cout << __FILE__ << "ç¬¬" << __LINE__ << "è¡Œï¼ˆ" << __FUNCTION__ << "ï¼‰ï¼š";
 #define LOG(...) { PRINT_LOCATION Logger::get_instance().print_info(__VA_ARGS__); }
 
 class Logger : public Singleton<Logger>

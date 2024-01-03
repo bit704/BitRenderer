@@ -1,5 +1,5 @@
 /*
-* ¹âÏß¿É»÷ÖĞÎïÌå×ÜÁĞ±íÀà
+* å…‰çº¿å¯å‡»ä¸­ç‰©ä½“æ€»åˆ—è¡¨ç±»
 */
 #ifndef HITTABLE_LIST_H
 #define HITTABLE_LIST_H
@@ -28,7 +28,7 @@ public:
     void add(std::shared_ptr<Hittable> object)
     {
         objects_.push_back(object);
-        bbox_ = AABB(bbox_, object->get_bbox()); // ²¢¼¯ÔËËã
+        bbox_ = AABB(bbox_, object->get_bbox()); // å¹¶é›†è¿ç®—
     }
 
     bool hit(const Ray& r, Interval interval, HitRecord& rec) const override
@@ -42,8 +42,8 @@ public:
             if (object->hit(r, Interval(interval.get_min(), closest_so_far), temp_rec))
             {
                 hit_anything = true;
-                closest_so_far = temp_rec.t; // ¸üĞÂµ±Ç°»÷ÖĞÊ±ºòµÄ¹âÏßÍ¶Éä¾àÀëÎªÏÂ´Î¹âÏßÍ¶ÉäµÄ×î´ó¾àÀë
-                rec = temp_rec; // ¸üĞÂ»÷ÖĞĞÅÏ¢
+                closest_so_far = temp_rec.t; // æ›´æ–°å½“å‰å‡»ä¸­æ—¶å€™çš„å…‰çº¿æŠ•å°„è·ç¦»ä¸ºä¸‹æ¬¡å…‰çº¿æŠ•å°„çš„æœ€å¤§è·ç¦»
+                rec = temp_rec; // æ›´æ–°å‡»ä¸­ä¿¡æ¯
             }
         }
 
@@ -55,7 +55,7 @@ public:
         return objects_;
     }
 
-    // ¶à¸öÎïÌåPDF¼ÓÈ¨
+    // å¤šä¸ªç‰©ä½“PDFåŠ æƒ
     double pdf_value(const Point3& o, const Vec3& v) const override
     {
         auto weight = 1. / objects_.size();

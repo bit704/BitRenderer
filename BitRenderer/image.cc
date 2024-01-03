@@ -5,26 +5,26 @@
 #include <new>
 #include <algorithm>
 
-// ÒÔÏÂÍ·ÎÄ¼ş°üº¬º¯Êı¶¨Òå£¬²»ÄÜ°üº¬ÔÚimage.hÖĞ£¬·ñÔòµ±image.h±»°üº¬Ê±»áµ¼ÖÂÖØ¶¨Òå´íÎóLNK2005¡¢LNK1169
+// ä»¥ä¸‹å¤´æ–‡ä»¶åŒ…å«å‡½æ•°å®šä¹‰ï¼Œä¸èƒ½åŒ…å«åœ¨image.hä¸­ï¼Œå¦åˆ™å½“image.hè¢«åŒ…å«æ—¶ä¼šå¯¼è‡´é‡å®šä¹‰é”™è¯¯LNK2005ã€LNK1169
 #define STB_IMAGE_IMPLEMENTATION
 #include "tool/stb_image.h"
-#define __STDC_LIB_EXT1__ // ±ÜÃâstb_image_write.h±¨C4996´íÎó£¬Î´Ê¹ÓÃ_sº¯Êı
+#define __STDC_LIB_EXT1__ // é¿å…stb_image_write.hæŠ¥C4996é”™è¯¯ï¼Œæœªä½¿ç”¨_så‡½æ•°
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "tool/stb_image_write.h"
 
 #include "logger.h"
 
-// static¹Ø¼ü×ÖÖ»ÄÜÓÃÓÚÀà¶¨ÒåÌåÄÚ²¿µÄÉùÃ÷ÖĞ£¬¶¨ÒåÊ±²»ÄÜ±êÊ¾Îªstatic
+// staticå…³é”®å­—åªèƒ½ç”¨äºç±»å®šä¹‰ä½“å†…éƒ¨çš„å£°æ˜ä¸­ï¼Œå®šä¹‰æ—¶ä¸èƒ½æ ‡ç¤ºä¸ºstatic
 const std::string ImageWrite::kOutputPath_ = "../output/";
 
 ImageWrite::ImageWrite(std::string imageName, int image_width, int image_height, int channel)
 	: image_path_(kOutputPath_ + imageName), width_(image_width), height_(image_height), channel_(channel)
 {
-	// Ê¹ÓÃstbi_image_free()ÊÍ·Å£¬Òò´Ë²»ÓÃnew
-	image_data_ = (unsigned char*)malloc(this->width_ * this->height_ * this->channel_); // ³õÊ¼»¯Í¼Æ¬ÄÚ´æ
+	// ä½¿ç”¨stbi_image_free()é‡Šæ”¾ï¼Œå› æ­¤ä¸ç”¨new
+	image_data_ = (unsigned char*)malloc(this->width_ * this->height_ * this->channel_); // åˆå§‹åŒ–å›¾ç‰‡å†…å­˜
 }
 
-// ÉèÖÃÏñËØ
+// è®¾ç½®åƒç´ 
 void ImageWrite::set_pixel(const int& row, const int& col, const int& r, const int& g, const int& b)
 {
 	image_data_[(row * width_ + col) * channel_] = r;
@@ -32,37 +32,37 @@ void ImageWrite::set_pixel(const int& row, const int& col, const int& r, const i
 	image_data_[(row * width_ + col) * channel_ + 2] = b;
 }
 
-// Ù¤ÂíĞ£Õı
+// ä¼½é©¬æ ¡æ­£
 inline double linear_to_gamma(double linear_component)
 {
-	// ²ÉÓÃÍ¨ÓÃÙ¤ÂíÖµ2.2£¬¼´·Å´ó°µ²¿
+	// é‡‡ç”¨é€šç”¨ä¼½é©¬å€¼2.2ï¼Œå³æ”¾å¤§æš—éƒ¨
 	return pow(linear_component, 1 / 2.2);
 }
 
 void ImageWrite::set_pixel(const int& row, const int& col, Color c, const int& samples_per_pixel)
 {
-	// Ò»¸öÏñËØ²ÉÑù¼¸´Î¾Íµş¼ÓÁË¼¸¸öÑÕÉ«£¬¸ù¾İ²ÉÑù´ÎÊıËõ·Å»ØÈ¥
+	// ä¸€ä¸ªåƒç´ é‡‡æ ·å‡ æ¬¡å°±å åŠ äº†å‡ ä¸ªé¢œè‰²ï¼Œæ ¹æ®é‡‡æ ·æ¬¡æ•°ç¼©æ”¾å›å»
 	double scale = 1. / samples_per_pixel;
 	c *= scale;
 
-	// Ù¤ÂíĞ£Õı
+	// ä¼½é©¬æ ¡æ­£
 	double r = linear_to_gamma(c.x());
 	double g = linear_to_gamma(c.y());
 	double b = linear_to_gamma(c.z());
 
-	// ¼ì²âNaN
+	// æ£€æµ‹NaN
 	if (r != r) r = 0.;
 	if (g != g) g = 0.;
 	if (b != b) b = 0.;
 	
-	// ½«ÖµÏŞÖÆÔÚ[0,1]£¬Ëõ·Åµ½[0,256)£¬ÔÙÏòÏÂÈ¡Õû
+	// å°†å€¼é™åˆ¶åœ¨[0,1]ï¼Œç¼©æ”¾åˆ°[0,256)ï¼Œå†å‘ä¸‹å–æ•´
 	r = std::clamp(r, 0., 1.) * 255.999;
 	g = std::clamp(g, 0., 1.) * 255.999;
 	b = std::clamp(b, 0., 1.) * 255.999;
 	set_pixel(row, col, (int)r, (int)g, (int)b);
 }
 
-// Ğ´ÈëÖ¸¶¨Í¼Æ¬
+// å†™å…¥æŒ‡å®šå›¾ç‰‡
 void ImageWrite::write()
 {
 	stbi_write_png(image_path_.c_str(), width_, height_, channel_, image_data_, 0);

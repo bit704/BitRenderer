@@ -42,14 +42,14 @@ int main()
 
     auto end = steady_clock::now();
 
-    LOG("×Ü¼ÆËãÁ¿£º", std::to_string(cal_count));
+    LOG("æ€»è®¡ç®—é‡ï¼š", std::to_string(cal_count));
 
     auto duration = end - start;
     auto duration_min = duration_cast<minutes>(duration);
     auto duration_sec = duration_cast<seconds>(duration);
 
-    LOG("×Ü¼ÆËãÊ±³¤£º", std::to_string(duration_min.count()), "·ÖÖÓ");
-    LOG("¼ÆËãËÙ¶È£º", std::to_string(cal_count / duration_sec.count()), "´Î/Ãë");
+    LOG("æ€»è®¡ç®—æ—¶é•¿ï¼š", std::to_string(duration_min.count()), "åˆ†é’Ÿ");
+    LOG("è®¡ç®—é€Ÿåº¦ï¼š", std::to_string(cal_count / duration_sec.count()), "æ¬¡/ç§’");
 
     return 0;
 }
@@ -76,7 +76,7 @@ void scene_composite1()
                 {
                     auto albedo = Color::random() * Color::random();
                     sphere_material = make_shared<Lambertian>(albedo);
-                    // ÔÚ0~1Ê±¼äÄÚ´ÓcenterÔË¶¯µ½center_end£¬Ëæ»úÏòÉÏµ¯Ìø
+                    // åœ¨0~1æ—¶é—´å†…ä»centerè¿åŠ¨åˆ°center_endï¼Œéšæœºå‘ä¸Šå¼¹è·³
                     auto center_end = center + Vec3(0, random_double(0, .5), 0);
                     list.add(make_shared<Sphere>(center, center_end, 0.2, sphere_material));
                 }
@@ -95,18 +95,18 @@ void scene_composite1()
             }
         }
     }
-    // ÕÛÉä
+    // æŠ˜å°„
     auto material1 = make_shared<Dielectric>(1.5);
     list.add(make_shared<Sphere>(Point3(0, 1, 0), 1.0, material1));
-    // Âş·´Éä
+    // æ¼«åå°„
     auto material2 = make_shared<Lambertian>(Color(0.4, 0.2, 0.1));
     list.add(make_shared<Sphere>(Point3(-4, 1, 0), 1.0, material2));
-    // ¸ß¹â
+    // é«˜å…‰
     auto material3 = make_shared<Metal>(Color(0.7, 0.6, 0.5), 0.0);
     list.add(make_shared<Sphere>(Point3(4, 1, 0), 1.0, material3));
 
     shared_ptr<HittableList> world(new HittableList());
-    // BVH¼ÓËÙ½á¹¹
+    // BVHåŠ é€Ÿç»“æ„
     world->add(make_shared<BVHNode>(list));
 
     Camera cam;
@@ -123,7 +123,7 @@ void scene_composite1()
     cam.render(world);
 }
 
-// 3DÆåÅÌ¸ñÎÆÀí
+// 3Dæ£‹ç›˜æ ¼çº¹ç†
 void scene_checker()
 {
     shared_ptr<HittableList> world(new HittableList());
@@ -157,24 +157,24 @@ void scene_cornell_box()
     auto green = make_shared<Lambertian>(Color(.12, .45, .15));
     auto lighting = make_shared<DiffuseLight>(Color(15, 15, 15));
 
-    // ºĞÌå
+    // ç›’ä½“
     world->add(make_shared<Quad>(Point3(555, 0, 0), Vec3(0, 555, 0), Vec3(0, 0, 555), green));
     world->add(make_shared<Quad>(Point3(0, 0, 0), Vec3(0, 555, 0), Vec3(0, 0, 555), red));
     world->add(make_shared<Quad>(Point3(0, 0, 0), Vec3(555, 0, 0), Vec3(0, 0, 555), white));
     world->add(make_shared<Quad>(Point3(555, 555, 555), Vec3(-555, 0, 0), Vec3(0, 0, -555), white));
     world->add(make_shared<Quad>(Point3(0, 0, 555), Vec3(555, 0, 0), Vec3(0, 555, 0), white));
 
-    // ¹âÔ´
+    // å…‰æº
     world->add(make_shared<Quad>(Point3(343, 554, 332), Vec3(-130, 0, 0), Vec3(0, 0, -105), lighting));
 
-    // ÂÁ³¤·½Ìå
+    // é“é•¿æ–¹ä½“
     shared_ptr<Material> aluminum = make_shared<Metal>(Color(0.8, 0.85, 0.88), 0.0);
     shared_ptr<Hittable> box1 = construct_box(Point3(0, 0, 0), Point3(165, 330, 165), aluminum);
     box1 = make_shared<RotateY>(box1, 45);
     box1 = make_shared<Translate>(box1, Vec3(265, 0, 295));
     world->add(box1);
 
-    // ²£Á§Çò
+    // ç»ç’ƒçƒ
     auto glass = make_shared<Dielectric>(1.5);
     world->add(make_shared<Sphere>(Point3(190, 90, 190), 90, glass));
 
@@ -202,7 +202,7 @@ void scene_composite2()
 {
     shared_ptr<HittableList> world(new HittableList());
     
-    // Á¢·½Ìå×é³ÉµÄµØ°å
+    // ç«‹æ–¹ä½“ç»„æˆçš„åœ°æ¿
     HittableList boxes1;
     auto ground_mat = make_shared<Lambertian>(Color(0.48, 0.83, 0.53));
     int boxes_per_side = 20;
@@ -223,39 +223,39 @@ void scene_composite2()
     }
     world->add(make_shared<BVHNode>(boxes1));
 
-    // ¹âÔ´
+    // å…‰æº
     auto light_mat = make_shared<DiffuseLight>(Color(7, 7, 7));
     world->add(make_shared<Quad>(Point3(123, 554, 147), Vec3(300, 0, 0), Vec3(0, 0, 265), light_mat));
 
-    // ÔË¶¯Çò
+    // è¿åŠ¨çƒ
     auto center1 = Point3(400, 400, 200);
     auto center2 = center1 + Vec3(30, 0, 0);
     auto sphere_mat = make_shared<Lambertian>(Color(0.7, 0.3, 0.1));
     world->add(make_shared<Sphere>(center1, center2, 50, sphere_mat));
 
-    // ²£Á§Çò
+    // ç»ç’ƒçƒ
     world->add(make_shared<Sphere>(Point3(260, 150, 45), 50, make_shared<Dielectric>(1.5)));
-    // ½ğÊôÇò
+    // é‡‘å±çƒ
     world->add(make_shared<Sphere>(Point3(0, 150, 145), 50, make_shared<Metal>(Color(0.8, 0.8, 0.9), 1.0)));
 
-    // ÄÚº¬À¶É«ÎíĞ§µÄ²£Á§Çò
+    // å†…å«è“è‰²é›¾æ•ˆçš„ç»ç’ƒçƒ
     auto boundary = make_shared<Sphere>(Point3(360, 150, 145), 70, make_shared<Dielectric>(1.5));
     world->add(boundary);
     world->add(make_shared<ConstantMedium>(boundary, 0.2, Color(0.2, 0.4, 0.9)));
 
-    // È«³¡¾°ÎíĞ§
+    // å…¨åœºæ™¯é›¾æ•ˆ
     boundary = make_shared<Sphere>(Point3(0, 0, 0), 5000, make_shared<Dielectric>(1.5));
     world->add(make_shared<ConstantMedium>(boundary, .0001, Color(1, 1, 1)));
 
-    // µØÇò
+    // åœ°çƒ
     auto emat = make_shared<Lambertian>(make_shared<ImageTexture>("../texture/earthmap.jpg"));
     world->add(make_shared<Sphere>(Point3(400, 200, 400), 100, emat));
 
-    // °ØÁÖÔëÉùÇò
+    // æŸæ—å™ªå£°çƒ
     auto pertext = make_shared<NoiseTexture>(8);
     world->add(make_shared<Sphere>(Point3(220, 280, 300), 80, make_shared<Lambertian>(pertext)));
 
-    // Çò×é³ÉµÄÁ¢·½Ìå
+    // çƒç»„æˆçš„ç«‹æ–¹ä½“
     HittableList boxes2;
     auto white = make_shared<Lambertian>(Color(.73, .73, .73));
     int ns = 1000;

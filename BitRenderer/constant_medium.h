@@ -1,5 +1,5 @@
 /*
-* ÃæÆ¬Îí
+* é¢ç‰‡é›¾
 */
 #ifndef CONSTANT_MEDIUM_H
 #define CONSTANT_MEDIUM_H
@@ -27,7 +27,7 @@ public:
         const bool enableDebug = false;
         const bool debugging = enableDebug && random_double() < 1e-5;
 
-        // ÇóÓëÅö×²ÌåµÄÇ°ºóÁ½¸ö½»µã
+        // æ±‚ä¸ç¢°æ’ä½“çš„å‰åä¸¤ä¸ªäº¤ç‚¹
         HitRecord rec1, rec2;
 
         if (!boundary_->hit(r, Interval(-kInfinitDouble, kInfinitDouble), rec1))
@@ -50,7 +50,7 @@ public:
         if (rec1.t < 0)
             rec1.t = 0;
 
-        auto ray_step_length = r.get_direction().length(); // ²½³¤
+        auto ray_step_length = r.get_direction().length(); // æ­¥é•¿
         auto distance_inside_boundary = (rec2.t - rec1.t) * ray_step_length;
         auto hit_distance = neg_inv_density_ * log(random_double());
 
@@ -67,8 +67,8 @@ public:
             LOG("rec.p = ", rec.p)
         }
 
-        rec.normal = Vec3(1, 0, 0);  // ÈÎÒâ
-        rec.front_face = true;     // ÈÎÒâ
+        rec.normal = Vec3(1, 0, 0);  // ä»»æ„
+        rec.front_face = true;     // ä»»æ„
         rec.material = phase_function_;
 
         return true;

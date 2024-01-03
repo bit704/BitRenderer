@@ -1,12 +1,12 @@
 /*
-* ¹âÏß¿É»÷ÖĞÎïÌåÀà
+* å…‰çº¿å¯å‡»ä¸­ç‰©ä½“ç±»
 */
 #ifndef HITTABLE_H
 #define HITTABLE_H
 
 #include "aabb.h"
 
-// Ç°ÏòÉùÃ÷£¬±ÜÃâÍ·ÎÄ¼şÑ­»·ÒıÓÃ
+// å‰å‘å£°æ˜ï¼Œé¿å…å¤´æ–‡ä»¶å¾ªç¯å¼•ç”¨
 class Material;
 
 struct HitRecord
@@ -18,8 +18,8 @@ struct HitRecord
     bool front_face;
     double u, v;
 
-    // È·±£·¨ÏßÃæÏò¹Û²ìÕß
-    // outward_normalÎª´ÓÇòĞÄÖ¸Ïò¹âÏß»÷ÖĞµã·½ÏòµÄ·¨Ïß
+    // ç¡®ä¿æ³•çº¿é¢å‘è§‚å¯Ÿè€…
+    // outward_normalä¸ºä»çƒå¿ƒæŒ‡å‘å…‰çº¿å‡»ä¸­ç‚¹æ–¹å‘çš„æ³•çº¿
     void set_face_normal(const Ray& r, const Vec3& outward_normal) 
     {
         front_face = dot(r.get_direction(), outward_normal) < 0;
@@ -27,7 +27,7 @@ struct HitRecord
     }
 };
 
-// ´¿ĞéÀà
+// çº¯è™šç±»
 class Hittable
 {
 public:
@@ -47,8 +47,8 @@ public:
     }
 };
 
-// ²Î¼û RayTracingTheNextWeek 8.1
-// ½«¶ÔÎïÌåµÄÆ½ÒÆµÈĞ§Îª¶ÔrayµÄ
+// å‚è§ RayTracingTheNextWeek 8.1
+// å°†å¯¹ç‰©ä½“çš„å¹³ç§»ç­‰æ•ˆä¸ºå¯¹rayçš„
 class Translate : public Hittable
 {
 public:
@@ -61,13 +61,13 @@ public:
 
     bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const override
     {
-        // ¸ù¾İoffset·´ÏòÒÆ¶¯¹âÏß
+        // æ ¹æ®offsetåå‘ç§»åŠ¨å…‰çº¿
         Ray offset_r(r.get_origin() - offset_, r.get_direction(), r.get_time());
 
         if (!object_->hit(offset_r, ray_t, rec))
             return false;
 
-        // ½«½»µã¸ù¾İoffsetÕıÏòÒÆ¶¯»ØÈ¥
+        // å°†äº¤ç‚¹æ ¹æ®offsetæ­£å‘ç§»åŠ¨å›å»
         rec.p += offset_;
         return true;
     }
@@ -84,7 +84,7 @@ private:
     AABB bbox_;
 };
 
-// ½«¶ÔÎïÌåµÄÈÆYÖá×ª¶¯µÈĞ§Îª¶ÔrayµÄ
+// å°†å¯¹ç‰©ä½“çš„ç»•Yè½´è½¬åŠ¨ç­‰æ•ˆä¸ºå¯¹rayçš„
 class RotateY : public Hittable
 {
 public:
@@ -127,7 +127,7 @@ public:
 
     bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const override
     {
-        // ½«ray´ÓÊÀ½ç¿Õ¼ä×ª»»µ½Ä£ĞÍ¿Õ¼ä
+        // å°†rayä»ä¸–ç•Œç©ºé—´è½¬æ¢åˆ°æ¨¡å‹ç©ºé—´
         auto origin = r.get_origin();
         auto direction = r.get_direction();
 

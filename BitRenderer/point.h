@@ -1,5 +1,5 @@
 /*
-* µãÀà
+* ï¿½ï¿½ï¿½ï¿½
 */
 #ifndef POINT_H
 #define POINT_H

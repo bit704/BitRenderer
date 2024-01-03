@@ -1,5 +1,5 @@
 /*
-* Ïà»úÀà
+* ç›¸æœºç±»
 */
 #ifndef CAMERA_H
 #define CAMERA_H
@@ -36,7 +36,7 @@ public:
             for (int j = 0; j < width_; ++j)
             {
                 Color pixel_color(0, 0, 0);
-                // ¶ÔÃ¿¸öÏñËØÖĞµÄ²ÉÑùµã½øĞĞ·Ö²ã£¬²ÉÑù¸ü¾ùÔÈ
+                // å¯¹æ¯ä¸ªåƒç´ ä¸­çš„é‡‡æ ·ç‚¹è¿›è¡Œåˆ†å±‚ï¼Œé‡‡æ ·æ›´å‡åŒ€
                 for (int s_i = 0; s_i < sqrt_spp_; ++s_i)
                 {
                     for (int s_j = 0; s_j < sqrt_spp_; ++s_j)
@@ -114,9 +114,9 @@ public:
 
 private:
 
-    // ÈôÊ¹ÓÃImageWrite image_£¬»á±¨´í 0xc0000005 ·ÃÎÊ³åÍ»¡£
-    // ³õÊ¼»¯image_Ê¹ÓÃµÄÁÙÊ±ImageWrite¶ÔÏó»á±»Á¢¿ÌÎö¹¹£¬Æä³ÖÓĞµÄimage_data_Ö¸ÕëÔÚÎö¹¹º¯ÊıÖĞÊÍ·Å£¬
-    // image_µÄimage_data_Ö¸ÕëÊÇ´ÓÁÙÊ±ImageWrite¶ÔÏóÇ³¿½±´¶øÀ´£¬³ÉÎªĞü¿ÕÖ¸Õë£¬¹Ê·ÃÎÊ³åÍ»¡£
+    // è‹¥ä½¿ç”¨ImageWrite image_ï¼Œä¼šæŠ¥é”™ 0xc0000005 è®¿é—®å†²çªã€‚
+    // åˆå§‹åŒ–image_ä½¿ç”¨çš„ä¸´æ—¶ImageWriteå¯¹è±¡ä¼šè¢«ç«‹åˆ»ææ„ï¼Œå…¶æŒæœ‰çš„image_data_æŒ‡é’ˆåœ¨ææ„å‡½æ•°ä¸­é‡Šæ”¾ï¼Œ
+    // image_çš„image_data_æŒ‡é’ˆæ˜¯ä»ä¸´æ—¶ImageWriteå¯¹è±¡æµ…æ‹·è´è€Œæ¥ï¼Œæˆä¸ºæ‚¬ç©ºæŒ‡é’ˆï¼Œæ•…è®¿é—®å†²çªã€‚
     std::unique_ptr<ImageWrite> image_;
     std::string image_name_;
 
@@ -125,31 +125,31 @@ private:
     int    channel_ = 3;
     int    height_;
     Point3 camera_center_;
-    Point3 pixel00_loc_; // (0,0)´¦ÏñËØµÄÎ»ÖÃ
+    Point3 pixel00_loc_; // (0,0)å¤„åƒç´ çš„ä½ç½®
     Vec3   pixel_delta_u_;
     Vec3   pixel_delta_v_;
-    int    samples_per_pixel_ = 16; // Ã¿ÏñËØ²ÉÑùÊı
+    int    samples_per_pixel_ = 16; // æ¯åƒç´ é‡‡æ ·æ•°
     int    sqrt_spp_ = 4;
-    int    max_depth_ = 10; // ¹âÏß×î´óµ¯Éä´ÎÊı
+    int    max_depth_ = 10; // å…‰çº¿æœ€å¤§å¼¹å°„æ¬¡æ•°
 
-    double vfov_ = 90;  // ´¹Ö±fov
+    double vfov_ = 90;  // å‚ç›´fov
     
     Point3 lookfrom_ = Point3(0, 0, -1);
     Point3 lookat_ = Point3(0, 0, 0);
     Vec3   vup_ = Point3(0, 1, 0);
-    // Ïà»ú×ø±êÏµ
-    Vec3   u_; // Ö¸ÏòÏà»úÓÒ·½
-    Vec3   v_; // Ö¸ÏòÏà»úÉÏ·½
-    Vec3   w_; // ÓëÏà»úÊÓµã·½ÏòÏà·´ 
+    // ç›¸æœºåæ ‡ç³»
+    Vec3   u_; // æŒ‡å‘ç›¸æœºå³æ–¹
+    Vec3   v_; // æŒ‡å‘ç›¸æœºä¸Šæ–¹
+    Vec3   w_; // ä¸ç›¸æœºè§†ç‚¹æ–¹å‘ç›¸å 
 
-    double defocus_angle_ = 0;  // ¹âÏß¾­¹ıÃ¿¸öÏñËØµÄ±ä»¯
-    double focus_dist_ = 10;    // Ïà»úÔ­µãµ½ÍêÃÀ¾Û½¹Æ½ÃæµÄ¾àÀë£¬ÕâÀïÓë½¹¾àÏàÍ¬
-    Vec3 defocus_disk_u_;  // É¢½¹ºáÏò°ë¾¶
-    Vec3 defocus_disk_v_;  // É¢½¹×İÏò°ë¾¶
+    double defocus_angle_ = 0;  // å…‰çº¿ç»è¿‡æ¯ä¸ªåƒç´ çš„å˜åŒ–
+    double focus_dist_ = 10;    // ç›¸æœºåŸç‚¹åˆ°å®Œç¾èšç„¦å¹³é¢çš„è·ç¦»ï¼Œè¿™é‡Œä¸ç„¦è·ç›¸åŒ
+    Vec3 defocus_disk_u_;  // æ•£ç„¦æ¨ªå‘åŠå¾„
+    Vec3 defocus_disk_v_;  // æ•£ç„¦çºµå‘åŠå¾„
 
     Color background_ = Color(.7, .8, 1.);
 
-    // ³õÊ¼»¯
+    // åˆå§‹åŒ–
     void initialize() 
     {
         height_ = static_cast<int>(width_ / aspect_ratio_);
@@ -159,38 +159,38 @@ private:
         
         camera_center_ = lookfrom_;
 
-        // Ïà»úÊôĞÔ
+        // ç›¸æœºå±æ€§
         auto theta = degrees_to_radians(vfov_);
         auto h = tan(theta / 2);
         auto viewport_height = 2 * h * focus_dist_;
 
         auto viewport_width = viewport_height * (static_cast<double>(width_) / height_);
         
-        // ¼ÆËãÏà»ú×ø±êÏµ£¬ÓÒÊÖÏµ(zÖáÖ¸ÏòÆÁÄ»Íâ)
-        w_ = unit_vector(lookfrom_ - lookat_); // ÓëÏà»úÊÓµã·½ÏòÏà·´ (0,0,-1)
-        u_ = unit_vector(cross(vup_, w_)); // Ö¸ÏòÏà»úÓÒ·½ (-1,0,0)
-        v_ = cross(w_, u_); // Ö¸ÏòÏà»úÉÏ·½ (0,1,0)
+        // è®¡ç®—ç›¸æœºåæ ‡ç³»ï¼Œå³æ‰‹ç³»(zè½´æŒ‡å‘å±å¹•å¤–)
+        w_ = unit_vector(lookfrom_ - lookat_); // ä¸ç›¸æœºè§†ç‚¹æ–¹å‘ç›¸å (0,0,-1)
+        u_ = unit_vector(cross(vup_, w_)); // æŒ‡å‘ç›¸æœºå³æ–¹ (-1,0,0)
+        v_ = cross(w_, u_); // æŒ‡å‘ç›¸æœºä¸Šæ–¹ (0,1,0)
 
         Vec3 viewport_u = viewport_width * u_;
         Vec3 viewport_v = viewport_height * -v_;
 
-        // Ã¿ÏñËØ¶ÔÓ¦µÄÊÓ¿Ú³¤¶È
+        // æ¯åƒç´ å¯¹åº”çš„è§†å£é•¿åº¦
         pixel_delta_u_ = viewport_u / width_;
         pixel_delta_v_ = viewport_v / height_;
-        // ×óÉÏ½ÇÏñËØµÄÎ»ÖÃ£¬ÏñËØÎ»ÖÃÒÔÖĞĞÄµã±íÊ¾
+        // å·¦ä¸Šè§’åƒç´ çš„ä½ç½®ï¼Œåƒç´ ä½ç½®ä»¥ä¸­å¿ƒç‚¹è¡¨ç¤º
         auto viewport_upper_left = camera_center_ - (focus_dist_ * w_) - viewport_u / 2 - viewport_v / 2;
         pixel00_loc_ = viewport_upper_left + 0.5 * (pixel_delta_u_ + pixel_delta_v_);
 
-        // Ïà»úÉ¢½¹Æ½ÃæµÄ»ùÏòÁ¿
+        // ç›¸æœºæ•£ç„¦å¹³é¢çš„åŸºå‘é‡
         auto defocus_radius = focus_dist_ * tan(degrees_to_radians(defocus_angle_ / 2));
         defocus_disk_u_ = u_ * defocus_radius;
         defocus_disk_v_ = v_ * defocus_radius;
     }
 
-    // »ñÈ¡¹âÏß»÷ÖĞ´¦µÄÑÕÉ«
+    // è·å–å…‰çº¿å‡»ä¸­å¤„çš„é¢œè‰²
     Color ray_color(const Ray& r, const std::shared_ptr<Hittable>& world, const std::shared_ptr<Hittable>& light, int depth) const
     {
-        // µ½´ïµ¯Éä´ÎÊıÉÏÏŞ£¬²»ÔÙÀÛ¼ÓÈÎºÎÑÕÉ«
+        // åˆ°è¾¾å¼¹å°„æ¬¡æ•°ä¸Šé™ï¼Œä¸å†ç´¯åŠ ä»»ä½•é¢œè‰²
         if (depth < 0)
         {
             return Color(0, 0, 0);
@@ -198,7 +198,7 @@ private:
 
         HitRecord rec;
 
-        // Interval×îĞ¡Öµ²»ÄÜÎª0£¬·ñÔòµ±ÊıÖµÎó²îµ¼ÖÂ¹âÏßÓëÎïÌå½»µãÔÚÎïÌåÄÚ²¿Ê±£¬¹âÏßÎŞ·¨Õı³£µ¯Éä
+        // Intervalæœ€å°å€¼ä¸èƒ½ä¸º0ï¼Œå¦åˆ™å½“æ•°å€¼è¯¯å·®å¯¼è‡´å…‰çº¿ä¸ç‰©ä½“äº¤ç‚¹åœ¨ç‰©ä½“å†…éƒ¨æ—¶ï¼Œå…‰çº¿æ— æ³•æ­£å¸¸å¼¹å°„
         if (!world->hit(r, Interval(1e-3, kInfinitDouble), rec))
             return background_;
 
@@ -206,9 +206,9 @@ private:
 
         ScatterRecord srec;
 
-        Color color_from_emission = rec.material->emitted(rec.u, rec.v, rec.p); // ×Ô·¢¹âÑÕÉ«
+        Color color_from_emission = rec.material->emitted(rec.u, rec.v, rec.p); // è‡ªå‘å…‰é¢œè‰²
 
-        // Ö»ÓĞ×Ô·¢¹âÑÕÉ«
+        // åªæœ‰è‡ªå‘å…‰é¢œè‰²
         if (!rec.material->scatter(r, rec, srec))
             return color_from_emission;
 
@@ -219,7 +219,7 @@ private:
 
         Ray scattered;
         double pdf_val;
-        // ÓĞÎŞ¹âÔ´²ÉÑù
+        // æœ‰æ— å…‰æºé‡‡æ ·
         if (light != nullptr)
         {
             auto light_ptr = std::make_shared<HittablePDF>(*light, rec.p);
@@ -242,10 +242,10 @@ private:
         return color_from_scatter + color_from_emission;
     }
 
-    // ²ÉÑùËæ»ú¹âÏß
+    // é‡‡æ ·éšæœºå…‰çº¿
     Ray get_ray(int i, int j, int s_i, int s_j) const
     {
-        // ·µ»Ø³¤¶ÈÎª1µÄÏñËØ¿éÉÏÒ»Ëæ»ú²ÉÑùµãÎ»ÖÃ
+        // è¿”å›é•¿åº¦ä¸º1çš„åƒç´ å—ä¸Šä¸€éšæœºé‡‡æ ·ç‚¹ä½ç½®
         auto pixel_sample_square = [=](int s_i, int s_j) -> Vec3
         {
             auto px = -0.5 + 1. / sqrt_spp_ * (s_i + random_double());
@@ -253,22 +253,22 @@ private:
             return (px * pixel_delta_u_) + (py * pixel_delta_v_);
         };
 
-        // ´Ó(i,j)´¦ÏñËØËæ»ú²ÉÑùÒ»Ìõ¹âÏß
+        // ä»(i,j)å¤„åƒç´ éšæœºé‡‡æ ·ä¸€æ¡å…‰çº¿
         auto pixel_center = pixel00_loc_ + (j * pixel_delta_u_) + (i * pixel_delta_v_);
         auto pixel_sample = pixel_center + pixel_sample_square(s_i, s_j);
 
         // auto ray_origin = camera_center_;
-        // É¢½¹£¬ÔÚÔ²ĞÎÍ¸¾µÉÏËæ»ú²ÉÑù£¬¹âÏßÔ­µã²»ÔÙÊÇÏà»úÔ­µã
+        // æ•£ç„¦ï¼Œåœ¨åœ†å½¢é€é•œä¸Šéšæœºé‡‡æ ·ï¼Œå…‰çº¿åŸç‚¹ä¸å†æ˜¯ç›¸æœºåŸç‚¹
         auto ray_origin = (defocus_angle_ <= 0) ? camera_center_ : defocus_disk_sample();
         auto ray_direction = pixel_sample - ray_origin;
 
-        // ÔÚ[0,1)Ê±¼ä¼ä¸ôÖ®¼äËæ»úÉú³É¹âÏß
+        // åœ¨[0,1)æ—¶é—´é—´éš”ä¹‹é—´éšæœºç”Ÿæˆå…‰çº¿
         auto ray_time = random_double();
 
         return Ray(ray_origin, ray_direction, ray_time);
     }
 
-    // ·µ»ØÔ²ĞÎÍ¸¾µÉÏËæ»úÒ»µã
+    // è¿”å›åœ†å½¢é€é•œä¸Šéšæœºä¸€ç‚¹
     Point3 defocus_disk_sample() const 
     {
         auto p = random_in_unit_disk();

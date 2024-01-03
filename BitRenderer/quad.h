@@ -1,5 +1,5 @@
 /*
-* Æ½ĞĞËÄ±ßĞÎÀà
+* å¹³è¡Œå››è¾¹å½¢ç±»
 */
 #ifndef QUAD_H
 #define QUAD_H
@@ -54,17 +54,17 @@ public:
     {
         auto denom = dot(normal_, r.get_direction());
 
-        // ¹âÏßÓëÆ½Ãæ·¨Ïß´¹Ö±
+        // å…‰çº¿ä¸å¹³é¢æ³•çº¿å‚ç›´
         if (fabs(denom) < kEpsilon)
             return false;
 
         auto t = (D_ - dot(normal_, r.get_origin())) / denom;
 
-        // ³¬³ö¹âÏß·¶Î§
+        // è¶…å‡ºå…‰çº¿èŒƒå›´
         if (!ray_t.contains(t))
             return false;
 
-        Point3 intersection = r.at(t); // ½»µã
+        Point3 intersection = r.at(t); // äº¤ç‚¹
 
         Vec3 planar_hitpt_vector = intersection - Q_;
         auto alpha = dot(w_, cross(planar_hitpt_vector, v_));
@@ -89,10 +89,10 @@ private:
     AABB bbox_;
     Vec3 normal_;
     double D_; // Ax+By+Cz=D
-    Vec3 w_; // ²Î¼ûRayTracingTheNextWeek 6.4
+    Vec3 w_; // å‚è§RayTracingTheNextWeek 6.4
     double area_;
 
-    // ÅĞ¶ÏÆ½ĞĞËÄ±ßĞÎËùÔÚÆ½ÃæÉÏÒ»µãÊÇ·ñÔÚÆ½ĞĞËÄ±ßĞÎÄÚ²¢Éè¶¨uv×ø±ê
+    // åˆ¤æ–­å¹³è¡Œå››è¾¹å½¢æ‰€åœ¨å¹³é¢ä¸Šä¸€ç‚¹æ˜¯å¦åœ¨å¹³è¡Œå››è¾¹å½¢å†…å¹¶è®¾å®šuvåæ ‡
     virtual bool is_interior(double a, double b, HitRecord& rec) const
     {
         if ((a < 0) || (1 < a) || (b < 0) || (1 < b))
@@ -103,12 +103,12 @@ private:
     }
 };
 
-// Á½µãÉú³ÉÁ¢·½Ìå
+// ä¸¤ç‚¹ç”Ÿæˆç«‹æ–¹ä½“
 inline std::shared_ptr<HittableList> construct_box(const Point3& a, const Point3& b, std::shared_ptr<Material> mat)
 {
     auto sides = std::make_shared<HittableList>();
 
-    // ¹¹ÔìÁ½¼«Öµµã
+    // æ„é€ ä¸¤æå€¼ç‚¹
     auto min = Point3(fmin(a.x(), b.x()), fmin(a.y(), b.y()), fmin(a.z(), b.z()));
     auto max = Point3(fmax(a.x(), b.x()), fmax(a.y(), b.y()), fmax(a.z(), b.z()));
 
@@ -116,12 +116,12 @@ inline std::shared_ptr<HittableList> construct_box(const Point3& a, const Point3
     auto dy = Vec3(0, max.y() - min.y(), 0);
     auto dz = Vec3(0, 0, max.z() - min.z());
 
-    sides->add(std::make_shared<Quad>(Point3(min.x(), min.y(), max.z()), dx, dy, mat)); // Ç°
-    sides->add(std::make_shared<Quad>(Point3(max.x(), min.y(), max.z()), -dz, dy, mat)); // ÓÒ
-    sides->add(std::make_shared<Quad>(Point3(max.x(), min.y(), min.z()), -dx, dy, mat)); // ºó
-    sides->add(std::make_shared<Quad>(Point3(min.x(), min.y(), min.z()), dz, dy, mat)); // ×ó
-    sides->add(std::make_shared<Quad>(Point3(min.x(), max.y(), max.z()), dx, -dz, mat)); // Ç°
-    sides->add(std::make_shared<Quad>(Point3(min.x(), min.y(), min.z()), dx, dz, mat)); // µ×
+    sides->add(std::make_shared<Quad>(Point3(min.x(), min.y(), max.z()), dx, dy, mat)); // å‰
+    sides->add(std::make_shared<Quad>(Point3(max.x(), min.y(), max.z()), -dz, dy, mat)); // å³
+    sides->add(std::make_shared<Quad>(Point3(max.x(), min.y(), min.z()), -dx, dy, mat)); // å
+    sides->add(std::make_shared<Quad>(Point3(min.x(), min.y(), min.z()), dz, dy, mat)); // å·¦
+    sides->add(std::make_shared<Quad>(Point3(min.x(), max.y(), max.z()), dx, -dz, mat)); // å‰
+    sides->add(std::make_shared<Quad>(Point3(min.x(), min.y(), min.z()), dx, dz, mat)); // åº•
 
     return sides;
 }

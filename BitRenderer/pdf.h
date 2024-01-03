@@ -1,5 +1,5 @@
 /*
-* ¸ÅÂÊÃÜ¶Èº¯ÊıÀà
+* æ¦‚ç‡å¯†åº¦å‡½æ•°ç±»
 * Probability Density Function
 */
 #ifndef PDF_H
@@ -59,7 +59,7 @@ private:
     ONB uvw_;
 };
 
-// ÓÃÓÚ¹âÔ´²ÉÑù
+// ç”¨äºå…‰æºé‡‡æ ·
 class HittablePDF : public PDF 
 {
 public:
@@ -83,7 +83,7 @@ private:
     Point3 origin_;
 };
 
-// ¼ÓÈ¨»ìºÏPDF
+// åŠ æƒæ··åˆPDF
 class MixturePDF : public PDF
 {
 public:

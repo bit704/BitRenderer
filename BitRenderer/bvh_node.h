@@ -1,5 +1,5 @@
 /*
-* BVHÊ÷½ÚµãÀà
+* BVHæ ‘èŠ‚ç‚¹ç±»
 */
 #ifndef BVH_NODE_H
 #define BVH_NODE_H
@@ -59,7 +59,7 @@ public:
             return false;
 
         bool hit_left = left_->hit(r, ray_t, rec);
-        // Èô»÷ÖÐ×ó½Úµã£¬¸üÐÂ»÷ÖÐÊ±¹âÏßÎ»ÖÃtÎª¹âÏßµÄ×î´ó»÷ÖÐ¾àÀë£¬ÔÙËã»÷ÖÐÓÒ½Úµã
+        // è‹¥å‡»ä¸­å·¦èŠ‚ç‚¹ï¼Œæ›´æ–°å‡»ä¸­æ—¶å…‰çº¿ä½ç½®tä¸ºå…‰çº¿çš„æœ€å¤§å‡»ä¸­è·ç¦»ï¼Œå†ç®—å‡»ä¸­å³èŠ‚ç‚¹
         bool hit_right = right_->hit(r, Interval(ray_t.get_min(), hit_left ? rec.t : ray_t.get_max()), rec);
 
         return hit_left || hit_right;

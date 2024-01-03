@@ -1,5 +1,5 @@
 /*
-* ÇòÀà
+* çƒç±»
 */
 #ifndef SPHERE_H
 #define SPHERE_H
@@ -12,7 +12,7 @@ class Sphere : public Hittable
 {
 public:
 
-    // ¾²Ì¬Çò
+    // é™æ€çƒ
     Sphere(Point3 center, double radius, std::shared_ptr<Material> material) 
         : center_(center), radius_(radius), material_(material), is_moving_(false) 
     {
@@ -20,7 +20,7 @@ public:
         bbox_ = AABB(center - rvec, center + rvec);
     }
 
-    // ÔË¶¯Çò
+    // è¿åŠ¨çƒ
     Sphere(Point3 center, Point3 center_end, double radius, std::shared_ptr<Material> material)
         : center_(center), radius_(radius), material_(material), is_moving_(true)
     {
@@ -45,17 +45,17 @@ public:
             return false;
         auto sqrtd = std::sqrt(discriminant);
 
-        auto root = (-half_b - sqrtd) / a; // ¸ü½üµÄ¸ù
+        auto root = (-half_b - sqrtd) / a; // æ›´è¿‘çš„æ ¹
         if (!interval.surrounds(root))
         {
-            root = (-half_b + sqrtd) / a; // ¸üÔ¶µÄ¸ù
+            root = (-half_b + sqrtd) / a; // æ›´è¿œçš„æ ¹
             if (!interval.surrounds(root))
                 return false;
         }
 
         rec.t = root;
         rec.p = r.at(rec.t);
-        Vec3 outward_normal = (rec.p - center_) / radius_; // µ¥Î»»¯
+        Vec3 outward_normal = (rec.p - center_) / radius_; // å•ä½åŒ–
         rec.set_face_normal(r, outward_normal);
         get_sphere_uv(outward_normal, rec.u, rec.v);
         rec.material = material_;
@@ -68,9 +68,9 @@ public:
         return bbox_;
     }
 
-    // ²Î¼ûRayTracingTheNextWeek 4.4
-    // ¸ù¾İÇòÉÏÒ»µãÈıÎ¬×ø±êµÃµ½ÆäuvÎÆÀí×ø±ê
-    // p: ÇòÉÏÒ»µã
+    // å‚è§RayTracingTheNextWeek 4.4
+    // æ ¹æ®çƒä¸Šä¸€ç‚¹ä¸‰ç»´åæ ‡å¾—åˆ°å…¶uvçº¹ç†åæ ‡
+    // p: çƒä¸Šä¸€ç‚¹
     // u: returned value [0,1] of angle around the Y axis from X=-1.
     // v: returned value [0,1] of angle from Y=-1 to Y=+1.
     static void get_sphere_uv(const Point3& p, double& u, double& v)
@@ -86,7 +86,7 @@ public:
 
     double pdf_value(const Point3& o, const Vec3& v) const override
     {
-        // ½ö¶Ô¾²Ì¬ÇòÓĞĞ§
+        // ä»…å¯¹é™æ€çƒæœ‰æ•ˆ
         HitRecord rec;
         if (!this->hit(Ray(o, v), Interval(0.001, kInfinitDouble), rec))
             return 0;
@@ -109,14 +109,14 @@ public:
 private:
 
     Point3 center_;
-    Vec3 center_move_vec_; // ÇòÒÆ¶¯¾àÀë
-    bool is_moving_; //ÇòÊÇ·ñÔÚÒÆ¶¯
+    Vec3 center_move_vec_; // çƒç§»åŠ¨è·ç¦»
+    bool is_moving_; //çƒæ˜¯å¦åœ¨ç§»åŠ¨
     AABB bbox_;
 
     double radius_;
     std::shared_ptr<Material> material_;
 
-    // »ñÈ¡tÊ±¿ÌµÄÇòĞÄÎ»ÖÃ
+    // è·å–tæ—¶åˆ»çš„çƒå¿ƒä½ç½®
     Point3 get_center(double t) const
     {
         return center_ + t * center_move_vec_;

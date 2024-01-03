@@ -1,5 +1,5 @@
 /*
-* 正交基类
+* 姝ｄ氦鍩虹被
 * Orthonormal Basis
 */
 #ifndef ONB_H
@@ -33,7 +33,7 @@ public:
     void build_from_w(const Vec3& w)
     {
         Vec3 unit_w = unit_vector(w);
-        // 选择一不与w平行的向量作为a
+        // 閫夋嫨涓�涓嶄笌w骞宠鐨勫悜閲忎綔涓篴
         Vec3 a = (fabs(unit_w.x()) > .9) ? Vec3(0, 1, 0) : Vec3(1, 0, 0);
         Vec3 v = unit_vector(cross(unit_w, a));
         Vec3 u = cross(unit_w, v);

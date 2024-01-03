@@ -1,19 +1,19 @@
 /*
-* ÃÉÌØ¿¨Âå»ı·ÖÊ¾Àı
-* ÒÔy=x^2ÔÚ[0,2]µÄ»ı·ÖÎªÀı
+* è’™ç‰¹å¡æ´›ç§¯åˆ†ç¤ºä¾‹
+* ä»¥y=x^2åœ¨[0,2]çš„ç§¯åˆ†ä¸ºä¾‹
 */
 #include <iostream>
 #include <iomanip>
 #include <cmath>
 #include "common.h"
 
-// f¼´pdfµÄ»ı·ÖcdfµÄ·´º¯Êı
+// få³pdfçš„ç§¯åˆ†cdfçš„åå‡½æ•°
 double f1(double d)
 {
     return 2 * d;
 }
 
-// pdfÔÚ»ı·ÖÇø¼äÉÏ»ı·Ö±Ø¶¨Îª1
+// pdfåœ¨ç§¯åˆ†åŒºé—´ä¸Šç§¯åˆ†å¿…å®šä¸º1
 double pdf1(double x)
 {
     return .5;
@@ -41,7 +41,7 @@ double pdf3(double x)
 
 void integral_lab()
 {
-    // º¯ÊıÖ¸ÕëÊı×é
+    // å‡½æ•°æŒ‡é’ˆæ•°ç»„
     double (*f[])(double) = { f1, f2, f3 };
     double (*pdf[])(double) = { pdf1, pdf2, pdf3 };
 
@@ -53,7 +53,7 @@ void integral_lab()
         {
             auto x = f[k](random_double());
             auto tmp = x * x / pdf[k](x);
-            if (std::isnormal(tmp)) // ±ÜÃânan¡¢inf
+            if (std::isnormal(tmp)) // é¿å…nanã€inf
                 sum += tmp;
         }
         std::cout << std::fixed << std::setprecision(12);

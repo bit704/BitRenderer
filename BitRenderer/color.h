@@ -1,5 +1,5 @@
 /*
-* ÑÕÉ«Àà
+* ï¿½ï¿½É«ï¿½ï¿½
 */
 #ifndef COLOR_H
 #define COLOR_H

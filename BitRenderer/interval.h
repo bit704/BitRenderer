@@ -1,5 +1,5 @@
 /*
-* ¼ä¸ôÀà
+* é—´éš”ç±»
 */
 #ifndef INTERVAL_H
 #define INTERVAL_H
@@ -17,7 +17,7 @@ public:
 
     Interval(double _min, double _max) : min_(_min), max_(_max) {}
 
-    // ²¢¼¯ÔËËã
+    // å¹¶é›†è¿ç®—
     Interval(const Interval& a, const Interval& b)
         : min_(fmin(a.min_, b.min_)), max_(fmax(a.max_, b.max_)) {}
 

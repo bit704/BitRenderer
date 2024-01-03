@@ -1,5 +1,5 @@
 /*
-* ¹âÏßÀà
+* å…‰çº¿ç±»
 */
 #ifndef RAY_H
 #define RAY_H

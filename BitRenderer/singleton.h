@@ -1,8 +1,8 @@
 /*
-* µ¥ÀýÄ£°åÀà
-* Meyers' Singleton£¬È·±£¶ÔÏó±»Ê¹ÓÃÇ°ÒÑÏÈ±»³õÊ¼»¯£¨Effective C++ Ìõ¿î4£©¡£
-* °Ñstaticµ¥Àý¶ÔÏó¶¨ÒåÔÚstaticº¯ÊýÄÚ²¿×÷Îª¾Ö²¿static±äÁ¿¡£
-* C++Ö»ÄÜ±£Ö¤ÔÚÍ¬Ò»¸öÎÄ¼þÖÐÉùÃ÷µÄstatic±äÁ¿µÄ³õÊ¼»¯Ë³ÐòÓëÆä±äÁ¿ÉùÃ÷µÄË³ÐòÒ»ÖÂ£¬µ«²»ÄÜ±£Ö¤²»Í¬µÄÎÄ¼þÖÐµÄstatic±äÁ¿µÄ³õÊ¼»¯Ë³Ðò¡£
+* å•ä¾‹æ¨¡æ¿ç±»
+* Meyers' Singletonï¼Œç¡®ä¿å¯¹è±¡è¢«ä½¿ç”¨å‰å·²å…ˆè¢«åˆå§‹åŒ–ï¼ˆEffective C++ æ¡æ¬¾4ï¼‰ã€‚
+* æŠŠstaticå•ä¾‹å¯¹è±¡å®šä¹‰åœ¨staticå‡½æ•°å†…éƒ¨ä½œä¸ºå±€éƒ¨staticå˜é‡ã€‚
+* C++åªèƒ½ä¿è¯åœ¨åŒä¸€ä¸ªæ–‡ä»¶ä¸­å£°æ˜Žçš„staticå˜é‡çš„åˆå§‹åŒ–é¡ºåºä¸Žå…¶å˜é‡å£°æ˜Žçš„é¡ºåºä¸€è‡´ï¼Œä½†ä¸èƒ½ä¿è¯ä¸åŒçš„æ–‡ä»¶ä¸­çš„staticå˜é‡çš„åˆå§‹åŒ–é¡ºåºã€‚
 */
 #ifndef SINGLETON_H
 #define SINGLETON_H

@@ -1,5 +1,5 @@
 /*
-* °üÎ§ºĞ
+* åŒ…å›´ç›’
 * Axis-Aligned Bounding Box
 */
 #ifndef AABB_H
@@ -21,7 +21,7 @@ public:
     AABB(const Interval& x, const Interval& y, const Interval& z)
         : x_(x), y_(y), z_(z) {}
 
-    // °üÎ§ºĞÁ½¼«Öµµã
+    // åŒ…å›´ç›’ä¸¤æå€¼ç‚¹
     AABB(const Point3& a, const Point3& b)
     {
         x_ = Interval(fmin(a[0], b[0]), fmax(a[0], b[0]));
@@ -29,7 +29,7 @@ public:
         z_ = Interval(fmin(a[2], b[2]), fmax(a[2], b[2]));
     }
 
-    // ²¢¼¯ÔËËã
+    // å¹¶é›†è¿ç®—
     AABB(const AABB& box0, const AABB& box1)
     {
         x_ = Interval(box0.x_, box1.x_);
@@ -52,9 +52,9 @@ public:
         //        (axis(a).get_max() - r.get_origin()[a]) / r.get_direction()[a]);
         //    double t1 = fmax((axis(a).get_min() - r.get_origin()[a]) / r.get_direction()[a],
         //        (axis(a).get_max() - r.get_origin()[a]) / r.get_direction()[a]);
-        //    ray_t.set_min(fmax(t0, ray_t.get_min())); // ¸üĞÂ×îĞ¡ÖµÎª´óÕß
-        //    ray_t.set_max(fmin(t1, ray_t.get_max())); // ¸üĞÂ×î´óÖµÎªĞ¡Õß
-        //    if (ray_t.get_max() <= ray_t.get_min()) // Ã»ÓĞÖØºÏËµÃ÷¹âÏß²»Óë°üÎ§ºĞÏà½»
+        //    ray_t.set_min(fmax(t0, ray_t.get_min())); // æ›´æ–°æœ€å°å€¼ä¸ºå¤§è€…
+        //    ray_t.set_max(fmin(t1, ray_t.get_max())); // æ›´æ–°æœ€å¤§å€¼ä¸ºå°è€…
+        //    if (ray_t.get_max() <= ray_t.get_min()) // æ²¡æœ‰é‡åˆè¯´æ˜å…‰çº¿ä¸ä¸åŒ…å›´ç›’ç›¸äº¤
         //        return false;
         //}
 
@@ -79,7 +79,7 @@ public:
         return true;
     }
 
-    // ±ÜÃâ¹ıÕ­
+    // é¿å…è¿‡çª„
     AABB pad()
     {
         double delta = 1e-4;

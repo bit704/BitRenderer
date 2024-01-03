@@ -1,5 +1,5 @@
 /*
-* ¹¤¾ß³£Á¿ºÍº¯Êı
+* å·¥å…·å¸¸é‡å’Œå‡½æ•°
 */
 #ifndef COMMON_H
 #define COMMON_H
@@ -9,7 +9,7 @@
 
 const double kInfinitDouble = std::numeric_limits<double>::infinity();
 const double kPI = 3.1415926535897932385;
-const double kEpsilon = 1e-8; // ±È½Ï¸¡µãÊıµÄãĞÖµ
+const double kEpsilon = 1e-8; // æ¯”è¾ƒæµ®ç‚¹æ•°çš„é˜ˆå€¼
 
 inline double degrees_to_radians(double degrees) {
     return degrees * kPI / 180.0;

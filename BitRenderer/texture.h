@@ -1,5 +1,5 @@
 /*
-* ÎÆÀíÀà
+* çº¹ç†ç±»
 */
 #ifndef TEXTURE_H
 #define TEXTURE_H
@@ -18,7 +18,7 @@ public:
     virtual Color value(double u, double v, const Point3& p) const = 0;
 };
 
-// ×ø±êÎŞ¹Øºã¶¨ÑÕÉ«ÎÆÀí
+// åæ ‡æ— å…³æ’å®šé¢œè‰²çº¹ç†
 class SolidColor : public Texture
 {
 public:
@@ -36,7 +36,7 @@ private:
     Color color_value_;
 };
 
-// ÆåÅÌ¸ñ3DÎÆÀí£¬½öÓë¿Õ¼ä×ø±êpÏà¹Ø
+// æ£‹ç›˜æ ¼3Dçº¹ç†ï¼Œä»…ä¸ç©ºé—´åæ ‡pç›¸å…³
 class CheckerTexture : public Texture
 {
 public:
@@ -74,13 +74,13 @@ public:
 
     Color value(double u, double v, const Point3& p) const override
     {
-        // ´¿ºìËµÃ÷ÎÆÀíÃ»ÓĞ¶ÁÈ¡³É¹¦
+        // çº¯çº¢è¯´æ˜çº¹ç†æ²¡æœ‰è¯»å–æˆåŠŸ
         if (image_read_.get_height() <= 0) 
             return Color(1., 0., 0.);
 
         u = std::clamp(u, 0., 1.);
-        //v = std::clamp(v, 0., 1.); // ²»·­×ªv
-        v = 1.0 - std::clamp(v, 0., 1.); // ·­×ªv
+        //v = std::clamp(v, 0., 1.); // ä¸ç¿»è½¬v
+        v = 1.0 - std::clamp(v, 0., 1.); // ç¿»è½¬v
 
         int i = static_cast<int>(v * image_read_.get_height());
         int j = static_cast<int>(u * image_read_.get_width());
@@ -98,7 +98,7 @@ public:
 
     NoiseTexture() {}
 
-    // ÆµÂÊ
+    // é¢‘ç‡
     NoiseTexture(double sc) : scale_(sc) {}
 
     Color value(double u, double v, const Point3& p) const override

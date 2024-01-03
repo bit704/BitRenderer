@@ -1,5 +1,5 @@
 /*
-* ²ÄÖÊÀà
+* æè´¨ç±»
 */
 #ifndef MATERIAL_H
 #define MATERIAL_H
@@ -48,9 +48,9 @@ public:
 
     bool scatter(const Ray& r_in, const HitRecord& rec, ScatterRecord& srec) const override 
     {
-        // Ëæ»úÔÚ°ëÇòÉÏ²ÉÑù·½Ïò
+        // éšæœºåœ¨åŠçƒä¸Šé‡‡æ ·æ–¹å‘
          //Vec3 scatter_direction = random_on_hemisphere(rec.normal);
-        // ÀÊ²®·Ö²¼£¬¿¿½ü·¨ÏßµÄ·½ÏòÉÏ·´Éä¿ÉÄÜĞÔ¸ü´ó
+        // æœ—ä¼¯åˆ†å¸ƒï¼Œé è¿‘æ³•çº¿çš„æ–¹å‘ä¸Šåå°„å¯èƒ½æ€§æ›´å¤§
         //Vec3 scatter_direction = rec.normal + random_unit_vector();
 
         srec.attenuation = albedo_->value(rec.u, rec.v, rec.p);
@@ -90,7 +90,7 @@ public:
 private:
 
     Color albedo_;
-    double fuzz_; // Ä£ºı¶È
+    double fuzz_; // æ¨¡ç³Šåº¦
 };
 
 class Dielectric : public Material
@@ -104,14 +104,14 @@ public:
         srec.attenuation = Color(1., 1., 1.);
         srec.pdf_ptr = nullptr;
         srec.skip_pdf = true;
-        // ¿ÕÆøµÄÕÛÉäÂÊÎª1
+        // ç©ºæ°”çš„æŠ˜å°„ç‡ä¸º1
         double refraction_ratio = rec.front_face ? (1. / ir_) : ir_;
 
         Vec3 unit_direction = unit_vector(r_in.get_direction());
 
         double cos_theta = fmin(dot(-unit_direction, rec.normal), 1.);
         double sin_theta = sqrt(1.0 - cos_theta * cos_theta);
-        // Í¨¹ıSnell¡¯s lawÅĞ¶ÏÕÛÉäÊÇ·ñÄÜ·¢Éú
+        // é€šè¿‡Snellâ€™s lawåˆ¤æ–­æŠ˜å°„æ˜¯å¦èƒ½å‘ç”Ÿ
         bool cannot_refract = refraction_ratio * sin_theta > 1.;
         Vec3 direction;
         if (cannot_refract || reflectance(cos_theta, refraction_ratio) > random_double())
@@ -126,9 +126,9 @@ public:
 
 private:
 
-    double ir_; // ÕÛÉäÂÊ
+    double ir_; // æŠ˜å°„ç‡
 
-    // Schlick's approximation¼ÆËã0¶ÈµÄ·ÆÄù¶ûÕÛÉäÂÊ
+    // Schlick's approximationè®¡ç®—0åº¦çš„è²æ¶…å°”æŠ˜å°„ç‡
     static double reflectance(double cosine, double ref_idx)
     {
         auto r0 = (1 - ref_idx) / (1 + ref_idx);
@@ -144,8 +144,8 @@ public:
     DiffuseLight(std::shared_ptr<Texture> a) : emit_(a) {}
     DiffuseLight(Color c) : emit_(std::make_shared<SolidColor>(c)) {}
 
-    // ×Ô·¢¹â
-    // ËùÓĞÃæ¾ù·¢¹â£¬²»×ö±³ÃæÌŞ³ı
+    // è‡ªå‘å…‰
+    // æ‰€æœ‰é¢å‡å‘å…‰ï¼Œä¸åšèƒŒé¢å‰”é™¤
     Color emitted(double u, double v, const Point3& p) const override
     {
         return emit_->value(u, v, p);
