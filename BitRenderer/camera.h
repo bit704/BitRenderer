@@ -20,17 +20,56 @@ class Camera
 {
 public:
 
-    void render(const std::shared_ptr<Hittable>& world, const std::shared_ptr<Hittable>& light = nullptr)
+    // 初始化，并返回渲染图像数组的指针
+    unsigned char* initialize()
     {
-        initialize();
+        height_ = static_cast<int>(width_ / aspect_ratio_);
+        height_ = (height_ < 1) ? 1 : height_;
 
-        sqrt_spp_ = (int)std::sqrt(samples_per_pixel_);
+        image_ = std::make_unique<ImageWrite>(image_name_, width_, height_, channel_);
 
+        camera_center_ = lookfrom_;
+
+        // 相机属性
+        auto theta = degrees_to_radians(vfov_);
+        auto h = tan(theta / 2);
+        auto viewport_height = 2 * h * focus_dist_;
+
+        auto viewport_width = viewport_height * (static_cast<double>(width_) / height_);
+
+        // 计算相机坐标系，右手系(z轴指向屏幕外)
+        w_ = unit_vector(lookfrom_ - lookat_); // 与相机视点方向相反 (0,0,-1)
+        u_ = unit_vector(cross(vup_, w_)); // 指向相机右方 (-1,0,0)
+        v_ = cross(w_, u_); // 指向相机上方 (0,1,0)
+
+        Vec3 viewport_u = viewport_width * u_;
+        Vec3 viewport_v = viewport_height * -v_;
+
+        // 每像素对应的视口长度
+        pixel_delta_u_ = viewport_u / width_;
+        pixel_delta_v_ = viewport_v / height_;
+        // 左上角像素的位置，像素位置以中心点表示
+        auto viewport_upper_left = camera_center_ - (focus_dist_ * w_) - viewport_u / 2 - viewport_v / 2;
+        pixel00_loc_ = viewport_upper_left + 0.5 * (pixel_delta_u_ + pixel_delta_v_);
+
+        // 相机散焦平面的基向量
+        auto defocus_radius = focus_dist_ * tan(degrees_to_radians(defocus_angle_ / 2));
+        defocus_disk_u_ = u_ * defocus_radius;
+        defocus_disk_v_ = v_ * defocus_radius;
+
+        return image_->get_image_data();
+    }
+
+    // 渲染图像
+    void render(const std::shared_ptr<Hittable>& world, const std::shared_ptr<Hittable>& light = nullptr)
+        const
+    {
         for (int i = 0; i < height_; ++i)
         {
             std::clog << std::fixed << std::setprecision(2);
             std::clog << "\rtask remaining: " << (double)(height_ - i - 1) / height_ * 100 << "%" << std::flush;
 
+// OpenMP并发            
 #pragma omp parallel for
 
             for (int j = 0; j < width_; ++j)
@@ -65,6 +104,7 @@ public:
     void set_samples_per_pixel(const int& samples_per_pixel)
     {
         samples_per_pixel_ = samples_per_pixel;
+        sqrt_spp_ = (int)std::sqrt(samples_per_pixel_);
     }
 
     void set_max_depth(const int& max_depth)
@@ -144,48 +184,10 @@ private:
 
     double defocus_angle_ = 0;  // 光线经过每个像素的变化
     double focus_dist_ = 10;    // 相机原点到完美聚焦平面的距离，这里与焦距相同
-    Vec3 defocus_disk_u_;  // 散焦横向半径
-    Vec3 defocus_disk_v_;  // 散焦纵向半径
+    Vec3   defocus_disk_u_;  // 散焦横向半径
+    Vec3   defocus_disk_v_;  // 散焦纵向半径
 
     Color background_ = Color(.7, .8, 1.);
-
-    // 初始化
-    void initialize() 
-    {
-        height_ = static_cast<int>(width_ / aspect_ratio_);
-        height_ = (height_ < 1) ? 1 : height_;
-
-        image_ = std::make_unique<ImageWrite>(image_name_, width_, height_, channel_);
-        
-        camera_center_ = lookfrom_;
-
-        // 相机属性
-        auto theta = degrees_to_radians(vfov_);
-        auto h = tan(theta / 2);
-        auto viewport_height = 2 * h * focus_dist_;
-
-        auto viewport_width = viewport_height * (static_cast<double>(width_) / height_);
-        
-        // 计算相机坐标系，右手系(z轴指向屏幕外)
-        w_ = unit_vector(lookfrom_ - lookat_); // 与相机视点方向相反 (0,0,-1)
-        u_ = unit_vector(cross(vup_, w_)); // 指向相机右方 (-1,0,0)
-        v_ = cross(w_, u_); // 指向相机上方 (0,1,0)
-
-        Vec3 viewport_u = viewport_width * u_;
-        Vec3 viewport_v = viewport_height * -v_;
-
-        // 每像素对应的视口长度
-        pixel_delta_u_ = viewport_u / width_;
-        pixel_delta_v_ = viewport_v / height_;
-        // 左上角像素的位置，像素位置以中心点表示
-        auto viewport_upper_left = camera_center_ - (focus_dist_ * w_) - viewport_u / 2 - viewport_v / 2;
-        pixel00_loc_ = viewport_upper_left + 0.5 * (pixel_delta_u_ + pixel_delta_v_);
-
-        // 相机散焦平面的基向量
-        auto defocus_radius = focus_dist_ * tan(degrees_to_radians(defocus_angle_ / 2));
-        defocus_disk_u_ = u_ * defocus_radius;
-        defocus_disk_v_ = v_ * defocus_radius;
-    }
 
     // 获取光线击中处的颜色
     Color ray_color(const Ray& r, const std::shared_ptr<Hittable>& world, const std::shared_ptr<Hittable>& light, int depth) const
@@ -219,7 +221,7 @@ private:
 
         Ray scattered;
         double pdf_val;
-        // 有无光源采样
+        // 同时对光源和材质采样
         if (light != nullptr)
         {
             auto light_ptr = std::make_shared<HittablePDF>(*light, rec.p);
@@ -228,6 +230,7 @@ private:
             scattered = Ray(rec.p, p.generate(), r.get_time());
             pdf_val = p.value(scattered.get_direction());
         }
+        // 只对材质采样
         else
         {
             scattered = Ray(rec.p, srec.pdf_ptr->generate(), r.get_time());

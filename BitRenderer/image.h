@@ -1,10 +1,12 @@
 /*
 * 图片写入类
 * 用于写入png格式图片
+* 
 * 图片读入类
 * 用于读入纹理图片
 * 
 * 除读写外，像素值在运算时值域为[0,1]
+* 写入像素值时进行伽马校正
 */
 #ifndef IMAGE_H
 #define IMAGE_H
@@ -21,6 +23,11 @@ public:
 	void set_pixel(const int& row, const int& col, Color c, const int& samples_per_pixel);
 	void set_pixel(const int& row, const int& col, const int& r, const int& g, const int& b);
 	void write();
+
+	unsigned char* get_image_data() const
+	{
+		return image_data_;
+	}
 
 private:
 

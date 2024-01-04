@@ -154,6 +154,7 @@
     <ClInclude Include="point.h" />
     <ClInclude Include="quad.h" />
     <ClInclude Include="ray.h" />
+    <ClInclude Include="scene.h" />
     <ClInclude Include="singleton.h" />
     <ClInclude Include="sphere.h" />
     <ClInclude Include="texture.h" />

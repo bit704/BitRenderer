@@ -7,10 +7,10 @@
 
 // 以下头文件包含函数定义，不能包含在image.h中，否则当image.h被包含时会导致重定义错误LNK2005、LNK1169
 #define STB_IMAGE_IMPLEMENTATION
-#include "tool/stb_image.h"
+#include "stb_image/stb_image.h"
 #define __STDC_LIB_EXT1__ // 避免stb_image_write.h报C4996错误，未使用_s函数
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "tool/stb_image_write.h"
+#include "stb_image/stb_image_write.h"
 
 #include "logger.h"
 
@@ -74,11 +74,12 @@ ImageWrite::~ImageWrite()
 	stbi_image_free(image_data_);
 }
 
-const std::string ImageRead::kInputPath_ = "../texture/";
+const std::string ImageRead::kInputPath_ = "./texture/";
 
 ImageRead::ImageRead(std::string image_name) : channel_(3)
 {
-	image_data_ = stbi_load(image_name.c_str(), &width_, &height_, &channel_, channel_);
+	std::string image_path = kInputPath_ + image_name;
+	image_data_ = stbi_load(image_path.c_str(), &width_, &height_, &channel_, channel_);
 }
 
 Color ImageRead::get_pixel(const int& row, const int& col) const
