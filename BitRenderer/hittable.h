@@ -95,8 +95,8 @@ public:
         cos_theta_ = cos(radians);
         bbox_ = object_->get_bbox();
 
-        Point3 min(kInfinitDouble, kInfinitDouble, kInfinitDouble);
-        Point3 max(-kInfinitDouble, -kInfinitDouble, -kInfinitDouble);
+        Point3 min_p(kInfinitDouble, kInfinitDouble, kInfinitDouble);
+        Point3 max_p(-kInfinitDouble, -kInfinitDouble, -kInfinitDouble);
 
         for (int i = 0; i < 2; i++)
         {
@@ -115,14 +115,14 @@ public:
 
                     for (int c = 0; c < 3; c++)
                     {
-                        min[c] = fmin(min[c], tester[c]);
-                        max[c] = fmax(max[c], tester[c]);
+                        min_p[c] = fmin(min_p[c], tester[c]);
+                        max_p[c] = fmax(max_p[c], tester[c]);
                     }
                 }
             }
         }
 
-        bbox_ = AABB(min, max);
+        bbox_ = AABB(min_p, max_p);
     }
 
     bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const override
