@@ -23,9 +23,17 @@ int main()
 {
 
     // 创建应用程序窗口
-    WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"ImGui", nullptr };
+    WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, 
+        GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"ImGui", nullptr };
     ::RegisterClassExW(&wc);
-    HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"BitRenderer", WS_OVERLAPPEDWINDOW, 100, 100, 960, 600, nullptr, nullptr, wc.hInstance, nullptr);
+
+    // 获取桌面可用区域大小，最大化窗口
+    RECT rect;
+    SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
+    int width = rect.right - rect.left;
+    int height = rect.bottom - rect.top;
+    HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"BitRenderer", WS_OVERLAPPEDWINDOW, 
+        rect.left, rect.top, width, height, nullptr, nullptr, wc.hInstance, nullptr);
 
     // 初始化Direct3D
     if (!CreateDeviceD3D(hwnd))
@@ -36,7 +44,8 @@ int main()
     }
 
     // 因为需要将D3D12_CPU_DESCRIPTOR_HANDLE传给ImTextureID, 确保适合
-    static_assert(sizeof(ImTextureID) >= sizeof(D3D12_CPU_DESCRIPTOR_HANDLE), "D3D12_CPU_DESCRIPTOR_HANDLE is too large to fit in an ImTextureID");
+    static_assert(sizeof(ImTextureID) >= sizeof(D3D12_CPU_DESCRIPTOR_HANDLE), 
+        "D3D12_CPU_DESCRIPTOR_HANDLE is too large to fit in an ImTextureID");
 
     ID3D12Resource* my_texture = nullptr;
 
