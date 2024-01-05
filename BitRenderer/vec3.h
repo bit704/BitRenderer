@@ -15,7 +15,8 @@ public:
 
 	Vec3() : e_{0,0,0} {}
 	Vec3(double t0, double t1, double t2) : e_{t0,t1,t2} {}
-	// 设置相机外参用
+
+	// 用于设置相机外参、颜色
 	Vec3(float t[3]) : e_{t[0],t[1],t[2]} {}
 
 	Vec3(const Vec3& v) : e_{ v.e_[0],v.e_[1], v.e_[2] } {}
