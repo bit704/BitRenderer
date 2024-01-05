@@ -276,7 +276,6 @@ int main()
             ImGui::InputFloat3("lookat", lookat);
             ImGui::InputFloat3("vup", vup);
 
-            
             ImGui::ColorEdit3("background color", background);
             ImGui::SameLine(); 
             HelpMarker(
@@ -339,7 +338,7 @@ int main()
 
             // 传递SRV GPU句柄，而不是CPU句柄。传递内部指针值, 转换为ImTextureID。
             ImGui::Image((ImTextureID)my_texture_srv_gpu_handle.ptr, ImVec2((float)cam.get_image_width(), (float)cam.get_image_height()));
-            ImGui::Text("Once done, image will be save to output folder.", cam.get_image_width(), cam.get_image_height());
+            ImGui::Text("Once done, image will be save to ./output/ folder.");
             ImGui::End();
         }
 

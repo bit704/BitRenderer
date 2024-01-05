@@ -15,7 +15,7 @@
 #include "logger.h"
 
 // static关键字只能用于类定义体内部的声明中，定义时不能标示为static
-const std::string ImageWrite::kOutputPath_ = "../output/";
+const std::string ImageWrite::kOutputPath_ = "./output/";
 
 ImageWrite::ImageWrite(std::string imageName, int image_width, int image_height, int channel)
 	: image_path_(kOutputPath_ + imageName), width_(image_width), height_(image_height), channel_(channel)
