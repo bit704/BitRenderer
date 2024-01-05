@@ -65,8 +65,8 @@ int main()
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // 键盘
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // 手柄
 
     // 设置IMGUI的style
     ImGui::StyleColorsDark();
@@ -322,10 +322,6 @@ int main()
         // 显示渲染过程图片
         if(show_rendering_process)
         {
-            // 加载纹理
-            bool ret = LoadTextureFromImageData(image_data, cam.get_image_width(), cam.get_image_height(), g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture);
-            IM_ASSERT(ret);
-
             ImGui::Begin("rendering process");
             ImGui::Text("image size = %d x %d", cam.get_image_width(), cam.get_image_height());
 
@@ -336,8 +332,13 @@ int main()
             auto duration_sec = duration_cast<seconds>(duration);
             ImGui::Text("cal time = %d sec (%d min)", duration_sec.count(), duration_min.count());
 
+            // 加载纹理
+            bool ret = LoadTextureFromImageData(image_data, cam.get_image_width(), cam.get_image_height(), g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture);
+            IM_ASSERT(ret);
+
             // 传递SRV GPU句柄，而不是CPU句柄。传递内部指针值, 转换为ImTextureID。
             ImGui::Image((ImTextureID)my_texture_srv_gpu_handle.ptr, ImVec2((float)cam.get_image_width(), (float)cam.get_image_height()));
+
             ImGui::Text("Once done, image will be save to ./output/ folder.");
             ImGui::End();
         }
@@ -379,6 +380,7 @@ int main()
         g_pd3dCommandQueue->Signal(g_fence, fenceValue);
         g_fenceLastSignaledValue = fenceValue;
         frameCtx->FenceValue = fenceValue;
+
     }
 
     WaitForLastSubmittedFrame();
