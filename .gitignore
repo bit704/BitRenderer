@@ -1,7 +1,8 @@
 # custom
 *.lnk
-output/
 imgui.ini
+**/output/*
+!**/output/.gitkeep
 
 #######################################################
 
