@@ -429,6 +429,10 @@ inline bool LoadTextureFromImageData(unsigned char* image_data, const int& image
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     d3d_device->CreateShaderResourceView(pTexture, &srvDesc, srv_cpu_handle);
 
+    // 一定要释放之前指向的资源，不然会报E_OUTOFMEMORY
+    if (*out_tex_resource != nullptr)
+        (*out_tex_resource)->Release();
+
     // 返回结果
     *out_tex_resource = pTexture;
 
