@@ -95,7 +95,7 @@ int main()
     float lookfrom[3] = { 13, 2, 3 };
     float lookat[3] = { 0, 0, 0 };
     float vup[3] = { 0, 1, 0 };
-    float background[3] = { .7, .8, 1 };
+    float background[3] = { .7f, .8f, 1 };
 
     // 窗口状态项
     bool show_rendering_process = false;
@@ -160,7 +160,7 @@ int main()
                 memcpy(lookat, lookat_t, 3 * sizeof(float));
                 float vup_t[3] = { 0, 1, 0 };
                 memcpy(vup, vup_t, 3 * sizeof(float));
-                float background_t[3] = { .7, .8, 1 };
+                float background_t[3] = { .7f, .8f, 1 };
                 memcpy(background, background_t, 3 * sizeof(float));
             }
             else if (scene_current_idx == 1)
@@ -192,7 +192,7 @@ int main()
                 memcpy(lookat, lookat_t, 3 * sizeof(float));
                 float vup_t[3] = { 0, 1, 0 };
                 memcpy(vup, vup_t, 3 * sizeof(float));
-                float background_t[3] = { .7, .8, 1 };
+                float background_t[3] = { .7f, .8f, 1 };
                 memcpy(background, background_t, 3 * sizeof(float));
             }
             else if (scene_current_idx == 3)
