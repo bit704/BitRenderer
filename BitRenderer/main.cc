@@ -95,6 +95,7 @@ int main()
     float lookfrom[3] = { 13, 2, 3 };
     float lookat[3] = { 0, 0, 0 };
     float vup[3] = { 0, 1, 0 };
+    float background[3] = { .7, .8, 1 };
 
     // 窗口状态项
     bool show_rendering_process = false;
@@ -153,15 +154,14 @@ int main()
                 samples_per_pixel = 100;
                 max_depth = 50;
                 vfov = 20;
-                lookfrom[0] = 13;
-                lookfrom[1] = 2;
-                lookfrom[2] = 3;
-                lookat[0] = 0;
-                lookat[1] = 0;
-                lookat[2] = 0;
-                vup[0] = 0;
-                vup[1] = 1;
-                vup[2] = 0;
+                float lookfrom_t[3] = { 13, 2, 3 };
+                memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
+                float lookat_t[3] = { 0, 0, 0 };
+                memcpy(lookat, lookat_t, 3 * sizeof(float));
+                float vup_t[3] = { 0, 1, 0 };
+                memcpy(vup, vup_t, 3 * sizeof(float));
+                float background_t[3] = { .7, .8, 1 };
+                memcpy(background, background_t, 3 * sizeof(float));
             }
             else if (scene_current_idx == 1)
             {
@@ -170,15 +170,14 @@ int main()
                 samples_per_pixel = 300;
                 max_depth = 40;
                 vfov = 40;
-                lookfrom[0] = 478;
-                lookfrom[1] = 278;
-                lookfrom[2] = -600;
-                lookat[0] = 278;
-                lookat[1] = 278;
-                lookat[2] = 0;
-                vup[0] = 0;
-                vup[1] = 1;
-                vup[2] = 0;
+                float lookfrom_t[3] = { 478, 278, -600 };
+                memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
+                float lookat_t[3] = { 278, 278, 0 };
+                memcpy(lookat, lookat_t, 3 * sizeof(float));
+                float vup_t[3] = { 0, 1, 0 };
+                memcpy(vup, vup_t, 3 * sizeof(float));
+                float background_t[3] = { 0, 0, 0 };
+                memcpy(background, background_t, 3 * sizeof(float));
             }
             else if (scene_current_idx == 2)
             {
@@ -187,15 +186,14 @@ int main()
                 samples_per_pixel = 100;
                 max_depth = 50;
                 vfov = 20;
-                lookfrom[0] = 13;
-                lookfrom[1] = 2;
-                lookfrom[2] = 3;
-                lookat[0] = 0;
-                lookat[1] = 0;
-                lookat[2] = 0;
-                vup[0] = 0;
-                vup[1] = 1;
-                vup[2] = 0;
+                float lookfrom_t[3] = { 13, 2, 3 };
+                memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
+                float lookat_t[3] = { 0, 0, 0 };
+                memcpy(lookat, lookat_t, 3 * sizeof(float));
+                float vup_t[3] = { 0, 1, 0 };
+                memcpy(vup, vup_t, 3 * sizeof(float));
+                float background_t[3] = { .7, .8, 1 };
+                memcpy(background, background_t, 3 * sizeof(float));
             }
             else if (scene_current_idx == 3)
             {
@@ -204,26 +202,24 @@ int main()
                 samples_per_pixel = 100;
                 max_depth = 50;
                 vfov = 40;
-                lookfrom[0] = 278;
-                lookfrom[1] = 278;
-                lookfrom[2] = -800;
-                lookat[0] = 278;
-                lookat[1] = 278;
-                lookat[2] = 0;
-                vup[0] = 0;
-                vup[1] = 1;
-                vup[2] = 0;
+                float lookfrom_t[3] = { 278, 278, -800 };
+                memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
+                float lookat_t[3] = { 278, 278, 0 };
+                memcpy(lookat, lookat_t, 3 * sizeof(float));
+                float vup_t[3] = { 0, 1, 0 };
+                memcpy(vup, vup_t, 3 * sizeof(float));
+                float background_t[3] = { 0, 0, 0 };
+                memcpy(background, background_t, 3 * sizeof(float));
             }
 
             // 输入图片宽度
             ImGui::InputInt("image width", &image_width);
-            ImGui::SameLine(); HelpMarker(
-                "100~4096");
+            ImGui::SameLine(); 
+            HelpMarker("100~4096");
             if (image_width < 100)
                 image_width = 100;
             if (image_width > 4096)
                 image_width = 4096;
-
 
             // 选择图片宽高比
             const char* combo_preview_value_ar = aspect_ratios[aspect_ratio_idx];
@@ -251,8 +247,8 @@ int main()
 
             // 输入spp
             ImGui::InputInt("samples per pixel", &samples_per_pixel);
-            ImGui::SameLine(); HelpMarker(
-                "10~10000");
+            ImGui::SameLine();
+            HelpMarker("10~10000");
             if (samples_per_pixel < 10)
                 samples_per_pixel = 10;
             if (samples_per_pixel > 10000)
@@ -260,8 +256,8 @@ int main()
 
             // 输入最大深度
             ImGui::InputInt("max depth", &max_depth);
-            ImGui::SameLine(); HelpMarker(
-                "10~400");
+            ImGui::SameLine(); 
+            HelpMarker("10~400");
             if (max_depth < 10)
                 max_depth = 10;
             if (max_depth > 400)
@@ -269,7 +265,8 @@ int main()
 
             // 选择
             ImGui::DragInt("vfov", &vfov, 1, 1, 179, "%d°", ImGuiSliderFlags_AlwaysClamp);
-            ImGui::SameLine(); HelpMarker(
+            ImGui::SameLine(); 
+            HelpMarker(
                 "Drag to edit value.\n"
                 "Hold SHIFT/ALT for faster/slower edit.\n"
                 "Double-click or CTRL+click to input value.");
@@ -278,6 +275,15 @@ int main()
             ImGui::InputFloat3("lookfrom", lookfrom);
             ImGui::InputFloat3("lookat", lookat);
             ImGui::InputFloat3("vup", vup);
+
+            
+            ImGui::ColorEdit3("background color", background);
+            ImGui::SameLine(); 
+            HelpMarker(
+                "Click on the color square to open a color picker.\n"
+                "Click and hold to use drag and drop.\n"
+                "Right-click on the color square to show options.\n"
+                "CTRL+click on individual component to input value.\n");
 
             if (ImGui::Button("start rendering") && !show_rendering_process)
             {
@@ -293,6 +299,7 @@ int main()
                 cam.set_lookfrom(Point3(lookfrom));
                 cam.set_lookat(Point3(lookat));
                 cam.set_vup(Vec3(vup));
+                cam.set_background(Color(background));
 
                 image_data = cam.initialize();
 
