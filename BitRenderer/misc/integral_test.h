@@ -39,7 +39,7 @@ double pdf3(double x)
     return (3. / 8.) * x * x;
 }
 
-void integral_lab()
+void integral_test()
 {
     // 函数指针数组
     double (*f[])(double) = { f1, f2, f3 };

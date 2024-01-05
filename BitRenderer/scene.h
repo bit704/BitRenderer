@@ -1,6 +1,6 @@
 /*
-* 预置场景
-*/
+ * 预置场景
+ */
 #ifndef SCENE_H
 #define SCENE_H
 
@@ -37,8 +37,9 @@ inline void scene_composite1(const Camera& cam)
                     auto albedo = Color::random() * Color::random();
                     sphere_material = make_shared<Lambertian>(albedo);
                     // 在0~1时间内从center运动到center_end，随机向上弹跳
-                    auto center_end = center + Vec3(0, random_double(0, .5), 0);
-                    list.add(make_shared<Sphere>(center, center_end, 0.2, sphere_material));
+                    //auto center_end = center + Vec3(0, random_double(0, .5), 0);
+                    //list.add(make_shared<Sphere>(center, center_end, 0.2, sphere_material));
+                    list.add(make_shared<Sphere>(center, 0.2, sphere_material));
                 }
                 else if (choose_mat < 0.95)
                 {

@@ -1,6 +1,6 @@
 /*
-* 面片雾
-*/
+ * 面片雾
+ */
 #ifndef CONSTANT_MEDIUM_H
 #define CONSTANT_MEDIUM_H
 

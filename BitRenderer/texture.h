@@ -1,6 +1,6 @@
 /*
-* 纹理类
-*/
+ * 纹理类
+ */
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
@@ -41,11 +41,11 @@ class CheckerTexture : public Texture
 {
 public:
 
-    CheckerTexture(double _scale, std::shared_ptr<Texture> _even, std::shared_ptr<Texture> _odd)
-        : inv_scale(1.0 / _scale), even_(_even), odd_(_odd) {}
+    CheckerTexture(double scale, std::shared_ptr<Texture> even, std::shared_ptr<Texture> odd)
+        : inv_scale(1.0 / scale), even_(even), odd_(odd) {}
 
-    CheckerTexture(double _scale, Color c1, Color c2)
-        : inv_scale(1.0 / _scale),
+    CheckerTexture(double scale, Color c1, Color c2)
+        : inv_scale(1.0 / scale),
         even_(std::make_shared<SolidColor>(c1)),
         odd_(std::make_shared<SolidColor>(c2)) {}
 
@@ -75,15 +75,15 @@ public:
     Color value(double u, double v, const Point3& p) const override
     {
         // 纯红说明纹理没有读取成功
-        if (image_read_.get_height() <= 0) 
+        if (image_read_.get_image_height() <= 0) 
             return Color(1., 0., 0.);
 
         u = std::clamp(u, 0., 1.);
         //v = std::clamp(v, 0., 1.); // 不翻转v
         v = 1.0 - std::clamp(v, 0., 1.); // 翻转v
 
-        int i = static_cast<int>(v * image_read_.get_height());
-        int j = static_cast<int>(u * image_read_.get_width());
+        int i = static_cast<int>(v * image_read_.get_image_height());
+        int j = static_cast<int>(u * image_read_.get_image_width());
         return image_read_.get_pixel(i, j);
     }
 

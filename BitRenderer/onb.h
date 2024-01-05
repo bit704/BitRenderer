@@ -1,7 +1,7 @@
 /*
-* 正交基类
-* Orthonormal Basis
-*/
+ * 正交基类
+ * Orthonormal Basis
+ */
 #ifndef ONB_H
 #define ONB_H
 

@@ -1,6 +1,6 @@
 /*
-* 相机类
-*/
+ * 相机类
+ */
 #ifndef CAMERA_H
 #define CAMERA_H
 
@@ -14,7 +14,7 @@
 #include "pdf.h"
 #include "logger.h"
 
-extern int cal_count;
+extern std::atomic<int> cal_count;
 
 class Camera
 {
@@ -23,10 +23,10 @@ public:
     // 初始化，并返回渲染图像数组的指针
     unsigned char* initialize()
     {
-        height_ = static_cast<int>(width_ / aspect_ratio_);
-        height_ = (height_ < 1) ? 1 : height_;
+        image_height_ = static_cast<int>(image_width_ / aspect_ratio_);
+        image_height_ = (image_height_ < 1) ? 1 : image_height_;
 
-        image_ = std::make_unique<ImageWrite>(image_name_, width_, height_, channel_);
+        image_ = std::make_unique<ImageWrite>(image_name_, image_width_, image_height_, channel_);
 
         camera_center_ = lookfrom_;
 
@@ -35,7 +35,7 @@ public:
         auto h = tan(theta / 2);
         auto viewport_height = 2 * h * focus_dist_;
 
-        auto viewport_width = viewport_height * (static_cast<double>(width_) / height_);
+        auto viewport_width = viewport_height * (static_cast<double>(image_width_) / image_height_);
 
         // 计算相机坐标系，右手系(z轴指向屏幕外)
         w_ = unit_vector(lookfrom_ - lookat_); // 与相机视点方向相反 (0,0,-1)
@@ -46,8 +46,8 @@ public:
         Vec3 viewport_v = viewport_height * -v_;
 
         // 每像素对应的视口长度
-        pixel_delta_u_ = viewport_u / width_;
-        pixel_delta_v_ = viewport_v / height_;
+        pixel_delta_u_ = viewport_u / image_width_;
+        pixel_delta_v_ = viewport_v / image_height_;
         // 左上角像素的位置，像素位置以中心点表示
         auto viewport_upper_left = camera_center_ - (focus_dist_ * w_) - viewport_u / 2 - viewport_v / 2;
         pixel00_loc_ = viewport_upper_left + 0.5 * (pixel_delta_u_ + pixel_delta_v_);
@@ -64,15 +64,12 @@ public:
     void render(const std::shared_ptr<Hittable>& world, const std::shared_ptr<Hittable>& light = nullptr)
         const
     {
-        for (int i = 0; i < height_; ++i)
+        for (int i = 0; i < image_height_; ++i)
         {
-            std::clog << std::fixed << std::setprecision(2);
-            std::clog << "\rtask remaining: " << (double)(height_ - i - 1) / height_ * 100 << "%" << std::flush;
-
 // OpenMP并发            
 #pragma omp parallel for
 
-            for (int j = 0; j < width_; ++j)
+            for (int j = 0; j < image_width_; ++j)
             {
                 Color pixel_color(0, 0, 0);
                 // 对每个像素中的采样点进行分层，采样更均匀
@@ -87,13 +84,22 @@ public:
                 image_->set_pixel(i, j, pixel_color, samples_per_pixel_);
             }
         }
-        std::clog << "\rDone.                 \n";
         image_->write();
     }
 
     void set_image_width(const int& image_width)
     {
-        width_ = image_width;
+        image_width_ = image_width;
+    }
+
+    int get_image_width() const
+    {
+        return image_width_;
+    }
+
+    int get_image_height() const
+    {
+        return image_height_;
     }
 
     void set_aspect_ratio(const double& aspect_ratio)
@@ -161,9 +167,9 @@ private:
     std::string image_name_;
 
     double aspect_ratio_ = 1.;
-    int    width_ = 100;
-    int    channel_ = 3;
-    int    height_;
+    int    image_width_;
+    int    image_height_;
+    int    channel_ = 4;
     Point3 camera_center_;
     Point3 pixel00_loc_; // (0,0)处像素的位置
     Vec3   pixel_delta_u_;

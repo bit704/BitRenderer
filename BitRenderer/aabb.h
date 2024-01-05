@@ -1,7 +1,7 @@
 /*
-* 包围盒
-* Axis-Aligned Bounding Box
-*/
+ * 包围盒
+ * Axis-Aligned Bounding Box
+ */
 #ifndef AABB_H
 #define AABB_H
 

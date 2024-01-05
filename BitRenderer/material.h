@@ -1,6 +1,6 @@
 /*
-* 材质类
-*/
+ * 材质类
+ */
 #ifndef MATERIAL_H
 #define MATERIAL_H
 

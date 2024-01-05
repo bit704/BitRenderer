@@ -1,6 +1,6 @@
 /*
-* 柏林噪声类
-*/
+ * 柏林噪声类
+ */
 #ifndef PERLIN_H
 #define PERLIN_H
 

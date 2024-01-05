@@ -1,6 +1,6 @@
 /*
-* ��ɫ��
-*/
+ * 三通道颜色类
+ */
 #ifndef COLOR_H
 #define COLOR_H
 

@@ -1,6 +1,6 @@
 /*
-* 工具常量和函数
-*/
+ * 工具常量和函数
+ */
 #ifndef COMMON_H
 #define COMMON_H
 

@@ -1,7 +1,7 @@
 /*
-* 日志类
-* 用于输出日志
-*/
+ * 日志类
+ * 用于输出日志
+ */
 #ifndef LOGGER_H
 #define LOGGER_H
 

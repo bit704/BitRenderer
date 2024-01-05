@@ -1,6 +1,6 @@
 /*
-* BVH树节点类
-*/
+ * BVH树节点类
+ */
 #ifndef BVH_NODE_H
 #define BVH_NODE_H
 

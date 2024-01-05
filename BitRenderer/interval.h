@@ -1,6 +1,6 @@
 /*
-* 间隔类
-*/
+ * 间隔类
+ */
 #ifndef INTERVAL_H
 #define INTERVAL_H
 

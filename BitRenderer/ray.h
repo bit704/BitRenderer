@@ -1,6 +1,6 @@
 /*
-* 光线类
-*/
+ * 光线类
+ */
 #ifndef RAY_H
 #define RAY_H
 

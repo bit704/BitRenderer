@@ -1,13 +1,13 @@
 /*
-* 图片写入类
-* 用于写入png格式图片
-* 
-* 图片读入类
-* 用于读入纹理图片
-* 
-* 除读写外，像素值在运算时值域为[0,1]
-* 写入像素值时进行伽马校正
-*/
+ * 图片写入类
+ * 用于写入png格式图片
+ * 
+ * 图片读入类
+ * 用于读入纹理图片
+ * 
+ * 除读写外，像素值在运算时值域为[0,1]
+ * 写入像素值时进行伽马校正
+ */
 #ifndef IMAGE_H
 #define IMAGE_H
 
@@ -36,7 +36,7 @@ private:
 	std::string image_path_;
 	int width_;
 	int height_;
-	int channel_;
+	int channel_ = 4;
 };
 
 class ImageRead
@@ -47,12 +47,12 @@ public:
 
 	Color get_pixel(const int& row, const int& col) const;
 
-	int get_width() const
+	int get_image_width() const
 	{
 		return width_;
 	}
 
-	int get_height() const
+	int get_image_height() const
 	{
 		return height_;
 	}
@@ -64,7 +64,7 @@ private:
 	std::string image_path_;
 	int width_;
 	int height_;
-	int channel_;
+	int channel_ = 3;
 };
 
 #endif // !IMAGE_H

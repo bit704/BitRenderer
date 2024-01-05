@@ -1,7 +1,7 @@
 /*
-* 概率密度函数类
-* Probability Density Function
-*/
+ * 概率密度函数类
+ * Probability Density Function
+ */
 #ifndef PDF_H
 #define PDF_H
 

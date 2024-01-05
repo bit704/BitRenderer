@@ -1,6 +1,6 @@
 /*
-* 平行四边形类
-*/
+ * 平行四边形类
+ */
 #ifndef QUAD_H
 #define QUAD_H
 
@@ -36,6 +36,7 @@ public:
 
     Vec3 random(const Point3& origin) const override
     {
+        // 平行四边形上随机一点
         auto p = Q_ + (random_double() * u_) + (random_double() * v_);
         return p - origin;
     }
