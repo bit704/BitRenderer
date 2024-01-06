@@ -69,13 +69,22 @@ int main()
     // 设置IMGUI上下文
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+    ImGuiIO& io = ImGui::GetIO(); 
+    (void)io;
+    io.Fonts->AddFontFromFileTTF("./misc/DroidSans.ttf", 16);
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // 键盘
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // 手柄
 
     // 设置IMGUI的style
-    ImGui::StyleColorsDark();
-    //ImGui::StyleColorsLight();
+    //ImGui::StyleColorsDark();
+    ImGui::StyleColorsLight();
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.TabRounding = 8.f;
+    style.FrameRounding = 8.f;
+    style.GrabRounding = 8.f;
+    style.WindowRounding = 8.f;
+    style.PopupRounding = 8.f;
 
     // 设置Win32和DirectX 12后端
     ImGui_ImplWin32_Init(hwnd);
@@ -135,7 +144,9 @@ int main()
 
         // 设置
         {
-            ImGui::Begin("setup");
+            ImGui::Begin("SETUP");
+
+            ImGui::SeparatorText("general");
 
             // 选择场景
             const char* combo_preview_value_scene = scenes[scene_current_idx];
@@ -217,6 +228,8 @@ int main()
                 memcpy(background, background_t, 3 * sizeof(float));
             }
 
+            ImGui::SeparatorText("image");
+
             // 输入图片宽度
             ImGui::InputInt("image width", &image_width);
             ImGui::SameLine(); 
@@ -250,6 +263,17 @@ int main()
                 case 4: aspect_ratio = 1.; break;
             }
 
+            // 设置背景颜色
+            ImGui::ColorEdit3("background color", background);
+            ImGui::SameLine();
+            HelpMarker(
+                "Click on the color square to open a color picker.\n"
+                "Click and hold to use drag and drop.\n"
+                "Right-click on the color square to show options.\n"
+                "CTRL+click on individual component to input value.\n");
+
+            ImGui::SeparatorText("tracing");
+
             // 输入spp
             ImGui::InputInt("samples per pixel", &samples_per_pixel);
             ImGui::SameLine();
@@ -268,26 +292,22 @@ int main()
             if (max_depth > 400)
                 max_depth = 400;
 
-            // 选择
+            // 设置相机外参
+            ImGui::SeparatorText("camera");
+
+            ImGui::InputFloat3("lookfrom", lookfrom);
+            ImGui::InputFloat3("lookat", lookat);
+            ImGui::InputFloat3("vup", vup);
+
+            // 设置vfov
             ImGui::DragInt("vfov", &vfov, 1, 1, 179, "%d°", ImGuiSliderFlags_AlwaysClamp);
-            ImGui::SameLine(); 
+            ImGui::SameLine();
             HelpMarker(
                 "Drag to edit value.\n"
                 "Hold SHIFT/ALT for faster/slower edit.\n"
                 "Double-click or CTRL+click to input value.");
 
-            // 设置相机外参
-            ImGui::InputFloat3("lookfrom", lookfrom);
-            ImGui::InputFloat3("lookat", lookat);
-            ImGui::InputFloat3("vup", vup);
-
-            ImGui::ColorEdit3("background color", background);
-            ImGui::SameLine(); 
-            HelpMarker(
-                "Click on the color square to open a color picker.\n"
-                "Click and hold to use drag and drop.\n"
-                "Right-click on the color square to show options.\n"
-                "CTRL+click on individual component to input value.\n");
+            ImGui::SeparatorText("command");
 
             if (ImGui::Button("start rendering") && !show_rendering_process)
             {

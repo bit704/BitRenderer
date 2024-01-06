@@ -1,5 +1,5 @@
 /*
- * UI工具函数
+ * UI辅助函数
  */
 #ifndef UI_HELPER
 #define UI_HELPER
