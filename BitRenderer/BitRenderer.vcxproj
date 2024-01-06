@@ -170,12 +170,19 @@
     <ClInclude Include="point.h" />
     <ClInclude Include="quad.h" />
     <ClInclude Include="ray.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="scene.h" />
     <ClInclude Include="singleton.h" />
     <ClInclude Include="sphere.h" />
     <ClInclude Include="texture.h" />
     <ClInclude Include="ui_helper.h" />
     <ClInclude Include="vec3.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="BitRenderer.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resource\logo.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

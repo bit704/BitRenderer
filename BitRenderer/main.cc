@@ -9,6 +9,7 @@
 #include "logger.h"
 #include "scene.h"
 #include "ui_helper.h"
+#include "resource.h"
 
 using std::chrono::steady_clock;
 using std::chrono::system_clock;
@@ -25,6 +26,10 @@ int main()
     // 创建应用程序窗口
     WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, 
         GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"ImGui", nullptr };
+
+    wc.hIcon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDI_ICON_LOGO));
+    wc.hIconSm = wc.hIcon;
+
     ::RegisterClassExW(&wc);
 
     // 获取桌面可用区域大小，最大化窗口
