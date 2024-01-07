@@ -103,7 +103,8 @@ public:
 
     Color value(double u, double v, const Point3& p) const override
     {
-        return Color(1, 1, 1) * 0.5 * (1.0 + noise_.noise(scale_ * p));
+        auto s = scale_ * p;
+        return Color(1, 1, 1) * .5 * (1 + sin(s.z() + 10 * noise_.turb(s)));
     }
 
 private:

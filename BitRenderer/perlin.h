@@ -64,6 +64,23 @@ public:
         return trilinear_interp(c, u, v, w);
     }
 
+    double turb(const Point3& p, int depth = 7) 
+        const
+    {
+        auto accum = 0.;
+        auto temp_p = p;
+        auto weight = 1.;
+
+        for (int i = 0; i < depth; ++i)
+        {
+            accum += weight * noise(temp_p);
+            weight *= .5;
+            temp_p *= 2;
+        }
+
+        return fabs(accum);
+    }
+
 private:
 
     static const unsigned int point_count_ = 256;
