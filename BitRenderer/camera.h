@@ -14,7 +14,7 @@
 #include "pdf.h"
 #include "logger.h"
 
-extern std::atomic<int> cal_count;
+extern std::atomic<long long> cal_count;
 
 class Camera
 {

@@ -10,15 +10,17 @@
 #include "scene.h"
 #include "ui_helper.h"
 #include "resource.h"
+#include "status.h"
 
 using std::chrono::steady_clock;
 using std::chrono::system_clock;
 using std::chrono::duration_cast;
 using std::chrono::minutes;
 using std::chrono::seconds;
+using std::chrono::milliseconds;
 
 // 计算次数统计
-std::atomic<int> cal_count(0);
+std::atomic<long long> cal_count(0);
 
 int main()
 {
@@ -120,7 +122,11 @@ int main()
     std::thread t;
 
     // 统计数据
-    auto start = steady_clock::now();
+    auto rendering_start = steady_clock::now(); // 记录渲染时间
+    float cpu_usage = 0.f;
+    auto cpu_start = steady_clock::now(); // 记录CPU占用率计算间隔
+    FILETIME cpu_idle_prev, cpu_kernel_prev, cpu_user_prev; // 记录CPU时间
+    GetSystemTimes(&cpu_idle_prev, &cpu_kernel_prev, &cpu_user_prev);
 
     bool done = false;
     while (!done)
@@ -309,10 +315,10 @@ int main()
 
             ImGui::SeparatorText("command");
 
-            if (ImGui::Button("start rendering") && !show_rendering_process)
+            if (ImGui::Button("rendering_start rendering") && !show_rendering_process)
             {
                 cal_count = 0;
-                start = steady_clock::now();
+                rendering_start = steady_clock::now();
 
                 cam.set_image_name(std::string(scenes[scene_current_idx]) + ".png");
                 cam.set_image_width(image_width);
@@ -329,33 +335,52 @@ int main()
 
                 switch (scene_current_idx)
                 {
-                    case 0: t = std::thread(scene_composite1, std::ref(cam)); break;
-                    case 1: t = std::thread(scene_composite2, std::ref(cam)); break;
-                    case 2: t = std::thread(scene_checker, std::ref(cam)); break;
-                    case 3: t = std::thread(scene_cornell_box, std::ref(cam)); break;
+                case 0: t = std::thread(scene_composite1, std::ref(cam)); break;
+                case 1: t = std::thread(scene_composite2, std::ref(cam)); break;
+                case 2: t = std::thread(scene_checker, std::ref(cam)); break;
+                case 3: t = std::thread(scene_cornell_box, std::ref(cam)); break;
                 }
 
                 if (t.joinable())
                     t.detach();
 
                 show_rendering_process = true;
-            } 
+            }
 
             ImGui::End();
         }
 
-        // 显示渲染过程图片
+        // 状态
+        {
+            ImGui::Begin("STATUS");
+            ImGui::Text("UI fps = %.2f", io.Framerate);
+            ImGui::Text("UI 1/fps = %.2f ms", 1000. / io.Framerate);
+            ImGui::Text("sys memory load = %lld", get_memory_load());
+
+            // 每300ms统计一次cpu占用率
+            auto cpu_now = steady_clock::now();
+            if (duration_cast<milliseconds>(cpu_now - cpu_start).count() > 300)
+            {
+                cpu_usage = get_cpu_usage(cpu_idle_prev, cpu_kernel_prev, cpu_user_prev);
+                cpu_start = steady_clock::now();
+            }
+
+            ImGui::Text("sys cpu usage = %.2f", cpu_usage);
+            ImGui::End();
+        }
+
+        // 显示渲染过程
         if(show_rendering_process)
         {
             ImGui::Begin("rendering process");
             ImGui::Text("image size = %d x %d", cam.get_image_width(), cam.get_image_height());
+            ImGui::Text(("cal count = " + format_num(cal_count.load())).c_str());
 
-            ImGui::Text("cal count = %d", cal_count.load());
-            auto end = steady_clock::now();
-            auto duration = end - start;
+            auto rendering_now = steady_clock::now();
+            auto duration = rendering_now - rendering_start;
             auto duration_min = duration_cast<minutes>(duration);
             auto duration_sec = duration_cast<seconds>(duration);
-            ImGui::Text("cal time = %d sec (%d min)", duration_sec.count(), duration_min.count());
+            ImGui::Text("cal time = %d min %d sec", duration_min.count(), duration_sec.count() % 60);
 
             // 加载纹理
             bool ret = LoadTextureFromImageData(image_data, cam.get_image_width(), cam.get_image_height(), g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture);

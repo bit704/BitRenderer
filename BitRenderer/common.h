@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include <limits>
+#include <sstream>
 
 const double kInfinitDouble = std::numeric_limits<double>::infinity();
 const double kPI = 3.1415926535897932385;
@@ -29,6 +30,16 @@ inline double random_double(double min, double max)
 inline int random_int(int min, int max)
 {
     return static_cast<int>(random_double(min, max + 1));
+}
+
+// 给输出数字加入千位分隔符
+inline std::string format_num(long long num)
+{
+    static std::ostringstream oss;
+    oss.str("");
+    oss.imbue(std::locale("en_US.UTF-8"));
+    oss << num;
+    return oss.str();
 }
 
 
