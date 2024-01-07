@@ -78,15 +78,15 @@ int main()
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // 键盘
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // 手柄
 
-    // 设置IMGUI的style
+    // 设置IMGUI的样式
     //ImGui::StyleColorsDark();
     ImGui::StyleColorsLight();
     ImGuiStyle& style = ImGui::GetStyle();
-    style.TabRounding = 8.f;
-    style.FrameRounding = 8.f;
-    style.GrabRounding = 8.f;
-    style.WindowRounding = 8.f;
-    style.PopupRounding = 8.f;
+    style.TabRounding    = 4.f;
+    style.FrameRounding  = 4.f;
+    style.GrabRounding   = 4.f;
+    style.WindowRounding = 4.f;
+    style.PopupRounding  = 4.f;
 
     // 设置Win32和DirectX 12后端
     ImGui_ImplWin32_Init(hwnd);
@@ -101,7 +101,7 @@ int main()
     ImGuiComboFlags flags = 0;
     const char* scenes[] = { "scene_composite1", "scene_composite2", "scene_checker", "scene_cornell_box"};
     int scene_current_idx = 0;
-    int image_width = 400;
+    int image_width = 600;
     const char* aspect_ratios[] = { "16/9", "2/1", "3/2", "4/3", "1/1" };
     int aspect_ratio_idx = 0;
     double aspect_ratio = 16. / 9.;
@@ -166,72 +166,74 @@ int main()
 
                     if (is_selected)
                         ImGui::SetItemDefaultFocus();
+
+                    // 各场景推荐参数
+                    if (scene_current_idx == 0)
+                    {
+                        image_width = 600;
+                        aspect_ratio_idx = 0;
+                        samples_per_pixel = 100;
+                        max_depth = 50;
+                        vfov = 20;
+                        float lookfrom_t[3] = { 13, 2, 3 };
+                        memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
+                        float lookat_t[3] = { 0, 0, 0 };
+                        memcpy(lookat, lookat_t, 3 * sizeof(float));
+                        float vup_t[3] = { 0, 1, 0 };
+                        memcpy(vup, vup_t, 3 * sizeof(float));
+                        float background_t[3] = { .7f, .8f, 1 };
+                        memcpy(background, background_t, 3 * sizeof(float));
+                    }
+                    else if (scene_current_idx == 1)
+                    {
+                        image_width = 600;
+                        aspect_ratio_idx = 4;
+                        samples_per_pixel = 1500;
+                        max_depth = 50;
+                        vfov = 40;
+                        float lookfrom_t[3] = { 478, 278, -600 };
+                        memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
+                        float lookat_t[3] = { 278, 278, 0 };
+                        memcpy(lookat, lookat_t, 3 * sizeof(float));
+                        float vup_t[3] = { 0, 1, 0 };
+                        memcpy(vup, vup_t, 3 * sizeof(float));
+                        float background_t[3] = { 0, 0, 0 };
+                        memcpy(background, background_t, 3 * sizeof(float));
+                    }
+                    else if (scene_current_idx == 2)
+                    {
+                        image_width = 600;
+                        aspect_ratio_idx = 0;
+                        samples_per_pixel = 100;
+                        max_depth = 50;
+                        vfov = 20;
+                        float lookfrom_t[3] = { 13, 2, 3 };
+                        memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
+                        float lookat_t[3] = { 0, 0, 0 };
+                        memcpy(lookat, lookat_t, 3 * sizeof(float));
+                        float vup_t[3] = { 0, 1, 0 };
+                        memcpy(vup, vup_t, 3 * sizeof(float));
+                        float background_t[3] = { .7f, .8f, 1 };
+                        memcpy(background, background_t, 3 * sizeof(float));
+                    }
+                    else if (scene_current_idx == 3)
+                    {
+                        image_width = 600;
+                        aspect_ratio_idx = 4;
+                        samples_per_pixel = 1000;
+                        max_depth = 50;
+                        vfov = 40;
+                        float lookfrom_t[3] = { 278, 278, -800 };
+                        memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
+                        float lookat_t[3] = { 278, 278, 0 };
+                        memcpy(lookat, lookat_t, 3 * sizeof(float));
+                        float vup_t[3] = { 0, 1, 0 };
+                        memcpy(vup, vup_t, 3 * sizeof(float));
+                        float background_t[3] = { 0, 0, 0 };
+                        memcpy(background, background_t, 3 * sizeof(float));
+                    }
                 }
                 ImGui::EndCombo();
-            }
-            if (scene_current_idx == 0)
-            {
-                image_width = 400;
-                aspect_ratio_idx = 0;
-                samples_per_pixel = 100;
-                max_depth = 50;
-                vfov = 20;
-                float lookfrom_t[3] = { 13, 2, 3 };
-                memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
-                float lookat_t[3] = { 0, 0, 0 };
-                memcpy(lookat, lookat_t, 3 * sizeof(float));
-                float vup_t[3] = { 0, 1, 0 };
-                memcpy(vup, vup_t, 3 * sizeof(float));
-                float background_t[3] = { .7f, .8f, 1 };
-                memcpy(background, background_t, 3 * sizeof(float));
-            }
-            else if (scene_current_idx == 1)
-            {
-                image_width = 400;
-                aspect_ratio_idx = 4;
-                samples_per_pixel = 300;
-                max_depth = 40;
-                vfov = 40;
-                float lookfrom_t[3] = { 478, 278, -600 };
-                memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
-                float lookat_t[3] = { 278, 278, 0 };
-                memcpy(lookat, lookat_t, 3 * sizeof(float));
-                float vup_t[3] = { 0, 1, 0 };
-                memcpy(vup, vup_t, 3 * sizeof(float));
-                float background_t[3] = { 0, 0, 0 };
-                memcpy(background, background_t, 3 * sizeof(float));
-            }
-            else if (scene_current_idx == 2)
-            {
-                image_width = 400;
-                aspect_ratio_idx = 0;
-                samples_per_pixel = 100;
-                max_depth = 50;
-                vfov = 20;
-                float lookfrom_t[3] = { 13, 2, 3 };
-                memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
-                float lookat_t[3] = { 0, 0, 0 };
-                memcpy(lookat, lookat_t, 3 * sizeof(float));
-                float vup_t[3] = { 0, 1, 0 };
-                memcpy(vup, vup_t, 3 * sizeof(float));
-                float background_t[3] = { .7f, .8f, 1 };
-                memcpy(background, background_t, 3 * sizeof(float));
-            }
-            else if (scene_current_idx == 3)
-            {
-                image_width = 600;
-                aspect_ratio_idx = 4;
-                samples_per_pixel = 100;
-                max_depth = 50;
-                vfov = 40;
-                float lookfrom_t[3] = { 278, 278, -800 };
-                memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
-                float lookat_t[3] = { 278, 278, 0 };
-                memcpy(lookat, lookat_t, 3 * sizeof(float));
-                float vup_t[3] = { 0, 1, 0 };
-                memcpy(vup, vup_t, 3 * sizeof(float));
-                float background_t[3] = { 0, 0, 0 };
-                memcpy(background, background_t, 3 * sizeof(float));
             }
 
             ImGui::SeparatorText("image");
@@ -291,7 +293,7 @@ int main()
 
             // 输入最大深度
             ImGui::InputInt("max depth", &max_depth);
-            ImGui::SameLine(); 
+            ImGui::SameLine();
             HelpMarker("10~400");
             if (max_depth < 10)
                 max_depth = 10;
@@ -301,9 +303,9 @@ int main()
             // 设置相机外参
             ImGui::SeparatorText("camera");
 
-            ImGui::InputFloat3("lookfrom", lookfrom);
-            ImGui::InputFloat3("lookat", lookat);
-            ImGui::InputFloat3("vup", vup);
+            ImGui::InputFloat3("lookfrom", lookfrom, "%.1f");
+            ImGui::InputFloat3("lookat", lookat, "%.1f");
+            ImGui::InputFloat3("vup", vup, "%.1f");
 
             // 设置vfov
             ImGui::DragInt("vfov", &vfov, 1, 1, 179, "%d°", ImGuiSliderFlags_AlwaysClamp);
@@ -335,10 +337,10 @@ int main()
 
                 switch (scene_current_idx)
                 {
-                case 0: t = std::thread(scene_composite1, std::ref(cam)); break;
-                case 1: t = std::thread(scene_composite2, std::ref(cam)); break;
-                case 2: t = std::thread(scene_checker, std::ref(cam)); break;
-                case 3: t = std::thread(scene_cornell_box, std::ref(cam)); break;
+                    case 0: t = std::thread(scene_composite1, std::ref(cam)); break;
+                    case 1: t = std::thread(scene_composite2, std::ref(cam)); break;
+                    case 2: t = std::thread(scene_checker, std::ref(cam)); break;
+                    case 3: t = std::thread(scene_cornell_box, std::ref(cam)); break;
                 }
 
                 if (t.joinable())

@@ -105,7 +105,8 @@ private:
 };
 
 // 两点生成立方体
-inline std::shared_ptr<HittableList> construct_box(const Point3& a, const Point3& b, std::shared_ptr<Material> mat)
+inline std::shared_ptr<HittableList> construct_box(const Point3& a, const Point3& b,
+    std::shared_ptr<Material> mat)
 {
     auto sides = std::make_shared<HittableList>();
 
@@ -117,12 +118,12 @@ inline std::shared_ptr<HittableList> construct_box(const Point3& a, const Point3
     auto dy = Vec3(0, max.y() - min.y(), 0);
     auto dz = Vec3(0, 0, max.z() - min.z());
 
-    sides->add(std::make_shared<Quad>(Point3(min.x(), min.y(), max.z()), dx, dy, mat)); // 前
-    sides->add(std::make_shared<Quad>(Point3(max.x(), min.y(), max.z()), -dz, dy, mat)); // 右
-    sides->add(std::make_shared<Quad>(Point3(max.x(), min.y(), min.z()), -dx, dy, mat)); // 后
-    sides->add(std::make_shared<Quad>(Point3(min.x(), min.y(), min.z()), dz, dy, mat)); // 左
-    sides->add(std::make_shared<Quad>(Point3(min.x(), max.y(), max.z()), dx, -dz, mat)); // 前
-    sides->add(std::make_shared<Quad>(Point3(min.x(), min.y(), min.z()), dx, dz, mat)); // 底
+    sides->add(std::make_shared<Quad>(Point3(min.x(), min.y(), max.z()),  dx,  dy, mat)); // 前
+    sides->add(std::make_shared<Quad>(Point3(max.x(), min.y(), max.z()), -dz,  dy, mat)); // 右
+    sides->add(std::make_shared<Quad>(Point3(max.x(), min.y(), min.z()), -dx,  dy, mat)); // 后
+    sides->add(std::make_shared<Quad>(Point3(min.x(), min.y(), min.z()),  dz,  dy, mat)); // 左
+    sides->add(std::make_shared<Quad>(Point3(min.x(), max.y(), max.z()),  dx, -dz, mat)); // 上
+    sides->add(std::make_shared<Quad>(Point3(min.x(), min.y(), min.z()),  dx,  dz, mat)); // 下
 
     return sides;
 }
