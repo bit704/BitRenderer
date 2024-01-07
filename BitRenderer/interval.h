@@ -11,9 +11,19 @@ class Interval
     friend Interval operator+(const Interval& ival, double displacement);
     friend Interval operator+(double displacement, const Interval& ival);
 
-public:
+private:
+    double min_, max_;
 
+public:
     Interval() : min_(+kInfinitDouble), max_(-kInfinitDouble) {}
+
+    ~Interval() = default;
+
+    Interval(const Interval&) = default;
+    Interval& operator=(const Interval&) = default;
+
+    Interval(Interval&&) = default;
+    Interval& operator=(Interval&&) = default;
 
     Interval(double _min, double _max) : min_(_min), max_(_max) {}
 
@@ -21,6 +31,7 @@ public:
     Interval(const Interval& a, const Interval& b)
         : min_(fmin(a.min_, b.min_)), max_(fmax(a.max_, b.max_)) {}
 
+public:
     bool contains(double x) const 
     {
         return min_ <= x && x <= max_;
@@ -61,10 +72,6 @@ public:
     {
         max_ = max;
     }
-
-private:
-
-    double min_, max_;
 };
 
 inline Interval operator+(const Interval& ival, double displacement)

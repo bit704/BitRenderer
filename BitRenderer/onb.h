@@ -9,16 +9,27 @@
 
 class ONB
 {
+private:
+    Vec3 axis_[3];
+
 public:
+    ONB() = default;
 
-    Vec3 u() const { return axis_[0]; }
-    Vec3 v() const { return axis_[1]; }
-    Vec3 w() const { return axis_[2]; }
+    ~ONB() = default;
 
-    ONB() {}
+    ONB(const ONB&) = delete;
+    ONB& operator=(const ONB&) = delete;
+
+    ONB(ONB&&) = delete;
+    ONB& operator=(ONB&&) = delete;
 
     Vec3 operator[](int i) const { return axis_[i]; }
     Vec3& operator[](int i) { return axis_[i]; }
+
+public:
+    Vec3 u() const { return axis_[0]; }
+    Vec3 v() const { return axis_[1]; }
+    Vec3 w() const { return axis_[2]; }
 
     Vec3 local(double a, double b, double c) const
     {
@@ -41,10 +52,6 @@ public:
         axis_[1] = v;
         axis_[2] = unit_w;
     }
-
-private:
-
-    Vec3 axis_[3];
 };
 
 #endif // !ONB_H

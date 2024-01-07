@@ -9,9 +9,15 @@
 
 class Perlin
 {
+private:
+    static const unsigned int point_count_ = 256;
+    //double* ranfloat_;
+    int* perm_x_;
+    int* perm_y_;
+    int* perm_z_;
+    Vec3* ranvec_;
 
 public:
-
     Perlin()
     {
         ranvec_ = new Vec3[point_count_];
@@ -36,6 +42,13 @@ public:
         delete[] perm_z_;
     }
 
+    Perlin(const Perlin&) = delete;
+    Perlin& operator=(const Perlin&) = delete;
+
+    Perlin(Perlin&&) = delete;
+    Perlin& operator=(Perlin&&) = delete;
+
+public:
     double noise(const Point3& p) const
     {
         auto u = p.x() - floor(p.x());
@@ -82,15 +95,6 @@ public:
     }
 
 private:
-
-    static const unsigned int point_count_ = 256;
-
-    //double* ranfloat_;
-    int* perm_x_;
-    int* perm_y_;
-    int* perm_z_;
-    Vec3* ranvec_;
-
     static int* perlin_generate_perm()
     {
         auto p = new int[point_count_];

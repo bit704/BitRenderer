@@ -15,7 +15,6 @@
 class Logger : public Singleton<Logger>
 {
 public:
-
 	// C++17
 	template <typename... Types>
 	inline void print_info(const Types... args)

@@ -1,16 +1,15 @@
 /*
  * 获取系统状态的函数
  */
-#ifndef STATUS
-#define STATUS
+#ifndef STATUS_H
+#define STATUS_H
 
 #include <windows.h>
-#include <stdio.h>
 
 static MEMORYSTATUSEX statex;
 
 // 正在使用的内存的近似百分比
-long long get_memory_load()
+inline long long get_memory_load()
 {
     statex.dwLength = sizeof(statex);
     GlobalMemoryStatusEx(&statex);
@@ -18,7 +17,7 @@ long long get_memory_load()
 }
 
 // CPU占用率
-float get_cpu_usage(FILETIME &cpu_idle_prev, FILETIME &cpu_kernel_prev, FILETIME &cpu_user_prev)
+inline float get_cpu_usage(FILETIME &cpu_idle_prev, FILETIME &cpu_kernel_prev, FILETIME &cpu_user_prev)
 {
 	FILETIME cpu_idle, cpu_kernel, cpu_user;
 	GetSystemTimes(&cpu_idle, &cpu_kernel, &cpu_user);
@@ -42,4 +41,4 @@ float get_cpu_usage(FILETIME &cpu_idle_prev, FILETIME &cpu_kernel_prev, FILETIME
 	return cpu_usage;
 }
 
-#endif // !STATUS
+#endif // !STATUS_H

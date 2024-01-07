@@ -11,23 +11,28 @@
 
 class Vec3
 {
-public:
+private:
+	double e_[3];
 
+public:
 	Vec3() : e_{0,0,0} {}
+
 	Vec3(double t0, double t1, double t2) : e_{t0,t1,t2} {}
+
+	~Vec3() = default;
 
 	// 用于设置相机外参、颜色
 	Vec3(float t[3]) : e_{t[0],t[1],t[2]} {}
 
 	Vec3(const Vec3& v) : e_{ v.e_[0],v.e_[1], v.e_[2] } {}
 
-	Vec3(Vec3&& v) noexcept : e_{ v.e_[0],v.e_[1], v.e_[2] } {}
-
 	Vec3& operator=(const Vec3& v) 
 	{
 		std::copy(std::begin(v.e_),std::end(v.e_),std::begin(e_));
 		return *this;
 	}
+
+	Vec3(Vec3&& v) noexcept : e_{ v.e_[0],v.e_[1], v.e_[2] } {}
 
 	Vec3& operator=(Vec3&& v) noexcept
 	{
@@ -60,6 +65,7 @@ public:
 		return *this *= 1 / t;
 	}
 
+public:
 	double length_squared() const
 	{
 		return e_[0] * e_[0] + e_[1] * e_[1] + e_[2] * e_[2];
@@ -99,10 +105,6 @@ public:
 	{
 		return e_[2];
 	}
-
-private:
-
-	double e_[3];
 };
 
 inline std::ostream& operator<<(std::ostream& out, const Vec3& v)

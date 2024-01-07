@@ -18,10 +18,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cc">
+    <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="image.cc">
+    <ClCompile Include="image.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="imgui\imgui.cpp">

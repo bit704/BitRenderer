@@ -15,11 +15,27 @@
 
 class ImageWrite 
 {
-public:
+private:
+	static const std::string kOutputPath_;
+	unsigned char* image_data_;
+	std::string image_path_;
+	int width_, height_;
+	int channel_ = 4;
 
-	ImageWrite(std::string image_name, int width_, int height_, int channel_);
+public:
+	ImageWrite() = delete;
+
 	~ImageWrite();
 
+	ImageWrite(const ImageWrite&) = delete;
+	ImageWrite& operator=(const ImageWrite&) = delete;
+
+	ImageWrite(ImageWrite&&) = delete;
+	ImageWrite& operator=(ImageWrite&&) = delete;
+
+	ImageWrite(std::string image_name, int width_, int height_, int channel_);
+
+public:
 	void set_pixel(const int& row, const int& col, Color c, const int& samples_per_pixel);
 	void set_pixel(const int& row, const int& col, const int& r, const int& g, const int& b);
 	void write();
@@ -28,23 +44,31 @@ public:
 	{
 		return image_data_;
 	}
-
-private:
-
-	static const std::string kOutputPath_;
-	unsigned char* image_data_;
-	std::string image_path_;
-	int width_;
-	int height_;
-	int channel_ = 4;
 };
 
 class ImageRead
 {
+private:
+	static const std::string kInputPath_;
+	unsigned char* image_data_;
+	std::string image_path_;
+	int width_, height_;
+	int channel_ = 3;
+
 public:
+	ImageRead() = delete;
+
+	~ImageRead() = default;
+
+	ImageRead(const ImageRead&) = delete;
+	ImageRead& operator=(const ImageRead&) = delete;
+
+	ImageRead(ImageRead&&) = delete;
+	ImageRead& operator=(ImageRead&&) = delete;
 
 	ImageRead(std::string image_name);
 
+public:
 	Color get_pixel(const int& row, const int& col) const;
 
 	int get_image_width() const
@@ -56,15 +80,6 @@ public:
 	{
 		return height_;
 	}
-
-private:
-
-	static const std::string kInputPath_;
-	unsigned char* image_data_;
-	std::string image_path_;
-	int width_;
-	int height_;
-	int channel_ = 3;
 };
 
 #endif // !IMAGE_H

@@ -5,15 +5,28 @@
 #define CONSTANT_MEDIUM_H
 
 #include <string>
+
 #include "common.h"
-#include "hittable.h"
 #include "material.h"
-#include "texture.h"
 #include "logger.h"
 
 class ConstantMedium : public Hittable
 {
+private:
+    std::shared_ptr<Hittable> boundary_;
+    std::shared_ptr<Material> phase_function_;
+    double neg_inv_density_;
+
 public:
+    ConstantMedium() = default;
+
+    ~ConstantMedium() = default;
+
+    ConstantMedium(const ConstantMedium&) = delete;
+    ConstantMedium& operator=(const ConstantMedium&) = delete;
+
+    ConstantMedium(ConstantMedium&&) = delete;
+    ConstantMedium& operator=(ConstantMedium&&) = delete;
 
     ConstantMedium(std::shared_ptr<Hittable> b, double d, std::shared_ptr<Texture> a)
         : boundary_(b), neg_inv_density_(-1 / d), phase_function_(std::make_shared<Isotropic>(a)) {}
@@ -21,7 +34,9 @@ public:
     ConstantMedium(std::shared_ptr<Hittable> b, double d, Color c)
         : boundary_(b), neg_inv_density_(-1 / d), phase_function_(std::make_shared<Isotropic>(c)) {}
 
-    bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const override
+public: 
+    bool hit(const Ray& r, Interval ray_t, HitRecord& rec) 
+        const override
     {
         // debug
         const bool enableDebug = false;
@@ -74,16 +89,11 @@ public:
         return true;
     }
 
-    AABB get_bbox() const override
+    AABB get_bbox() 
+        const override
     {
         return boundary_->get_bbox(); 
     }
-
-private:
-
-    std::shared_ptr<Hittable> boundary_;
-    double neg_inv_density_;
-    std::shared_ptr<Material> phase_function_;
 };
 
 #endif // !CONSTANT_MEDIUM_H

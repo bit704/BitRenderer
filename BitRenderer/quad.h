@@ -9,6 +9,16 @@
 
 class Quad : public Hittable
 {
+private:
+    Point3 Q_;
+    Vec3 u_, v_;
+    std::shared_ptr<Material> material_;
+    AABB bbox_;
+    Vec3 normal_;
+    double D_; // Ax+By+Cz=D
+    Vec3 w_; // 参见RayTracingTheNextWeek 6.4
+    double area_;
+
 public:
 
     Quad(const Point3& Q, const Vec3& u, const Vec3& v, std::shared_ptr<Material> m)
@@ -19,10 +29,20 @@ public:
         normal_ = unit_vector(n);
         D_ = dot(normal_, Q);
         w_ = n / dot(n, n);
-        set_bbox();
+        bbox_ = AABB(Q_, Q_ + u_ + v_).pad();
     }
 
-    double pdf_value(const Point3& origin, const Vec3& v) const override
+    ~Quad() = default;
+
+    Quad(const Quad&) = delete;
+    Quad& operator=(const Quad&) = delete;
+
+    Quad(Quad&&) = delete;
+    Quad& operator=(Quad&&) = delete;
+
+public:
+    double pdf_value(const Point3& origin, const Vec3& v) 
+        const override
     {
         HitRecord rec;
         if (!this->hit(Ray(origin, v), Interval(1e-3, kInfinitDouble), rec))
@@ -34,24 +54,22 @@ public:
         return distance_squared / (cosine * area_);
     }
 
-    Vec3 random(const Point3& origin) const override
+    Vec3 random(const Point3& origin) 
+        const override
     {
         // 平行四边形上随机一点
         auto p = Q_ + (random_double() * u_) + (random_double() * v_);
         return p - origin;
     }
 
-    virtual void set_bbox()
-    {
-        bbox_ = AABB(Q_, Q_ + u_ + v_).pad();
-    }
-
-    AABB get_bbox() const override 
+    AABB get_bbox() 
+        const override 
     { 
         return bbox_;
     }
 
-    bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const override 
+    bool hit(const Ray& r, Interval ray_t, HitRecord& rec) 
+        const override 
     {
         auto denom = dot(normal_, r.get_direction());
 
@@ -83,16 +101,6 @@ public:
     }
 
 private:
-
-    Point3 Q_;
-    Vec3 u_, v_;
-    std::shared_ptr<Material> material_;
-    AABB bbox_;
-    Vec3 normal_;
-    double D_; // Ax+By+Cz=D
-    Vec3 w_; // 参见RayTracingTheNextWeek 6.4
-    double area_;
-
     // 判断平行四边形所在平面上一点是否在平行四边形内并设定uv坐标
     virtual bool is_interior(double a, double b, HitRecord& rec) const
     {

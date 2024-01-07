@@ -1,8 +1,8 @@
 /*
  * UI辅助函数
  */
-#ifndef UI_HELPER
-#define UI_HELPER
+#ifndef UI_HELPER_H
+#define UI_HELPER_H
 
 #include <d3d12.h>
 #include <dxgi1_4.h>
@@ -451,4 +451,4 @@ inline void HelpMarker(const char* desc)
     }
 }
 
-#endif // !UI_HELPER
+#endif // !UI_HELPER_H

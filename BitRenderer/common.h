@@ -14,12 +14,12 @@ const double kEpsilon = 1e-8; // 比较浮点数的阈值
 
 inline double degrees_to_radians(double degrees)
 {
-    return degrees * kPI / 180.0;
+    return degrees * kPI / 180.;
 }
 
 inline double random_double()
 {
-    return rand() / (RAND_MAX + 1.0); // [0,1)
+    return rand() / (RAND_MAX + 1.); // [0,1)
 }
 
 inline double random_double(double min, double max)
@@ -41,6 +41,5 @@ inline std::string format_num(long long num)
     oss << num;
     return oss.str();
 }
-
 
 #endif // !COMMON_H

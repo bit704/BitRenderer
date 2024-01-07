@@ -31,8 +31,8 @@ struct HitRecord
 class Hittable
 {
 public:
-
     virtual ~Hittable() = default;
+
     virtual bool hit(const Ray& r, Interval interval, HitRecord& rec) const = 0;
     virtual AABB get_bbox() const = 0;
 
@@ -51,7 +51,21 @@ public:
 // 将对物体的平移等效为对ray的
 class Translate : public Hittable
 {
+private:
+    std::shared_ptr<Hittable> object_;
+    Vec3 offset_;
+    AABB bbox_;
+
 public:
+    Translate() = delete;
+
+    ~Translate() = default;
+
+    Translate(const Translate&) = delete;
+    Translate& operator=(const Translate&) = delete;
+
+    Translate(Translate&&) = delete;
+    Translate& operator=(Translate&&) = delete;
 
     Translate(std::shared_ptr<Hittable> p, const Vec3& displacement)
         : object_(p), offset_(displacement)
@@ -59,7 +73,9 @@ public:
         bbox_ = object_->get_bbox() + offset_;
     }
 
-    bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const override
+public:
+    bool hit(const Ray& r, Interval ray_t, HitRecord& rec) 
+        const override
     {
         // 根据offset反向移动光线
         Ray offset_r(r.get_origin() - offset_, r.get_direction(), r.get_time());
@@ -72,22 +88,32 @@ public:
         return true;
     }
 
-    AABB get_bbox() const override
+    AABB get_bbox() 
+        const override
     { 
         return bbox_;
     }
-
-private:
-
-    std::shared_ptr<Hittable> object_;
-    Vec3 offset_;
-    AABB bbox_;
 };
 
 // 将对物体的绕Y轴转动等效为对ray的
 class RotateY : public Hittable
 {
+private:
+    std::shared_ptr<Hittable> object_;
+    double sin_theta_, cos_theta_;
+    AABB bbox_;
+
 public:
+    RotateY() = delete;
+
+    ~RotateY() = default;
+
+    RotateY(const RotateY&) = delete;
+    RotateY& operator=(const RotateY&) = delete;
+
+    RotateY(RotateY&&) = delete;
+    RotateY& operator=(RotateY&&) = delete;
+
     RotateY(std::shared_ptr<Hittable> p, double angle) : object_(p)
     {
         auto radians = degrees_to_radians(angle);
@@ -125,7 +151,9 @@ public:
         bbox_ = AABB(min_p, max_p);
     }
 
-    bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const override
+public:
+    bool hit(const Ray& r, Interval ray_t, HitRecord& rec) 
+        const override
     {
         // 将ray从世界空间转换到模型空间
         auto origin = r.get_origin();
@@ -156,17 +184,11 @@ public:
         return true;
     }
 
-    virtual AABB get_bbox() const 
+    AABB get_bbox() 
+        const override
     {
         return bbox_;
     }
-
-private:
-
-    std::shared_ptr<Hittable> object_;
-    double sin_theta_;
-    double cos_theta_;
-    AABB bbox_;
 };
 
 #endif // !HITTABLE_H

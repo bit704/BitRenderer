@@ -1,12 +1,11 @@
 /*
- * 预置场景
+ * 预置场景函数
  */
 #ifndef SCENE_H
 #define SCENE_H
 
 #include "camera.h"
 #include "sphere.h"
-#include "hittable_list.h"
 #include "quad.h"
 #include "bvh_node.h"
 #include "constant_medium.h"

@@ -11,15 +11,27 @@
 
 class HittableList : public Hittable
 {
-public:
+private:
+    std::vector<std::shared_ptr<Hittable>> objects_;
+    AABB bbox_;
 
+public:
     HittableList() = default;
+
+    ~HittableList() = default;
+
+    HittableList(const HittableList&) = delete;
+    HittableList& operator=(const HittableList&) = delete;
+
+    HittableList(HittableList&&) = delete;
+    HittableList& operator=(HittableList&&) = delete;
 
     HittableList(std::shared_ptr<Hittable> object) 
     { 
         add(object);
     }
 
+public:
     void clear() 
     { 
         objects_.clear(); 
@@ -31,7 +43,8 @@ public:
         bbox_ = AABB(bbox_, object->get_bbox()); // 并集运算
     }
 
-    bool hit(const Ray& r, Interval interval, HitRecord& rec) const override
+    bool hit(const Ray& r, Interval interval, HitRecord& rec) 
+        const override
     {
         HitRecord temp_rec;
         bool hit_anything = false;
@@ -50,13 +63,15 @@ public:
         return hit_anything;
     }
 
-    std::vector<std::shared_ptr<Hittable>> get_objects() const
+    std::vector<std::shared_ptr<Hittable>> get_objects() 
+        const
     {
         return objects_;
     }
 
     // 多个物体PDF加权
-    double pdf_value(const Point3& o, const Vec3& v) const override
+    double pdf_value(const Point3& o, const Vec3& v) 
+        const override
     {
         auto weight = 1. / objects_.size();
         auto sum = 0.;
@@ -67,21 +82,18 @@ public:
         return sum;
     }
 
-    Vec3 random(const Vec3& o) const override
+    Vec3 random(const Vec3& o) 
+        const override
     {
         auto int_size = static_cast<int>(objects_.size());
         return objects_[random_int(0, int_size - 1)]->random(o);
     }
 
-    AABB get_bbox() const override
+    AABB get_bbox() 
+        const override
     {
         return bbox_;
     }
-
-private:
-
-    std::vector<std::shared_ptr<Hittable>> objects_;
-    AABB bbox_;
 };
 
 #endif // !HITTABLE_LIST_H

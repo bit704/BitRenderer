@@ -7,19 +7,60 @@
 #include <cmath>
 #include <iomanip>
 
-#include "color.h"
-#include "hittable.h"
 #include "image.h"
 #include "material.h"
-#include "pdf.h"
 #include "logger.h"
 
 extern std::atomic<long long> cal_count;
 
 class Camera
 {
-public:
+private:
+    // 若使用ImageWrite image_，会报错 0xc0000005 访问冲突。
+    // 初始化image_使用的临时ImageWrite对象会被立刻析构，其持有的image_data_指针在析构函数中释放，
+    // image_的image_data_指针是从临时ImageWrite对象浅拷贝而来，成为悬空指针，故访问冲突。
+    std::unique_ptr<ImageWrite> image_;
+    std::string image_name_;
 
+    double aspect_ratio_ = 1.;
+    double vfov_ = 90;  // 垂直fov
+    int    image_width_;
+    int    image_height_;
+    Color background_ = Color(.7, .8, 1.);
+    int    channel_ = 4;
+    Point3 camera_center_;
+    Point3 pixel00_loc_; // (0,0)处像素的位置
+    Vec3   pixel_delta_u_;
+    Vec3   pixel_delta_v_;
+    int    samples_per_pixel_ = 16; // 每像素采样数
+    int    sqrt_spp_ = 4;
+    int    max_depth_ = 10; // 光线最大弹射次数
+
+    Point3 lookfrom_ = Point3(0, 0, -1);
+    Point3 lookat_ = Point3(0, 0, 0);
+    Vec3   vup_ = Point3(0, 1, 0);
+    // 相机坐标系
+    Vec3   u_; // 指向相机右方
+    Vec3   v_; // 指向相机上方
+    Vec3   w_; // 与相机视点方向相反 
+
+    double defocus_angle_ = 0;  // 光线经过每个像素的变化
+    double focus_dist_ = 10;    // 相机原点到完美聚焦平面的距离，这里与焦距相同
+    Vec3   defocus_disk_u_;  // 散焦横向半径
+    Vec3   defocus_disk_v_;  // 散焦纵向半径
+
+public:
+    Camera() = default;
+
+    ~Camera() = default;
+
+    Camera(const Camera&) = delete;
+    Camera& operator=(const Camera&) = delete;
+
+    Camera(Camera&&) = delete;
+    Camera& operator=(Camera&&) = delete;
+
+public:
     // 初始化，并返回渲染图像数组的指针
     unsigned char* initialize()
     {
@@ -87,17 +128,20 @@ public:
         image_->write();
     }
 
+public:
     void set_image_width(const int& image_width)
     {
         image_width_ = image_width;
     }
 
-    int get_image_width() const
+    int get_image_width() 
+        const
     {
         return image_width_;
     }
 
-    int get_image_height() const
+    int get_image_height() 
+        const
     {
         return image_height_;
     }
@@ -159,44 +203,9 @@ public:
     }
 
 private:
-
-    // 若使用ImageWrite image_，会报错 0xc0000005 访问冲突。
-    // 初始化image_使用的临时ImageWrite对象会被立刻析构，其持有的image_data_指针在析构函数中释放，
-    // image_的image_data_指针是从临时ImageWrite对象浅拷贝而来，成为悬空指针，故访问冲突。
-    std::unique_ptr<ImageWrite> image_;
-    std::string image_name_;
-
-    double aspect_ratio_ = 1.;
-    int    image_width_;
-    int    image_height_;
-    int    channel_ = 4;
-    Point3 camera_center_;
-    Point3 pixel00_loc_; // (0,0)处像素的位置
-    Vec3   pixel_delta_u_;
-    Vec3   pixel_delta_v_;
-    int    samples_per_pixel_ = 16; // 每像素采样数
-    int    sqrt_spp_ = 4;
-    int    max_depth_ = 10; // 光线最大弹射次数
-
-    double vfov_ = 90;  // 垂直fov
-    
-    Point3 lookfrom_ = Point3(0, 0, -1);
-    Point3 lookat_ = Point3(0, 0, 0);
-    Vec3   vup_ = Point3(0, 1, 0);
-    // 相机坐标系
-    Vec3   u_; // 指向相机右方
-    Vec3   v_; // 指向相机上方
-    Vec3   w_; // 与相机视点方向相反 
-
-    double defocus_angle_ = 0;  // 光线经过每个像素的变化
-    double focus_dist_ = 10;    // 相机原点到完美聚焦平面的距离，这里与焦距相同
-    Vec3   defocus_disk_u_;  // 散焦横向半径
-    Vec3   defocus_disk_v_;  // 散焦纵向半径
-
-    Color background_ = Color(.7, .8, 1.);
-
     // 获取光线击中处的颜色
-    Color ray_color(const Ray& r, const std::shared_ptr<Hittable>& world, const std::shared_ptr<Hittable>& light, int depth) const
+    Color ray_color(const Ray& r, const std::shared_ptr<Hittable>& world, const std::shared_ptr<Hittable>& light, const int& depth) 
+        const
     {
         // 到达弹射次数上限，不再累加任何颜色
         if (depth < 0)
@@ -252,7 +261,8 @@ private:
     }
 
     // 采样随机光线
-    Ray get_ray(int i, int j, int s_i, int s_j) const
+    Ray get_ray(int i, int j, int s_i, int s_j) 
+        const
     {
         // 返回长度为1的像素块上一随机采样点位置
         auto pixel_sample_square = [=](int s_i, int s_j) -> Vec3
@@ -278,7 +288,8 @@ private:
     }
 
     // 返回圆形透镜上随机一点
-    Point3 defocus_disk_sample() const 
+    Point3 defocus_disk_sample() 
+        const 
     {
         auto p = random_in_unit_disk();
         return camera_center_ + (p[0] * defocus_disk_u_) + (p[1] * defocus_disk_v_);

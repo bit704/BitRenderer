@@ -10,7 +10,24 @@
 
 class Sphere : public Hittable
 {
+private:
+    Point3 center_;
+    Vec3 center_move_vec_; // 球移动距离
+    bool is_moving_; //球是否在移动
+    AABB bbox_;
+    double radius_;
+    std::shared_ptr<Material> material_;
+
 public:
+    Sphere() = delete;
+
+    ~Sphere() = default;
+
+    Sphere(const Sphere&) = delete;
+    Sphere& operator=(const Sphere&) = delete;
+
+    Sphere(Sphere&&) = delete;
+    Sphere& operator=(Sphere&&) = delete;
 
     // 静态球
     Sphere(Point3 center, double radius, std::shared_ptr<Material> material) 
@@ -32,7 +49,9 @@ public:
         center_move_vec_ = center_end - center;
     }
 
-    bool hit(const Ray& r, Interval interval, HitRecord& rec) const override
+public:
+    bool hit(const Ray& r, Interval interval, HitRecord& rec) 
+        const override
     {
         Point3 now_center = is_moving_ ? get_center(r.get_time()) : center_;
         Vec3 oc = r.get_origin() - now_center;
@@ -107,15 +126,6 @@ public:
     }
 
 private:
-
-    Point3 center_;
-    Vec3 center_move_vec_; // 球移动距离
-    bool is_moving_; //球是否在移动
-    AABB bbox_;
-
-    double radius_;
-    std::shared_ptr<Material> material_;
-
     // 获取t时刻的球心位置
     Point3 get_center(double t) const
     {
@@ -134,7 +144,6 @@ private:
 
         return Vec3(x, y, z);
     }
-
 };
 
 #endif // !SPHERE_H

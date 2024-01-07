@@ -4,12 +4,24 @@
 #ifndef BVH_NODE_H
 #define BVH_NODE_H
 
-#include "hittable.h"
 #include "hittable_list.h"
 
 class BVHNode : public Hittable
 {
+private:
+    std::shared_ptr<Hittable> left_, right_;
+    AABB bbox_;
+
 public:
+    BVHNode() = delete;
+
+    ~BVHNode() = default;
+
+    BVHNode(const BVHNode&) = delete;
+    BVHNode& operator=(const BVHNode&) = delete;
+
+    BVHNode(BVHNode&&) = delete;
+    BVHNode& operator=(BVHNode&&) = delete;
 
     BVHNode(const HittableList& list) 
         : BVHNode(list.get_objects(), 0, list.get_objects().size()) {}
@@ -53,6 +65,7 @@ public:
         bbox_ = AABB(left_->get_bbox(), right_->get_bbox());
     }
 
+public:
     bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const override
     {
         if (!bbox_.hit(r, ray_t))
@@ -68,11 +81,6 @@ public:
     AABB get_bbox() const override { return bbox_; }
 
 private:
-
-    std::shared_ptr<Hittable> left_;
-    std::shared_ptr<Hittable> right_;
-    AABB bbox_;
-
     static bool box_compare(const std::shared_ptr<Hittable> a, const std::shared_ptr<Hittable> b, 
         int axis_index)
     {
