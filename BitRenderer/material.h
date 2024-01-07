@@ -28,7 +28,7 @@ public:
     {
         return false;
     }
-    virtual Color emitted(double u, double v, const Point3& p) const
+    virtual Color emitted(double u, double v, const Point3& p, const HitRecord& rec) const
     {
         return Color(0, 0, 0);
     }
@@ -145,10 +145,14 @@ public:
     DiffuseLight(Color c) : emit_(std::make_shared<SolidColor>(c)) {}
 
     // 自发光
-    // 所有面均发光，不做背面剔除
-    Color emitted(double u, double v, const Point3& p) const override
+    Color emitted(double u, double v, const Point3& p, const HitRecord& rec)
+        const override
     {
-        return emit_->value(u, v, p);
+        // 正面发光，背面剔除
+        if (rec.front_face)
+            return emit_->value(u, v, p);
+        else
+            return Color(0, 0, 0);
     }
 
 private:

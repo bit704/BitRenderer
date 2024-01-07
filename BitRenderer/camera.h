@@ -214,7 +214,7 @@ private:
 
         ScatterRecord srec;
 
-        Color color_from_emission = rec.material->emitted(rec.u, rec.v, rec.p); // 自发光颜色
+        Color color_from_emission = rec.material->emitted(rec.u, rec.v, rec.p, rec); // 自发光颜色
 
         // 只有自发光颜色
         if (!rec.material->scatter(r, rec, srec))
