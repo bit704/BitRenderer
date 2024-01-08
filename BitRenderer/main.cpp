@@ -19,8 +19,9 @@ using std::chrono::minutes;
 using std::chrono::seconds;
 using std::chrono::milliseconds;
 
-// 计算次数统计
-std::atomic<long long> cal_count(0);
+std::atomic_ullong hit_count(0); // 击中次数统计
+std::atomic_ullong sample_count(0); // 采样次数统计
+std::vector<bool> depth_reach; // 各深度是否到达过，无需锁
 
 int main()
 {
@@ -317,9 +318,13 @@ int main()
 
             ImGui::SeparatorText("command");
 
-            if (ImGui::Button("rendering_start rendering") && !show_rendering_process)
+            // 开始渲染
+            if (ImGui::Button("start rendering") && !show_rendering_process)
             {
-                cal_count = 0;
+                hit_count = 0;
+                std::vector<bool>().swap(depth_reach);
+                depth_reach.resize(max_depth + 1);
+
                 rendering_start = steady_clock::now();
 
                 cam.set_image_name(std::string(scenes[scene_current_idx]) + ".png");
@@ -376,7 +381,9 @@ int main()
         {
             ImGui::Begin("rendering process");
             ImGui::Text("image size = %d x %d", cam.get_image_width(), cam.get_image_height());
-            ImGui::Text(("cal count = " + format_num(cal_count.load())).c_str());
+            ImGui::Text(("hit count = " + format_num(hit_count.load())).c_str());
+            ImGui::Text("average depth = %.2f", (double)hit_count.load() / (sample_count.load() + 1));
+            ImGui::Text("max depth = %d", depth_reach.rend() - 1 - std::find_if(depth_reach.rbegin(), depth_reach.rend(), [](bool b) { return b; }));
 
             auto rendering_now = steady_clock::now();
             auto duration = rendering_now - rendering_start;

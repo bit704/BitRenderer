@@ -11,7 +11,9 @@
 #include "material.h"
 #include "logger.h"
 
-extern std::atomic<long long> cal_count;
+extern std::atomic_ullong hit_count;
+extern std::atomic_ullong sample_count;
+extern std::vector<bool> depth_reach;
 
 class Camera
 {
@@ -213,13 +215,14 @@ private:
             return Color(0, 0, 0);
         }
 
+        ++hit_count;
+        depth_reach[depth] = true;
+
         HitRecord rec;
 
         // Interval最小值不能为0，否则当数值误差导致光线与物体交点在物体内部时，光线无法正常弹射
         if (!world->hit(r, Interval(1e-3, kInfinitDouble), rec))
             return background_;
-
-        ++cal_count;
 
         ScatterRecord srec;
 
@@ -264,6 +267,8 @@ private:
     Ray get_ray(int i, int j, int s_i, int s_j) 
         const
     {
+        ++sample_count;
+
         // 返回长度为1的像素块上一随机采样点位置
         auto pixel_sample_square = [=](int s_i, int s_j) -> Vec3
         {
