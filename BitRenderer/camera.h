@@ -13,7 +13,7 @@
 
 extern std::atomic_ullong hit_count;
 extern std::atomic_ullong sample_count;
-extern std::vector<bool> depth_reach;
+extern std::atomic_bool rendering;
 
 class Camera
 {
@@ -74,11 +74,11 @@ public:
         camera_center_ = lookfrom_;
 
         // 相机属性
-        auto theta = degrees_to_radians(vfov_);
-        auto h = tan(theta / 2);
-        auto viewport_height = 2 * h * focus_dist_;
+        double theta = degrees_to_radians(vfov_);
+        double h = tan(theta / 2);
+        double viewport_height = 2 * h * focus_dist_;
 
-        auto viewport_width = viewport_height * (static_cast<double>(image_width_) / image_height_);
+        double viewport_width = viewport_height * (static_cast<double>(image_width_) / image_height_);
 
         // 计算相机坐标系，右手系(z轴指向屏幕外)
         w_ = unit_vector(lookfrom_ - lookat_); // 与相机视点方向相反 (0,0,-1)
@@ -107,6 +107,7 @@ public:
     void render(const std::shared_ptr<Hittable>& world, const std::shared_ptr<Hittable>& light = nullptr)
         const
     {
+        rendering.store(true);
         for (int i = 0; i < image_height_; ++i)
         {
 // OpenMP并发            
@@ -127,6 +128,7 @@ public:
                 image_->set_pixel(i, j, pixel_color, samples_per_pixel_);
             }
         }
+        rendering.store(false);
         image_->write();
     }
 
@@ -210,13 +212,12 @@ private:
         const
     {
         // 到达弹射次数上限，不再累加任何颜色
-        if (depth < 0)
+        if (depth <= 0)
         {
             return Color(0, 0, 0);
         }
 
         ++hit_count;
-        depth_reach[depth] = true;
 
         HitRecord rec;
 

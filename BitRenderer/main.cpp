@@ -21,7 +21,7 @@ using std::chrono::milliseconds;
 
 std::atomic_ullong hit_count(0); // 击中次数统计
 std::atomic_ullong sample_count(0); // 采样次数统计
-std::vector<bool> depth_reach; // 各深度是否到达过，无需锁
+std::atomic_bool rendering(false); // 标志是否正在渲染
 
 int main()
 {
@@ -115,7 +115,6 @@ int main()
     float background[3] = { .7f, .8f, 1 };
 
     // 窗口状态项
-    bool show_rendering_process = false;
 
     // 渲染数据
     Camera cam;
@@ -319,11 +318,10 @@ int main()
             ImGui::SeparatorText("command");
 
             // 开始渲染
-            if (ImGui::Button("start rendering") && !show_rendering_process)
+            if (ImGui::Button("start rendering") && !rendering.load())
             {
                 hit_count = 0;
-                std::vector<bool>().swap(depth_reach);
-                depth_reach.resize(max_depth + 1);
+                sample_count = 0;
 
                 rendering_start = steady_clock::now();
 
@@ -350,8 +348,6 @@ int main()
 
                 if (t.joinable())
                     t.detach();
-
-                show_rendering_process = true;
             }
 
             ImGui::End();
@@ -377,27 +373,30 @@ int main()
         }
 
         // 显示渲染过程
-        if(show_rendering_process)
         {
-            ImGui::Begin("rendering process");
+            ImGui::Begin("rendering");
             ImGui::Text("image size = %d x %d", cam.get_image_width(), cam.get_image_height());
             ImGui::Text(("hit count = " + format_num(hit_count.load())).c_str());
             ImGui::Text("average depth = %.2f", (double)hit_count.load() / (sample_count.load() + 1));
-            ImGui::Text("max depth = %d", depth_reach.rend() - 1 - std::find_if(depth_reach.rbegin(), depth_reach.rend(), [](bool b) { return b; }));
+            
+            if (rendering.load())
+            {
+                auto rendering_now = steady_clock::now();
+                auto duration = rendering_now - rendering_start;
+                auto duration_min = duration_cast<minutes>(duration);
+                auto duration_sec = duration_cast<seconds>(duration);
+                ImGui::Text("cal time = %d min %d sec", duration_min.count(), duration_sec.count() % 60);
+            }
 
-            auto rendering_now = steady_clock::now();
-            auto duration = rendering_now - rendering_start;
-            auto duration_min = duration_cast<minutes>(duration);
-            auto duration_sec = duration_cast<seconds>(duration);
-            ImGui::Text("cal time = %d min %d sec", duration_min.count(), duration_sec.count() % 60);
-
-            // 加载纹理
-            bool ret = LoadTextureFromImageData(image_data, cam.get_image_width(), cam.get_image_height(), g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture);
-            IM_ASSERT(ret);
-
-            // 传递SRV GPU句柄，而不是CPU句柄。传递内部指针值, 转换为ImTextureID。
-            ImGui::Image((ImTextureID)my_texture_srv_gpu_handle.ptr, ImVec2((float)cam.get_image_width(), (float)cam.get_image_height()));
-
+            if (image_data != nullptr)
+            {
+                // 加载纹理
+                bool ret = LoadTextureFromImageData(image_data, cam.get_image_width(), cam.get_image_height(), g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture);
+                IM_ASSERT(ret);
+                // 传递SRV GPU句柄，而不是CPU句柄。传递内部指针值, 转换为ImTextureID。
+                ImGui::Image((ImTextureID)my_texture_srv_gpu_handle.ptr, ImVec2((float)cam.get_image_width(), (float)cam.get_image_height()));
+            }
+           
             ImGui::Text("Once done, image will be save to ./output/ folder.");
             ImGui::End();
         }
