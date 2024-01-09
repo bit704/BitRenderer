@@ -115,8 +115,6 @@ int main()
     float vup[3] = { 0, 1, 0 };
     float background[3] = { .7f, .8f, 1 };
 
-    // 窗口状态项
-
     // 渲染数据
     Camera cam;
     unsigned char* image_data = nullptr;
@@ -129,6 +127,7 @@ int main()
     auto cpu_start = steady_clock::now(); // 记录CPU占用率计算间隔
     FILETIME cpu_idle_prev, cpu_kernel_prev, cpu_user_prev; // 记录CPU时间
     GetSystemTimes(&cpu_idle_prev, &cpu_kernel_prev, &cpu_user_prev);
+    std::string save_info = "";
 
     bool done = false;
     while (!done)
@@ -324,6 +323,7 @@ int main()
             {
                 hit_count = 0;
                 sample_count = 0;
+                save_info = "";
 
                 rendering_start = steady_clock::now();
 
@@ -352,9 +352,26 @@ int main()
                     t.detach();
             }
 
+            ImGui::SameLine();
             // 结束渲染
             if (ImGui::Button("end") && rendering.load())
                 rendering.store(false);
+
+            ImGui::SameLine();
+            if (ImGui::Button("save"))
+            {               
+                if (!rendering.load())
+                {
+                    save_info = "Image has be saved to ./output/ folder.";
+                    cam.save_image();
+                }                   
+                else
+                {
+                    save_info = "Still rendering!";
+                }
+            }   
+
+            ImGui::Text(save_info.c_str());
 
             ImGui::End();
         }
@@ -401,8 +418,7 @@ int main()
                 // 传递SRV GPU句柄，而不是CPU句柄。传递内部指针值, 转换为ImTextureID。
                 ImGui::Image((ImTextureID)my_texture_srv_gpu_handle.ptr, ImVec2((float)cam.get_image_width(), (float)cam.get_image_height()));
             }
-           
-            ImGui::Text("Once done, image will be save to ./output/ folder.");
+
             ImGui::End();
         }
 

@@ -133,10 +133,16 @@ public:
             }
         }
         rendering.store(false);
-        image_->write();
     }
 
 public:
+    void save_image() 
+        const
+    {
+        if(image_->get_image_data() != nullptr)
+            image_->write();
+    }
+
     void set_image_width(const int& image_width)
     {
         image_width_ = image_width;
