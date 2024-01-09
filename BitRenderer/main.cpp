@@ -18,6 +18,7 @@ using std::chrono::duration_cast;
 using std::chrono::minutes;
 using std::chrono::seconds;
 using std::chrono::milliseconds;
+using std::chrono::nanoseconds;
 
 std::atomic_ullong hit_count(0); // 击中次数统计
 std::atomic_ullong sample_count(0); // 采样次数统计
@@ -122,7 +123,8 @@ int main()
     std::thread t;
 
     // 统计数据
-    auto rendering_start = steady_clock::now(); // 记录渲染时间
+    auto rendering_start = steady_clock::now(); // 记录渲染开始时间
+    nanoseconds duration(0); // 记录渲染用时
     float cpu_usage = 0.f;
     auto cpu_start = steady_clock::now(); // 记录CPU占用率计算间隔
     FILETIME cpu_idle_prev, cpu_kernel_prev, cpu_user_prev; // 记录CPU时间
@@ -381,12 +383,11 @@ int main()
             
             if (rendering.load())
             {
-                auto rendering_now = steady_clock::now();
-                auto duration = rendering_now - rendering_start;
-                auto duration_min = duration_cast<minutes>(duration);
-                auto duration_sec = duration_cast<seconds>(duration);
-                ImGui::Text("cal time = %d min %d sec", duration_min.count(), duration_sec.count() % 60);
+                duration = steady_clock::now() - rendering_start;
             }
+            auto duration_min = duration_cast<minutes>(duration);
+            auto duration_sec = duration_cast<seconds>(duration);
+            ImGui::Text("cal time = %d min %d sec", duration_min.count(), duration_sec.count() % 60);
 
             if (image_data != nullptr)
             {
