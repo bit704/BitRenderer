@@ -108,21 +108,25 @@ public:
         const
     {
         rendering.store(true);
+        // OpenMP并发
+#pragma omp parallel for
         for (int i = 0; i < image_height_; ++i)
         {
-// OpenMP并发            
-#pragma omp parallel for
-
             for (int j = 0; j < image_width_; ++j)
             {
                 Color pixel_color(0, 0, 0);
                 // 对每个像素中的采样点进行分层，采样更均匀
+#pragma omp parallel for
                 for (int s_i = 0; s_i < sqrt_spp_; ++s_i)
                 {
                     for (int s_j = 0; s_j < sqrt_spp_; ++s_j)
                     {
-                        Ray r = get_ray(i, j, s_i, s_j);
-                        pixel_color += ray_color(r, world, light, max_depth_);
+                        
+                        if (rendering.load())
+                        {
+                            Ray r = get_ray(i, j, s_i, s_j);
+                            pixel_color += ray_color(r, world, light, max_depth_);
+                        }
                     }
                 }
                 image_->set_pixel(i, j, pixel_color, samples_per_pixel_);

@@ -21,7 +21,9 @@ ImageWrite::ImageWrite(std::string imageName, int image_width, int image_height,
 	: image_path_(kOutputPath_ + imageName), width_(image_width), height_(image_height), channel_(channel)
 {
 	// 使用stbi_image_free()释放，因此不用new
-	image_data_ = (unsigned char*)malloc(this->width_ * this->height_ * this->channel_); // 初始化图片内存
+	image_data_ = (unsigned char*)malloc(width_ * height_ * channel_); // 初始化图片内存
+	if(image_data_ != nullptr)
+		memset(image_data_, 0, sizeof(unsigned char) * width_ * height_ * channel_);
 }
 
 // 设置像素

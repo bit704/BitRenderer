@@ -320,7 +320,7 @@ int main()
             ImGui::SeparatorText("command");
 
             // 开始渲染
-            if (ImGui::Button("start rendering") && !rendering.load())
+            if (ImGui::Button("start") && !rendering.load())
             {
                 hit_count = 0;
                 sample_count = 0;
@@ -351,6 +351,10 @@ int main()
                 if (t.joinable())
                     t.detach();
             }
+
+            // 结束渲染
+            if (ImGui::Button("end") && rendering.load())
+                rendering.store(false);
 
             ImGui::End();
         }
