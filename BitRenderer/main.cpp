@@ -1,6 +1,3 @@
-/*
- * UI使用IMGUI，后端为DirectX 12 + Win32
- */
 #include <chrono>
 #include <string>
 #include <thread>
@@ -23,6 +20,7 @@ using std::chrono::nanoseconds;
 std::atomic_ullong hit_count(0); // 击中次数统计
 std::atomic_ullong sample_count(0); // 采样次数统计
 std::atomic_bool rendering(false); // 标志是否正在渲染
+std::string rendering_info = "";
 
 int main()
 {
@@ -97,11 +95,15 @@ int main()
         g_pd3dSrvDescHeap->GetCPUDescriptorHandleForHeapStart(),
         g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
 
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    
     // 窗口设置项
     ImGuiComboFlags flags = 0;
-    const char* scenes[] = { "scene_composite1", "scene_composite2", "scene_checker", "scene_cornell_box"};
+    //ImGuiWindowFlags_ custom_window_flag = ImGuiWindowFlags_None;
+    ImGuiWindowFlags_ custom_window_flag = (ImGuiWindowFlags_)(ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+    ImVec4 clear_color = ImVec4(1.f, 1.f, 1.f, 1.f); // 背景颜色
+    bool use_preset = true;
+
+    // 渲染设置项
+    const char* scenes[] = { "None", "scene_checker", "scene_cornell_box", "scene_composite1", "scene_composite2"};
     int scene_current_idx = 0;
     int image_width = 600;
     const char* aspect_ratios[] = { "16/9", "2/1", "3/2", "4/3", "1/1" };
@@ -127,7 +129,6 @@ int main()
     auto cpu_start = steady_clock::now(); // 记录CPU占用率计算间隔
     FILETIME cpu_idle_prev, cpu_kernel_prev, cpu_user_prev; // 记录CPU时间
     GetSystemTimes(&cpu_idle_prev, &cpu_kernel_prev, &cpu_user_prev);
-    std::string save_info = "";
 
     bool done = false;
     while (!done)
@@ -151,93 +152,117 @@ int main()
 
         // 设置
         {
-            ImGui::Begin("SETUP");
+            ImGui::Begin("SETUP", nullptr, custom_window_flag | ImGuiWindowFlags_MenuBar);
 
-            ImGui::SeparatorText("general");
-
-            // 选择场景
-            const char* combo_preview_value_scene = scenes[scene_current_idx];
-            if (ImGui::BeginCombo("scene", combo_preview_value_scene, flags))
+            // 菜单
+            if (ImGui::BeginMenuBar())
             {
-                for (int n = 0; n < IM_ARRAYSIZE(scenes); n++)
+                if (ImGui::BeginMenu("Mode"))
                 {
-                    const bool is_selected = (scene_current_idx == n);
-                    if (ImGui::Selectable(scenes[n], is_selected))
-                        scene_current_idx = n;
+                    if (ImGui::MenuItem("Tracer"))
+                    {
 
-                    if (is_selected)
-                        ImGui::SetItemDefaultFocus();
+                    }
+                    if (ImGui::MenuItem("Rasterizer"))
+                    {
 
-                    // 各场景推荐参数
-                    if (scene_current_idx == 0)
-                    {
-                        image_width = 600;
-                        aspect_ratio_idx = 0;
-                        samples_per_pixel = 100;
-                        max_depth = 50;
-                        vfov = 20;
-                        float lookfrom_t[3] = { 13, 2, 3 };
-                        memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
-                        float lookat_t[3] = { 0, 0, 0 };
-                        memcpy(lookat, lookat_t, 3 * sizeof(float));
-                        float vup_t[3] = { 0, 1, 0 };
-                        memcpy(vup, vup_t, 3 * sizeof(float));
-                        float background_t[3] = { .7f, .8f, 1 };
-                        memcpy(background, background_t, 3 * sizeof(float));
                     }
-                    else if (scene_current_idx == 1)
-                    {
-                        image_width = 600;
-                        aspect_ratio_idx = 4;
-                        samples_per_pixel = 1500;
-                        max_depth = 50;
-                        vfov = 40;
-                        float lookfrom_t[3] = { 478, 278, -600 };
-                        memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
-                        float lookat_t[3] = { 278, 278, 0 };
-                        memcpy(lookat, lookat_t, 3 * sizeof(float));
-                        float vup_t[3] = { 0, 1, 0 };
-                        memcpy(vup, vup_t, 3 * sizeof(float));
-                        float background_t[3] = { 0, 0, 0 };
-                        memcpy(background, background_t, 3 * sizeof(float));
-                    }
-                    else if (scene_current_idx == 2)
-                    {
-                        image_width = 600;
-                        aspect_ratio_idx = 0;
-                        samples_per_pixel = 100;
-                        max_depth = 50;
-                        vfov = 20;
-                        float lookfrom_t[3] = { 13, 2, 3 };
-                        memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
-                        float lookat_t[3] = { 0, 0, 0 };
-                        memcpy(lookat, lookat_t, 3 * sizeof(float));
-                        float vup_t[3] = { 0, 1, 0 };
-                        memcpy(vup, vup_t, 3 * sizeof(float));
-                        float background_t[3] = { .7f, .8f, 1 };
-                        memcpy(background, background_t, 3 * sizeof(float));
-                    }
-                    else if (scene_current_idx == 3)
-                    {
-                        image_width = 600;
-                        aspect_ratio_idx = 4;
-                        samples_per_pixel = 1000;
-                        max_depth = 50;
-                        vfov = 40;
-                        float lookfrom_t[3] = { 278, 278, -800 };
-                        memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
-                        float lookat_t[3] = { 278, 278, 0 };
-                        memcpy(lookat, lookat_t, 3 * sizeof(float));
-                        float vup_t[3] = { 0, 1, 0 };
-                        memcpy(vup, vup_t, 3 * sizeof(float));
-                        float background_t[3] = { 0, 0, 0 };
-                        memcpy(background, background_t, 3 * sizeof(float));
-                    }
+                    ImGui::EndMenu();
                 }
-                ImGui::EndCombo();
+                ImGui::EndMenuBar();
+            }
+            
+            ImGui::SeparatorText("scene");
+
+            ImGui::Checkbox("use preset", &use_preset);            
+
+            if (use_preset)
+            {
+                ImGui::SameLine();
+                // 选择预置场景
+                const char* combo_preview_value_scene = scenes[scene_current_idx];
+                if (ImGui::BeginCombo("preset", combo_preview_value_scene, flags))
+                {
+                    for (int n = 0; n < IM_ARRAYSIZE(scenes); n++)
+                    {
+                        const bool is_selected = (scene_current_idx == n);
+                        if (ImGui::Selectable(scenes[n], is_selected))
+                            scene_current_idx = n;
+
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
+
+                        // 各场景推荐参数
+                        if (scene_current_idx == 1)
+                        {
+                            image_width = 600;
+                            aspect_ratio_idx = 0;
+                            samples_per_pixel = 100;
+                            max_depth = 50;
+                            vfov = 20;
+                            float lookfrom_t[3] = { 13, 2, 3 };
+                            memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
+                            float lookat_t[3] = { 0, 0, 0 };
+                            memcpy(lookat, lookat_t, 3 * sizeof(float));
+                            float vup_t[3] = { 0, 1, 0 };
+                            memcpy(vup, vup_t, 3 * sizeof(float));
+                            float background_t[3] = { .7f, .8f, 1 };
+                            memcpy(background, background_t, 3 * sizeof(float));
+                        }
+                        else if (scene_current_idx == 2)
+                        {
+                            image_width = 600;
+                            aspect_ratio_idx = 4;
+                            samples_per_pixel = 1000;
+                            max_depth = 50;
+                            vfov = 40;
+                            float lookfrom_t[3] = { 278, 278, -800 };
+                            memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
+                            float lookat_t[3] = { 278, 278, 0 };
+                            memcpy(lookat, lookat_t, 3 * sizeof(float));
+                            float vup_t[3] = { 0, 1, 0 };
+                            memcpy(vup, vup_t, 3 * sizeof(float));
+                            float background_t[3] = { 0, 0, 0 };
+                            memcpy(background, background_t, 3 * sizeof(float));
+                        }
+                        else if (scene_current_idx == 3)
+                        {
+                            image_width = 600;
+                            aspect_ratio_idx = 0;
+                            samples_per_pixel = 100;
+                            max_depth = 50;
+                            vfov = 20;
+                            float lookfrom_t[3] = { 13, 2, 3 };
+                            memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
+                            float lookat_t[3] = { 0, 0, 0 };
+                            memcpy(lookat, lookat_t, 3 * sizeof(float));
+                            float vup_t[3] = { 0, 1, 0 };
+                            memcpy(vup, vup_t, 3 * sizeof(float));
+                            float background_t[3] = { .7f, .8f, 1 };
+                            memcpy(background, background_t, 3 * sizeof(float));
+                        }
+                        else if (scene_current_idx == 4)
+                        {
+                            image_width = 600;
+                            aspect_ratio_idx = 4;
+                            samples_per_pixel = 1500;
+                            max_depth = 50;
+                            vfov = 40;
+                            float lookfrom_t[3] = { 478, 278, -600 };
+                            memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
+                            float lookat_t[3] = { 278, 278, 0 };
+                            memcpy(lookat, lookat_t, 3 * sizeof(float));
+                            float vup_t[3] = { 0, 1, 0 };
+                            memcpy(vup, vup_t, 3 * sizeof(float));
+                            float background_t[3] = { 0, 0, 0 };
+                            memcpy(background, background_t, 3 * sizeof(float));
+                        }
+                    }
+                    ImGui::EndCombo();
+                }
             }
 
-            ImGui::SeparatorText("image");
+            ImGui::SeparatorText("camera");
 
             // 输入图片宽度
             ImGui::InputInt("image width", &image_width);
@@ -265,11 +290,11 @@ int main()
             }
             switch (aspect_ratio_idx)
             {
-                case 0: aspect_ratio = 16. / 9.; break;
-                case 1: aspect_ratio = 2. / 1.; break;
-                case 2: aspect_ratio = 3. / 2.; break;
-                case 3: aspect_ratio = 4. / 3.; break;
-                case 4: aspect_ratio = 1.; break;
+            case 0: aspect_ratio = 16. / 9.; break;
+            case 1: aspect_ratio = 2. / 1.; break;
+            case 2: aspect_ratio = 3. / 2.; break;
+            case 3: aspect_ratio = 4. / 3.; break;
+            case 4: aspect_ratio = 1.; break;
             }
 
             // 设置背景颜色
@@ -280,8 +305,6 @@ int main()
                 "Click and hold to use drag and drop.\n"
                 "Right-click on the color square to show options.\n"
                 "CTRL+click on individual component to input value.\n");
-
-            ImGui::SeparatorText("tracing");
 
             // 输入spp
             ImGui::InputInt("samples per pixel", &samples_per_pixel);
@@ -302,8 +325,6 @@ int main()
                 max_depth = 400;
 
             // 设置相机外参
-            ImGui::SeparatorText("camera");
-
             ImGui::InputFloat3("lookfrom", lookfrom, "%.1f");
             ImGui::InputFloat3("lookat", lookat, "%.1f");
             ImGui::InputFloat3("vup", vup, "%.1f");
@@ -321,64 +342,78 @@ int main()
             // 开始渲染
             if (ImGui::Button("start") && !rendering.load())
             {
-                hit_count = 0;
-                sample_count = 0;
-                save_info = "";
-
-                rendering_start = steady_clock::now();
-
-                cam.set_image_name(std::string(scenes[scene_current_idx]) + ".png");
-                cam.set_image_width(image_width);
-                cam.set_aspect_ratio(aspect_ratio);
-                cam.set_samples_per_pixel(samples_per_pixel);
-                cam.set_max_depth(max_depth);
-                cam.set_vfov(vfov);
-                cam.set_lookfrom(Point3(lookfrom));
-                cam.set_lookat(Point3(lookat));
-                cam.set_vup(Vec3(vup));
-                cam.set_background(Color(background));
-
-                image_data = cam.initialize();
-
-                switch (scene_current_idx)
+                if (scene_current_idx == 0)
                 {
-                    case 0: t = std::thread(scene_composite1, std::ref(cam)); break;
-                    case 1: t = std::thread(scene_composite2, std::ref(cam)); break;
-                    case 2: t = std::thread(scene_checker, std::ref(cam)); break;
-                    case 3: t = std::thread(scene_cornell_box, std::ref(cam)); break;
+                    rendering_info = "No scene.";
                 }
+                else
+                {
+                    hit_count = 0;
+                    sample_count = 0;
+                    rendering_info = "Rendering...";
 
-                if (t.joinable())
-                    t.detach();
+                    rendering_start = steady_clock::now();
+
+                    cam.set_image_name(std::string(scenes[scene_current_idx]) + ".png");
+                    cam.set_image_width(image_width);
+                    cam.set_aspect_ratio(aspect_ratio);
+                    cam.set_samples_per_pixel(samples_per_pixel);
+                    cam.set_max_depth(max_depth);
+                    cam.set_vfov(vfov);
+                    cam.set_lookfrom(Point3(lookfrom));
+                    cam.set_lookat(Point3(lookat));
+                    cam.set_vup(Vec3(vup));
+                    cam.set_background(Color(background));
+
+                    image_data = cam.initialize();
+
+                    switch (scene_current_idx)
+                    {
+                    case 1: t = std::thread(scene_checker,     std::ref(cam)); break;
+                    case 2: t = std::thread(scene_cornell_box, std::ref(cam)); break;
+                    case 3: t = std::thread(scene_composite1,  std::ref(cam)); break;
+                    case 4: t = std::thread(scene_composite2,  std::ref(cam)); break;                   
+                    }
+
+                    if (t.joinable())
+                        t.detach();
+                }
             }
 
             ImGui::SameLine();
             // 结束渲染
             if (ImGui::Button("end") && rendering.load())
+            {
                 rendering.store(false);
+            }      
 
             ImGui::SameLine();
             if (ImGui::Button("save"))
             {               
-                if (!rendering.load())
+                if (image_data == nullptr)
                 {
-                    save_info = "Image has be saved to ./output/ folder.";
-                    cam.save_image();
+                    rendering_info = "No Image.";
+                }
+                else if (rendering.load())
+                {
+                    rendering_info = "Still rendering!";
                 }                   
                 else
-                {
-                    save_info = "Still rendering!";
+                {                 
+                    rendering_info = "Image has be saved to ./output/ folder.";
+                    cam.save_image();
                 }
             }   
 
-            ImGui::Text(save_info.c_str());
+            ImGui::Text(rendering_info.c_str());
 
             ImGui::End();
         }
 
         // 状态
         {
-            ImGui::Begin("STATUS");
+            ImGui::Begin("STATUS", nullptr, custom_window_flag);
+
             ImGui::Text("UI fps = %.2f", io.Framerate);
             ImGui::Text("UI 1/fps = %.2f ms", 1000. / io.Framerate);
             ImGui::Text("sys memory load = %lld", get_memory_load());
@@ -397,7 +432,8 @@ int main()
 
         // 显示渲染过程
         {
-            ImGui::Begin("rendering");
+            ImGui::Begin("rendering", nullptr, custom_window_flag);
+
             ImGui::Text("image size = %d x %d", cam.get_image_width(), cam.get_image_height());
             ImGui::Text(("hit count = " + format_num(hit_count.load())).c_str());
             ImGui::Text("average depth = %.2f", (double)hit_count.load() / (sample_count.load() + 1));

@@ -84,6 +84,7 @@ public:
     }
 };
 
+// 图片纹理
 class ImageTexture : public Texture
 {
 private:
@@ -119,6 +120,7 @@ public:
     }
 };
 
+// 噪声纹理
 class NoiseTexture : public Texture
 {
 private:

@@ -14,6 +14,7 @@
 extern std::atomic_ullong hit_count;
 extern std::atomic_ullong sample_count;
 extern std::atomic_bool rendering;
+extern std::string rendering_info;
 
 class Camera
 {
@@ -121,7 +122,6 @@ public:
                 {
                     for (int s_j = 0; s_j < sqrt_spp_; ++s_j)
                     {
-                        
                         if (rendering.load())
                         {
                             Ray r = get_ray(i, j, s_i, s_j);
@@ -133,6 +133,7 @@ public:
             }
         }
         rendering.store(false);
+        rendering_info = "Done.";
     }
 
 public:
