@@ -77,7 +77,7 @@ ImageWrite::~ImageWrite()
 	stbi_image_free(image_data_);
 }
 
-const std::string ImageRead::kInputPath_ = "./texture/";
+const std::string ImageRead::kInputPath_ = "./load/";
 
 ImageRead::ImageRead(std::string image_name)
 {
