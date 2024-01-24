@@ -125,7 +125,7 @@ int main()
     // 统计数据
     auto rendering_start = steady_clock::now(); // 记录渲染开始时间
     nanoseconds duration(0); // 记录渲染用时
-    float cpu_usage = 0.f;
+    double cpu_usage = 0.;
     auto cpu_start = steady_clock::now(); // 记录CPU占用率计算间隔
     FILETIME cpu_idle_prev, cpu_kernel_prev, cpu_user_prev; // 记录CPU时间
     GetSystemTimes(&cpu_idle_prev, &cpu_kernel_prev, &cpu_user_prev);

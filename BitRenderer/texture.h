@@ -24,16 +24,6 @@ private:
     Color color_value_;
 
 public:
-    SolidColor() = delete;
-
-    ~SolidColor() = default;
-
-    SolidColor(const SolidColor&) = default;
-    SolidColor& operator=(const SolidColor&) = default;
-
-    SolidColor(SolidColor&&) = default;
-    SolidColor& operator=(SolidColor&&) = default;
-
     SolidColor(Color c) : color_value_(c) {}
     SolidColor(double r, double g, double b) : SolidColor(Color(r, g, b)) {}
 
@@ -53,16 +43,6 @@ private:
     std::shared_ptr<Texture> even_, odd_;
 
 public:
-    CheckerTexture() = delete;
-
-    ~CheckerTexture() = default;
-
-    CheckerTexture(const CheckerTexture&) = delete;
-    CheckerTexture& operator=(const CheckerTexture&) = delete;
-
-    CheckerTexture(CheckerTexture&&) = delete;
-    CheckerTexture& operator=(CheckerTexture&&) = delete;
-
     CheckerTexture(double scale, std::shared_ptr<Texture> even, std::shared_ptr<Texture> odd)
         : inv_scale_(1.0 / scale), even_(even), odd_(odd) {}
 
@@ -70,6 +50,12 @@ public:
         : inv_scale_(1.0 / scale),
         even_(std::make_shared<SolidColor>(c1)),
         odd_(std::make_shared<SolidColor>(c2)) {}
+
+    CheckerTexture(const CheckerTexture&) = delete;
+    CheckerTexture& operator=(const CheckerTexture&) = delete;
+
+    CheckerTexture(CheckerTexture&&) = delete;
+    CheckerTexture& operator=(CheckerTexture&&) = delete;
 
 public:
     Color value(double u, double v, const Point3& p)
@@ -91,16 +77,6 @@ private:
     ImageRead image_read_;
 
 public:
-    ImageTexture() = delete;
-
-    ~ImageTexture() = default;
-
-    ImageTexture(const ImageTexture&) = delete;
-    ImageTexture& operator=(const ImageTexture&) = delete;
-
-    ImageTexture(ImageTexture&&) = delete;
-    ImageTexture& operator=(ImageTexture&&) = delete;
-
     ImageTexture(std::string filename) : image_read_(filename) {}
 
 public:
@@ -128,16 +104,6 @@ private:
     double scale_ = 1.;
 
 public:
-    NoiseTexture() = delete;
-
-    ~NoiseTexture() = default;
-
-    NoiseTexture(const NoiseTexture&) = delete;
-    NoiseTexture& operator=(const NoiseTexture&) = delete;
-
-    NoiseTexture(NoiseTexture&&) = delete;
-    NoiseTexture& operator=(NoiseTexture&&) = delete;
-
     // 频率
     NoiseTexture(double sc) : scale_(sc) {}
 

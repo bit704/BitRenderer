@@ -18,21 +18,17 @@ private:
     double neg_inv_density_;
 
 public:
-    ConstantMedium() = default;
+    ConstantMedium(std::shared_ptr<Hittable> b, double d, std::shared_ptr<Texture> a)
+        : boundary_(b), neg_inv_density_(-1 / d), phase_function_(std::make_shared<Isotropic>(a)) {}
 
-    ~ConstantMedium() = default;
+    ConstantMedium(std::shared_ptr<Hittable> b, double d, Color c)
+        : boundary_(b), neg_inv_density_(-1 / d), phase_function_(std::make_shared<Isotropic>(c)) {}
 
     ConstantMedium(const ConstantMedium&) = delete;
     ConstantMedium& operator=(const ConstantMedium&) = delete;
 
     ConstantMedium(ConstantMedium&&) = delete;
     ConstantMedium& operator=(ConstantMedium&&) = delete;
-
-    ConstantMedium(std::shared_ptr<Hittable> b, double d, std::shared_ptr<Texture> a)
-        : boundary_(b), neg_inv_density_(-1 / d), phase_function_(std::make_shared<Isotropic>(a)) {}
-
-    ConstantMedium(std::shared_ptr<Hittable> b, double d, Color c)
-        : boundary_(b), neg_inv_density_(-1 / d), phase_function_(std::make_shared<Isotropic>(c)) {}
 
 public: 
     bool hit(const Ray& r, Interval ray_t, HitRecord& rec) 

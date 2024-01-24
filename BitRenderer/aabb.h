@@ -19,14 +19,6 @@ private:
 public:
     AABB() = default;
 
-    ~AABB() = default;
-
-    AABB(const AABB&) = default;
-    AABB& operator=(const AABB&) = default;
-
-    AABB(AABB&&) = default;
-    AABB& operator=(AABB&&) = default;
-
     AABB(const Interval& x, const Interval& y, const Interval& z)
         : x_(x), y_(y), z_(z) {}
 

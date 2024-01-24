@@ -18,18 +18,16 @@ private:
 public:
     HittableList() = default;
 
-    ~HittableList() = default;
+    HittableList(std::shared_ptr<Hittable> object)
+    {
+        add(object);
+    }
 
     HittableList(const HittableList&) = delete;
     HittableList& operator=(const HittableList&) = delete;
 
     HittableList(HittableList&&) = delete;
     HittableList& operator=(HittableList&&) = delete;
-
-    HittableList(std::shared_ptr<Hittable> object) 
-    { 
-        add(object);
-    }
 
 public:
     void clear() 

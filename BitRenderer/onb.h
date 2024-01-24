@@ -13,16 +13,6 @@ private:
     Vec3 axis_[3];
 
 public:
-    ONB() = default;
-
-    ~ONB() = default;
-
-    ONB(const ONB&) = delete;
-    ONB& operator=(const ONB&) = delete;
-
-    ONB(ONB&&) = delete;
-    ONB& operator=(ONB&&) = delete;
-
     Vec3 operator[](int i) const { return axis_[i]; }
     Vec3& operator[](int i) { return axis_[i]; }
 

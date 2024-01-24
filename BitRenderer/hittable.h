@@ -18,6 +18,8 @@ struct HitRecord
     bool front_face;
     double u, v;
 
+    HitRecord() : p(), normal(), material(), t(0), front_face(false), u(0), v(0) {}
+
     // 确保法线面向观察者
     // outward_normal为从球心指向光线击中点方向的法线
     void set_face_normal(const Ray& r, const Vec3& outward_normal) 

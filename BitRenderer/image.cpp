@@ -73,7 +73,7 @@ void ImageWrite::write()
 
 ImageWrite::~ImageWrite()
 {
-	LOG("free the image");
+	LOG("free the image for write");
 	stbi_image_free(image_data_);
 }
 
@@ -96,4 +96,10 @@ Color ImageRead::get_pixel(const int& row, const int& col) const
 		return x / 255.;
 	};
 	return Color(scale(r), scale(g), scale(b));
+}
+
+ImageRead::~ImageRead()
+{
+	LOG("free the image for read");
+	stbi_image_free(image_data_);
 }

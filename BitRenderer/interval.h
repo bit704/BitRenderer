@@ -17,14 +17,6 @@ private:
 public:
     Interval() : min_(+kInfinitDouble), max_(-kInfinitDouble) {}
 
-    ~Interval() = default;
-
-    Interval(const Interval&) = default;
-    Interval& operator=(const Interval&) = default;
-
-    Interval(Interval&&) = default;
-    Interval& operator=(Interval&&) = default;
-
     Interval(double _min, double _max) : min_(_min), max_(_max) {}
 
     // 并集运算

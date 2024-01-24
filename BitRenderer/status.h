@@ -17,7 +17,7 @@ inline long long get_memory_load()
 }
 
 // CPU占用率
-inline float get_cpu_usage(FILETIME &cpu_idle_prev, FILETIME &cpu_kernel_prev, FILETIME &cpu_user_prev)
+inline double get_cpu_usage(FILETIME &cpu_idle_prev, FILETIME &cpu_kernel_prev, FILETIME &cpu_user_prev)
 {
 	FILETIME cpu_idle, cpu_kernel, cpu_user;
 	GetSystemTimes(&cpu_idle, &cpu_kernel, &cpu_user);

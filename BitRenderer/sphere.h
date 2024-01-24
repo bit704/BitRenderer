@@ -19,16 +19,6 @@ private:
     std::shared_ptr<Material> material_;
 
 public:
-    Sphere() = delete;
-
-    ~Sphere() = default;
-
-    Sphere(const Sphere&) = delete;
-    Sphere& operator=(const Sphere&) = delete;
-
-    Sphere(Sphere&&) = delete;
-    Sphere& operator=(Sphere&&) = delete;
-
     // 静态球
     Sphere(Point3 center, double radius, std::shared_ptr<Material> material) 
         : center_(center), radius_(radius), material_(material), is_moving_(false) 
@@ -48,6 +38,12 @@ public:
 
         center_move_vec_ = center_end - center;
     }
+
+    Sphere(const Sphere&) = delete;
+    Sphere& operator=(const Sphere&) = delete;
+
+    Sphere(Sphere&&) = delete;
+    Sphere& operator=(Sphere&&) = delete;
 
 public:
     bool hit(const Ray& r, Interval interval, HitRecord& rec) 

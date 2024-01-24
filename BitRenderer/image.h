@@ -23,7 +23,7 @@ private:
 	int channel_ = 4;
 
 public:
-	ImageWrite() = delete;
+	ImageWrite(std::string image_name, int width_, int height_, int channel_);
 
 	~ImageWrite();
 
@@ -32,8 +32,6 @@ public:
 
 	ImageWrite(ImageWrite&&) = delete;
 	ImageWrite& operator=(ImageWrite&&) = delete;
-
-	ImageWrite(std::string image_name, int width_, int height_, int channel_);
 
 public:
 	void set_pixel(const int& row, const int& col, Color c, const int& samples_per_pixel);
@@ -56,9 +54,9 @@ private:
 	int channel_ = 3;
 
 public:
-	ImageRead() = delete;
+	ImageRead(std::string image_name);
 
-	~ImageRead() = default;
+	~ImageRead();
 
 	ImageRead(const ImageRead&) = delete;
 	ImageRead& operator=(const ImageRead&) = delete;
@@ -66,7 +64,6 @@ public:
 	ImageRead(ImageRead&&) = delete;
 	ImageRead& operator=(ImageRead&&) = delete;
 
-	ImageRead(std::string image_name);
 
 public:
 	Color get_pixel(const int& row, const int& col) const;

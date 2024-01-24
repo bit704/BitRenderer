@@ -15,14 +15,6 @@ private:
 public:
     BVHNode() = delete;
 
-    ~BVHNode() = default;
-
-    BVHNode(const BVHNode&) = delete;
-    BVHNode& operator=(const BVHNode&) = delete;
-
-    BVHNode(BVHNode&&) = delete;
-    BVHNode& operator=(BVHNode&&) = delete;
-
     BVHNode(const HittableList& list) 
         : BVHNode(list.get_objects(), 0, list.get_objects().size()) {}
 
@@ -64,6 +56,12 @@ public:
 
         bbox_ = AABB(left_->get_bbox(), right_->get_bbox());
     }
+
+    BVHNode(const BVHNode&) = delete;
+    BVHNode& operator=(const BVHNode&) = delete;
+
+    BVHNode(BVHNode&&) = delete;
+    BVHNode& operator=(BVHNode&&) = delete;
 
 public:
     bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const override

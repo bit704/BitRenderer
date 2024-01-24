@@ -25,37 +25,50 @@ private:
     std::unique_ptr<ImageWrite> image_;
     std::string image_name_;
 
-    double aspect_ratio_ = 1.;
-    double vfov_ = 90;  // 垂直fov
+    double aspect_ratio_;
+    double vfov_;  // 垂直fov
     int    image_width_;
     int    image_height_;
-    Color background_ = Color(.7, .8, 1.);
-    int    channel_ = 4;
+    Color  background_;
+    int    channel_;
     Point3 camera_center_;
     Point3 pixel00_loc_; // (0,0)处像素的位置
     Vec3   pixel_delta_u_;
     Vec3   pixel_delta_v_;
-    int    samples_per_pixel_ = 16; // 每像素采样数
-    int    sqrt_spp_ = 4;
-    int    max_depth_ = 10; // 光线最大弹射次数
+    int    samples_per_pixel_; // 每像素采样数
+    int    sqrt_spp_;
+    int    max_depth_; // 光线最大弹射次数
 
-    Point3 lookfrom_ = Point3(0, 0, -1);
-    Point3 lookat_ = Point3(0, 0, 0);
-    Vec3   vup_ = Point3(0, 1, 0);
+    Point3 lookfrom_;
+    Point3 lookat_;
+    Vec3   vup_;
     // 相机坐标系
     Vec3   u_; // 指向相机右方
     Vec3   v_; // 指向相机上方
     Vec3   w_; // 与相机视点方向相反 
 
-    double defocus_angle_ = 0;  // 光线经过每个像素的变化
-    double focus_dist_ = 10;    // 相机原点到完美聚焦平面的距离，这里与焦距相同
+    double defocus_angle_;  // 光线经过每个像素的变化
+    double focus_dist_;    // 相机原点到完美聚焦平面的距离，这里与焦距相同
     Vec3   defocus_disk_u_;  // 散焦横向半径
     Vec3   defocus_disk_v_;  // 散焦纵向半径
 
 public:
-    Camera() = default;
-
-    ~Camera() = default;
+    Camera() 
+        : aspect_ratio_(1), 
+        vfov_(90), 
+        background_(.7, .8, 1.), 
+        image_height_(256), 
+        image_width_(256), 
+        channel_(4),
+        samples_per_pixel_(16), 
+        sqrt_spp_(4),
+        max_depth_(10),
+        lookfrom_(0, 0, -1), 
+        lookat_(0, 0, 0), 
+        vup_(0, 1, 0),
+        defocus_angle_(0), 
+        focus_dist_(10)
+    {}
 
     Camera(const Camera&) = delete;
     Camera& operator=(const Camera&) = delete;
@@ -219,7 +232,7 @@ public:
 
 private:
     // 获取光线击中处的颜色
-    Color ray_color(const Ray& r, const std::shared_ptr<Hittable>& world, const std::shared_ptr<Hittable>& light, const int& depth) 
+    Color ray_color(const Ray& r_in, const std::shared_ptr<Hittable>& world, const std::shared_ptr<Hittable>& light, const int& depth) 
         const
     {
         // 到达弹射次数上限，不再累加任何颜色
@@ -230,49 +243,38 @@ private:
 
         ++hit_count;
 
-        HitRecord rec;
-
+        HitRecord hit_rec; // 击中点记录
         // Interval最小值不能为0，否则当数值误差导致光线与物体交点在物体内部时，光线无法正常弹射
-        if (!world->hit(r, Interval(1e-3, kInfinitDouble), rec))
+        if (!world->hit(r_in, Interval(1e-3, kInfinitDouble), hit_rec))
             return background_;
 
-        ScatterRecord srec;
+        // 只有自发光，无散射
+        if (hit_rec.material->no_scatter_)
+            return hit_rec.material->eval_color(hit_rec);
 
-        Color color_from_emission = rec.material->emitted(rec.u, rec.v, rec.p, rec); // 自发光颜色
+        // 下一条散射光线
+        Ray r_out = hit_rec.material->sample_ray(r_in, hit_rec);
 
-        // 只有自发光颜色
-        if (!rec.material->scatter(r, rec, srec))
-            return color_from_emission;
+        // 不用重要性采样
+        if (hit_rec.material->skip_pdf_)
+            return hit_rec.material->eval_color(hit_rec, ray_color(r_out, world, light, depth - 1));
 
-        if (srec.skip_pdf)
-        {
-            return srec.attenuation * ray_color(srec.skip_pdf_ray, world, light, depth - 1);
-        }
-
-        Ray scattered;
-        double pdf_val;
+        double brdf, pdf;
         // 同时对光源和材质采样
+        pdf = hit_rec.material->eval_pdf(hit_rec, r_out);
         if (light != nullptr)
-        {
-            auto light_ptr = std::make_shared<HittablePDF>(*light, rec.p);
-            MixturePDF p(light_ptr, srec.pdf_ptr);
+        {       
+            auto light_pdf = std::make_shared<HittablePDF>(*light, hit_rec.p);
 
-            scattered = Ray(rec.p, p.generate(), r.get_time());
-            pdf_val = p.value(scattered.get_direction());
+            if (random_double() < 0.5) // 按0.5的概率对光源采样r_out
+                r_out = Ray(hit_rec.p, light_pdf->gen_direction(), r_in.get_time());
+
+            pdf = 0.5 * hit_rec.material->eval_pdf(hit_rec, r_out)
+                +0.5 * light_pdf->value(r_out.get_direction()); // 按0.5的比例混合pdf值
         }
-        // 只对材质采样
-        else
-        {
-            scattered = Ray(rec.p, srec.pdf_ptr->generate(), r.get_time());
-            pdf_val = srec.pdf_ptr->value(scattered.get_direction());
-        }
+        brdf = hit_rec.material->eval_brdf(r_in, hit_rec, r_out);
 
-        double scattering_pdf = rec.material->scattering_pdf(r, rec, scattered);
-
-        Color sample_color = ray_color(scattered, world, light, depth - 1);
-        Color color_from_scatter = (srec.attenuation * scattering_pdf * sample_color) / pdf_val;
-
-        return color_from_scatter + color_from_emission;
+        return hit_rec.material->eval_color(hit_rec, ray_color(r_out, world, light, depth - 1), brdf, pdf);
     }
 
     // 采样随机光线
