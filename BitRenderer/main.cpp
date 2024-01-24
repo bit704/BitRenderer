@@ -504,6 +504,7 @@ int main()
     ImGui_ImplDX12_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
+    my_texture->Release();
 
     CleanupDeviceD3D();
     ::DestroyWindow(hwnd);
