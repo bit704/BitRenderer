@@ -5,8 +5,8 @@
 #ifndef PDF_H
 #define PDF_H
 
-#include "onb.h"
 #include "hittable_list.h"
+#include "onb.h"
 
 class PDF
 {

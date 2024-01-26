@@ -4,24 +4,22 @@
 #ifndef CONSTANT_MEDIUM_H
 #define CONSTANT_MEDIUM_H
 
-#include <string>
-
 #include "common.h"
-#include "material.h"
 #include "logger.h"
+#include "material.h"
 
 class ConstantMedium : public Hittable
 {
 private:
-    std::shared_ptr<Hittable> boundary_;
-    std::shared_ptr<Material> phase_function_;
+    shared_ptr<Hittable> boundary_;
+    shared_ptr<Material> phase_function_;
     double neg_inv_density_;
 
 public:
-    ConstantMedium(std::shared_ptr<Hittable> b, double d, std::shared_ptr<Texture> a)
+    ConstantMedium(shared_ptr<Hittable> b, double d, shared_ptr<Texture> a)
         : boundary_(b), neg_inv_density_(-1 / d), phase_function_(std::make_shared<Isotropic>(a)) {}
 
-    ConstantMedium(std::shared_ptr<Hittable> b, double d, Color c)
+    ConstantMedium(shared_ptr<Hittable> b, double d, Color c)
         : boundary_(b), neg_inv_density_(-1 / d), phase_function_(std::make_shared<Isotropic>(c)) {}
 
     ConstantMedium(const ConstantMedium&) = delete;
@@ -31,7 +29,7 @@ public:
     ConstantMedium& operator=(ConstantMedium&&) = delete;
 
 public: 
-    bool hit(const Ray& r, Interval ray_t, HitRecord& rec) 
+    bool hit(const Ray& r, const Interval& interval, HitRecord& rec)
         const override
     {
         // debug
@@ -50,10 +48,10 @@ public:
         if (debugging) 
             LOG("ray_tmin=", rec1.t , ", ray_tmax=", rec2.t)
 
-        if (rec1.t < ray_t.get_min()) 
-            rec1.t = ray_t.get_min();
-        if (rec2.t > ray_t.get_max()) 
-            rec2.t = ray_t.get_max();
+        if (rec1.t < interval.get_min()) 
+            rec1.t = interval.get_min();
+        if (rec2.t > interval.get_max()) 
+            rec2.t = interval.get_max();
 
         if (rec1.t >= rec2.t)
             return false;

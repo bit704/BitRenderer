@@ -5,8 +5,6 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-#include <iostream>
-
 #include "singleton.h"
 
 #define PRINT_LOCATION std::cout << __FILE__ << "第" << __LINE__ << "行（" << __FUNCTION__ << "）：";

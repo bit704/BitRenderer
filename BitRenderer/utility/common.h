@@ -1,45 +1,71 @@
 /*
- * 工具常量和函数
+ * 公共常量和函数
  */
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <algorithm>
+#include <chrono>
 #include <cmath>
+#include <d3d12.h>   // ui_helper.h
+#include <dxgi1_4.h> // ui_helper.h
+#include <filesystem>
+#include <iostream>
 #include <limits>
+#include <memory>
+#include <new>
+#include <regex>
 #include <sstream>
+#include <string>
+#include <tchar.h>   // ui_helper.h
+#include <thread>
+#include <vector>
+#include <windows.h> // status.h
 
-const double kInfinitDouble = std::numeric_limits<double>::infinity();
-const double kPI = 3.1415926535897932385;
-const double kEpsilon = 1e-8; // 比较浮点数的阈值
+using std::make_shared;
+using std::shared_ptr;
+using std::unique_ptr;
+using std::chrono::steady_clock;
+using std::chrono::system_clock;
+using std::chrono::duration_cast;
+using std::chrono::minutes;
+using std::chrono::seconds;
+using std::chrono::milliseconds;
+using std::chrono::nanoseconds;
+namespace fs = std::filesystem;
 
-inline double degrees_to_radians(double degrees)
-{
-    return degrees * kPI / 180.;
-}
+using uint = unsigned int;
 
-inline double random_double()
-{
-    return rand() / (RAND_MAX + 1.); // [0,1)
-}
+extern const double kInfinitDouble;
+extern const double kPI;
+extern const double kEpsilon;    // 比较浮点数的阈值
+extern const char*  kLoadPath;   // 加载文件的位置
+extern const char*  kOutputPath; // 保存输出的位置
 
-inline double random_double(double min, double max)
-{
-    return min + (max - min) * random_double(); // [min,max)
-}
+// 返回dir目录下（含递归目录）所有文件名满足rule的文件的路径
+std::vector<fs::path> traverse_path(std::string dir, std::regex rule);
 
-inline int random_int(int min, int max)
-{
-    return static_cast<int>(random_double(min, max + 1));
-}
+double degrees_to_radians(double degrees);
+
+double random_double();
+double random_double(double min, double max);
+int    random_int(int min, int max);
 
 // 给输出数字加入千位分隔符
-inline std::string format_num(long long num)
+std::string format_num(long long num);
+
+// 避免minwindef.h中宏max和std::max的冲突
+#undef max
+#undef min
+
+inline double max3(double x, double y, double z)
 {
-    static std::ostringstream oss;
-    oss.str("");
-    oss.imbue(std::locale("en_US.UTF-8"));
-    oss << num;
-    return oss.str();
+    return std::max(x, std::max(y, z));
+}
+
+inline double min3(double x, double y, double z)
+{
+    return std::min(z, std::min(y, z));
 }
 
 #endif // !COMMON_H

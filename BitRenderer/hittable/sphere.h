@@ -5,8 +5,8 @@
 #define SPHERE_H
 
 #include "hittable.h"
-#include "vec3.h"
 #include "onb.h"
+#include "vec3.h"
 
 class Sphere : public Hittable
 {
@@ -16,11 +16,11 @@ private:
     bool is_moving_; //球是否在移动
     AABB bbox_;
     double radius_;
-    std::shared_ptr<Material> material_;
+    shared_ptr<Material> material_;
 
 public:
     // 静态球
-    Sphere(Point3 center, double radius, std::shared_ptr<Material> material) 
+    Sphere(Point3 center, double radius, shared_ptr<Material> material) 
         : center_(center), radius_(radius), material_(material), is_moving_(false) 
     {
         auto rvec = Vec3(radius, radius, radius);
@@ -28,7 +28,7 @@ public:
     }
 
     // 运动球
-    Sphere(Point3 center, Point3 center_end, double radius, std::shared_ptr<Material> material)
+    Sphere(Point3 center, Point3 center_end, double radius, shared_ptr<Material> material)
         : center_(center), radius_(radius), material_(material), is_moving_(true)
     {
         auto rvec = Vec3(radius, radius, radius);
@@ -46,7 +46,7 @@ public:
     Sphere& operator=(Sphere&&) = delete;
 
 public:
-    bool hit(const Ray& r, Interval interval, HitRecord& rec) 
+    bool hit(const Ray& r, const Interval& interval, HitRecord& rec)
         const override
     {
         Point3 now_center = is_moving_ ? get_center(r.get_time()) : center_;

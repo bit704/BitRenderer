@@ -12,6 +12,7 @@
 #define IMAGE_H
 
 #include "color.h"
+#include "common.h"
 
 class ImageWrite 
 {

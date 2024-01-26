@@ -1,11 +1,11 @@
 /*
  * 点类
  */
-#ifndef POINT_H
-#define POINT_H
+#ifndef POINT3_H
+#define POINT3_H
 
 #include "vec3.h"
 
 using Point3 = Vec3;
 
-#endif // !POINT_H
+#endif // !POINT3_H

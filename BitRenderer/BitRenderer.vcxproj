@@ -110,8 +110,10 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <OpenMPSupport>true</OpenMPSupport>
-      <AdditionalIncludeDirectories>imgui;imgui/backends;stb_image;base;hittable;material;utility;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>imgui;imgui/backends;stb_image;tiny_obj_loader;base;hittable;material;utility;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>common.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -140,6 +142,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="common.cpp" />
     <ClCompile Include="image.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_dx12.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_win32.cpp" />
@@ -155,32 +158,25 @@
     <ClInclude Include="base\color.h" />
     <ClInclude Include="base\interval.h" />
     <ClInclude Include="base\onb.h" />
-    <ClInclude Include="base\point.h" />
+    <ClInclude Include="base\point3.h" />
     <ClInclude Include="base\ray.h" />
     <ClInclude Include="base\vec3.h" />
-    <ClInclude Include="camera.h" />
     <ClInclude Include="hittable\bvh_node.h" />
     <ClInclude Include="hittable\constant_medium.h" />
     <ClInclude Include="hittable\hittable.h" />
     <ClInclude Include="hittable\hittable_list.h" />
     <ClInclude Include="hittable\quad.h" />
     <ClInclude Include="hittable\sphere.h" />
-    <ClInclude Include="image.h" />
-    <ClInclude Include="imgui\backends\imgui_impl_dx12.h" />
-    <ClInclude Include="imgui\backends\imgui_impl_win32.h" />
-    <ClInclude Include="imgui\imconfig.h" />
-    <ClInclude Include="imgui\imgui.h" />
-    <ClInclude Include="imgui\imgui_internal.h" />
-    <ClInclude Include="imgui\imstb_rectpack.h" />
-    <ClInclude Include="imgui\imstb_textedit.h" />
-    <ClInclude Include="imgui\imstb_truetype.h" />
+    <ClInclude Include="hittable\triangle.h" />
     <ClInclude Include="material\material.h" />
     <ClInclude Include="material\pdf.h" />
     <ClInclude Include="material\perlin.h" />
     <ClInclude Include="material\texture.h" />
-    <ClInclude Include="resource.h" />
+    <ClInclude Include="utility\camera.h" />
     <ClInclude Include="utility\common.h" />
+    <ClInclude Include="utility\image.h" />
     <ClInclude Include="utility\logger.h" />
+    <ClInclude Include="utility\resource.h" />
     <ClInclude Include="utility\scene.h" />
     <ClInclude Include="utility\singleton.h" />
     <ClInclude Include="utility\status.h" />

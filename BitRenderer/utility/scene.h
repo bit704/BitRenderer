@@ -4,17 +4,88 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include "camera.h"
-#include "sphere.h"
-#include "quad.h"
 #include "bvh_node.h"
+#include "camera.h"
 #include "constant_medium.h"
+#include "quad.h"
+#include "sphere.h"
+#include "triangle.h"
 
-using std::make_shared;
-using std::shared_ptr;
+extern std::vector<Point3> vertices;
+extern std::vector<Point3> normals;
+extern std::vector<std::pair<double, double>> texcoords;
+
+inline void scene_obj(const Camera& cam, const std::string& obj_path)
+{
+    shared_ptr<HittableList> world(new HittableList());
+
+    vertices = { {0, 0, 0}, {1, 0, 0}, {0, 1, 0} };
+    normals = { {0, 0, 1}, {0, 0, 1}, {0, 0, 1} };
+    texcoords = { {0, 0}, {1, 0}, {0, 1} };
+    auto earthmap = make_shared<ImageTexture>("earthmap.jpg");
+    world->add(make_shared<Triangle>(0, 0, 0, 1, 1, 1, 2, 2, 2, make_shared<Lambertian>(earthmap)));
+
+    cam.render(world);
+}
+
+// 3D棋盘格纹理，两个球
+inline void scene_checker(const Camera& cam)
+{
+    shared_ptr<HittableList> world(new HittableList());
+
+    auto checker = make_shared<CheckerTexture>(0.8, Color(.2, .3, .1), Color(.9, .9, .9));
+
+    world->add(make_shared<Sphere>(Point3(0, -10, 0), 10, make_shared<Lambertian>(checker)));
+    world->add(make_shared<Sphere>(Point3(0, 10, 0), 10, make_shared<Lambertian>(checker)));
+
+    cam.render(world);
+}
+
+// Cornell Box 1984
+inline void scene_cornell_box(const Camera& cam)
+{
+    shared_ptr<HittableList> world(new HittableList());
+
+    // 材质
+    auto red = make_shared<Lambertian>(Color(.65, .05, .05));
+    auto white = make_shared<Lambertian>(Color(.73, .73, .73));
+    auto green = make_shared<Lambertian>(Color(.12, .45, .15));
+    auto lighting = make_shared<DiffuseLight>(Color(15, 15, 15));
+    auto aluminum = make_shared<Metal>(Color(.8, .85, .88), 0.);
+
+    // 包围盒体
+    world->add(make_shared<Quad>(Point3(555, 0, 0), Vec3(0, 555, 0), Vec3(0, 0, 555), green));
+    world->add(make_shared<Quad>(Point3(0, 0, 0), Vec3(0, 555, 0), Vec3(0, 0, 555), red));
+    world->add(make_shared<Quad>(Point3(0, 0, 0), Vec3(555, 0, 0), Vec3(0, 0, 555), white));
+    world->add(make_shared<Quad>(Point3(555, 555, 555), Vec3(-555, 0, 0), Vec3(0, 0, -555), white));
+    world->add(make_shared<Quad>(Point3(0, 0, 555), Vec3(555, 0, 0), Vec3(0, 555, 0), white));
+
+    // 长方体
+    shared_ptr<Hittable> box1 = construct_box(Point3(0, 0, 0), Point3(165, 180, 165), aluminum);
+    box1 = make_shared<RotateY>(box1, 45);
+    box1 = make_shared<Translate>(box1, Vec3(240, 0, 240));
+    world->add(box1);
+
+    // 玻璃球
+    auto glass = make_shared<Dielectric>(1.5);
+    world->add(make_shared<Sphere>(Point3(180, 160, 190), 90, glass));
+
+    // 光源
+    world->add(make_shared<Quad>(Point3(343, 554, 332), Vec3(-130, 0, 0), Vec3(0, 0, -105), lighting));
+
+    // 对光源几何体采样
+    shared_ptr<HittableList> light(new HittableList());
+    auto m = shared_ptr<Material>();
+    light->add(make_shared<Quad>(Point3(343, 554, 332), Vec3(-130, 0, 0), Vec3(0, 0, -105), m));
+    // 对玻璃球采样
+    light->add(make_shared<Sphere>(Point3(190, 90, 190), 90, m));
+
+    cam.render(world, light);
+}
 
 inline void scene_composite1(const Camera& cam)
 {
+    shared_ptr<HittableList> world(new HittableList());
     HittableList list;
 
     auto ground_material = make_shared<Lambertian>(Color(0.5, 0.5, 0.5));
@@ -65,7 +136,6 @@ inline void scene_composite1(const Camera& cam)
     auto material3 = make_shared<Metal>(Color(0.7, 0.6, 0.5), 0.0);
     list.add(make_shared<Sphere>(Point3(4, 1, 0), 1.0, material3));
 
-    shared_ptr<HittableList> world(new HittableList());
     // BVH加速结构
     world->add(make_shared<BVHNode>(list));
 
@@ -118,8 +188,8 @@ inline void scene_composite2(const Camera& cam)
     world->add(make_shared<ConstantMedium>(boundary, .0001, Color(1, 1, 1)));
 
     // 地球
-    auto emat = make_shared<Lambertian>(make_shared<ImageTexture>("earthmap.jpg"));
-    world->add(make_shared<Sphere>(Point3(400, 200, 400), 100, emat));
+    auto earthmap = make_shared<Lambertian>(make_shared<ImageTexture>("earthmap.jpg"));
+    world->add(make_shared<Sphere>(Point3(400, 200, 400), 100, earthmap));
 
     // 柏林噪声球
     auto pertext = make_shared<NoiseTexture>(0.1);
@@ -147,60 +217,6 @@ inline void scene_composite2(const Camera& cam)
     shared_ptr<HittableList> light(new HittableList());
     auto m = shared_ptr<Material>();
     light->add(make_shared<Quad>(Point3(123, 554, 147), Vec3(300, 0, 0), Vec3(0, 0, 265), m));
-
-    cam.render(world, light);
-}
-
-// 3D棋盘格纹理，两个球
-inline void scene_checker(const Camera& cam)
-{
-    shared_ptr<HittableList> world(new HittableList());
-
-    auto checker = make_shared<CheckerTexture>(0.8, Color(.2, .3, .1), Color(.9, .9, .9));
-
-    world->add(make_shared<Sphere>(Point3(0, -10, 0), 10, make_shared<Lambertian>(checker)));
-    world->add(make_shared<Sphere>(Point3(0, 10, 0), 10, make_shared<Lambertian>(checker)));
-
-    cam.render(world);
-}
-
-// Cornell Box 1984
-inline void scene_cornell_box(const Camera& cam)
-{
-    shared_ptr<HittableList> world(new HittableList());
-
-    // 材质
-    auto red = make_shared<Lambertian>(Color(.65, .05, .05));
-    auto white = make_shared<Lambertian>(Color(.73, .73, .73));
-    auto green = make_shared<Lambertian>(Color(.12, .45, .15));
-    auto lighting = make_shared<DiffuseLight>(Color(15, 15, 15));
-    auto aluminum = make_shared<Metal>(Color(.8, .85, .88), 0.);
-
-    // 包围盒体
-    world->add(make_shared<Quad>(Point3(555, 0, 0), Vec3(0, 555, 0), Vec3(0, 0, 555), green));
-    world->add(make_shared<Quad>(Point3(0, 0, 0), Vec3(0, 555, 0), Vec3(0, 0, 555), red));
-    world->add(make_shared<Quad>(Point3(0, 0, 0), Vec3(555, 0, 0), Vec3(0, 0, 555), white));
-    world->add(make_shared<Quad>(Point3(555, 555, 555), Vec3(-555, 0, 0), Vec3(0, 0, -555), white));
-    world->add(make_shared<Quad>(Point3(0, 0, 555), Vec3(555, 0, 0), Vec3(0, 555, 0), white));
-
-    // 长方体
-    shared_ptr<Hittable> box1 = construct_box(Point3(0, 0, 0), Point3(165, 180, 165), aluminum);
-    box1 = make_shared<RotateY>(box1, 45);
-    box1 = make_shared<Translate>(box1, Vec3(240, 0, 240));
-    world->add(box1);
-
-    // 玻璃球
-    auto glass = make_shared<Dielectric>(1.5);
-    world->add(make_shared<Sphere>(Point3(180, 160, 190), 90, glass));
-
-    // 光源
-    world->add(make_shared<Quad>(Point3(343, 554, 332), Vec3(-130, 0, 0), Vec3(0, 0, -105), lighting));
-
-    // 对光源几何体采样
-    shared_ptr<HittableList> light(new HittableList());
-    auto m = shared_ptr<Material>();
-    light->add(make_shared<Quad>(Point3(343, 554, 332), Vec3(-130, 0, 0), Vec3(0, 0, -105), m));
-    light->add(make_shared<Sphere>(Point3(190, 90, 190), 90, m));
 
     cam.render(world, light);
 }

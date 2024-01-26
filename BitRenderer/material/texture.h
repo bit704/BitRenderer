@@ -4,11 +4,9 @@
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
-#include <algorithm>
-
 #include "color.h"
-#include "point.h"
 #include "perlin.h"
+#include "point3.h"
 
 class Texture
 {
@@ -40,10 +38,10 @@ class CheckerTexture : public Texture
 {
 private:
     double inv_scale_;
-    std::shared_ptr<Texture> even_, odd_;
+    shared_ptr<Texture> even_, odd_;
 
 public:
-    CheckerTexture(double scale, std::shared_ptr<Texture> even, std::shared_ptr<Texture> odd)
+    CheckerTexture(double scale, shared_ptr<Texture> even, shared_ptr<Texture> odd)
         : inv_scale_(1.0 / scale), even_(even), odd_(odd) {}
 
     CheckerTexture(double scale, Color c1, Color c2)

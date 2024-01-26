@@ -5,7 +5,7 @@
 #define PERLIN_H
 
 #include "common.h"
-#include "point.h"
+#include "point3.h"
 
 class Perlin
 {

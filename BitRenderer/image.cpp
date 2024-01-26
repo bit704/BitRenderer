@@ -1,21 +1,15 @@
 #include "image.h"
-
-#include <iostream>
-#include <string>
-#include <new>
-#include <algorithm>
+#include "logger.h"
 
 // 以下头文件包含函数定义，不能包含在image.h中，否则当image.h被包含时会导致重定义错误LNK2005、LNK1169
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "stb_image.h" 
 #define __STDC_LIB_EXT1__ // 避免stb_image_write.h报C4996错误，未使用_s函数
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-#include "logger.h"
-
 // static关键字只能用于类定义体内部的声明中，定义时不能标示为static
-const std::string ImageWrite::kOutputPath_ = "./output/";
+const std::string ImageWrite::kOutputPath_ = kOutputPath;
 
 ImageWrite::ImageWrite(std::string imageName, int image_width, int image_height, int channel)
 	: image_path_(kOutputPath_ + imageName), width_(image_width), height_(image_height), channel_(channel)
@@ -73,11 +67,11 @@ void ImageWrite::write()
 
 ImageWrite::~ImageWrite()
 {
-	LOG("free the image for write");
+	LOG("free the image for write")
 	stbi_image_free(image_data_);
 }
 
-const std::string ImageRead::kInputPath_ = "./load/";
+const std::string ImageRead::kInputPath_ = kLoadPath;
 
 ImageRead::ImageRead(std::string image_name)
 {
@@ -100,6 +94,6 @@ Color ImageRead::get_pixel(const int& row, const int& col) const
 
 ImageRead::~ImageRead()
 {
-	LOG("free the image for read");
+	LOG("free the image for read")
 	stbi_image_free(image_data_);
 }

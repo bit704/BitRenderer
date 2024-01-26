@@ -4,12 +4,12 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 
-#include "ray.h"
 #include "color.h"
 #include "hittable.h"
-#include "texture.h"
 #include "onb.h"
 #include "pdf.h"
+#include "ray.h"
+#include "texture.h"
 
 class Material 
 {
@@ -48,12 +48,12 @@ public:
 class Lambertian : public Material
 {
 private:
-    std::shared_ptr<Texture> albedo_;
+    shared_ptr<Texture> albedo_;
 
 public:
     Lambertian(const Color& a) : albedo_(std::make_shared<SolidColor>(a)) {}
 
-    Lambertian(std::shared_ptr<Texture> a) : albedo_(a) {}
+    Lambertian(shared_ptr<Texture> a) : albedo_(a) {}
 
     Lambertian(const Lambertian& other) : albedo_(other.albedo_) {}
     Lambertian& operator=(const Lambertian& other)
@@ -99,11 +99,11 @@ public:
 class Isotropic : public Material
 {
 private:
-    std::shared_ptr<Texture> albedo_;
+    shared_ptr<Texture> albedo_;
 
 public:
     Isotropic(Color c) : albedo_(std::make_shared<SolidColor>(c)) {}
-    Isotropic(std::shared_ptr<Texture> a) : albedo_(a) {}
+    Isotropic(shared_ptr<Texture> a) : albedo_(a) {}
 
     Isotropic(const Isotropic& other) : albedo_(other.albedo_) {}
     Isotropic& operator=(const Isotropic& other)
@@ -224,10 +224,10 @@ private:
 class DiffuseLight : public Material
 {
 private:
-    std::shared_ptr<Texture> emit_;
+    shared_ptr<Texture> emit_;
 
 public:
-    DiffuseLight(std::shared_ptr<Texture> a) : emit_(a)
+    DiffuseLight(shared_ptr<Texture> a) : emit_(a)
     {
         no_scatter_ = true;
     }

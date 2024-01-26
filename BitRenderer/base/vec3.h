@@ -1,12 +1,9 @@
 /*
  * 长度为3的向量类
  */
-#ifndef Vec3_H
-#define Vec3_H
+#ifndef VEC3_H
+#define VEC3_H
 
-#include <cmath>
-#include <iostream>
-#include <algorithm>
 #include "common.h"
 
 class Vec3
@@ -230,4 +227,4 @@ inline Vec3 random_cosine_direction()
 }
 
 
-#endif // !Vec3_H
+#endif // !VEC3_H

@@ -4,17 +4,14 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include <cmath>
-#include <iomanip>
-
 #include "image.h"
 #include "material.h"
 #include "logger.h"
 
 extern std::atomic_ullong hit_count;
 extern std::atomic_ullong sample_count;
-extern std::atomic_bool rendering;
-extern std::string rendering_info;
+extern std::atomic_bool   rendering;
+extern std::string        info;
 
 class Camera
 {
@@ -22,7 +19,7 @@ private:
     // 若使用ImageWrite image_，会报错 0xc0000005 访问冲突。
     // 初始化image_使用的临时ImageWrite对象会被立刻析构，其持有的image_data_指针在析构函数中释放，
     // image_的image_data_指针是从临时ImageWrite对象浅拷贝而来，成为悬空指针，故访问冲突。
-    std::unique_ptr<ImageWrite> image_;
+    unique_ptr<ImageWrite> image_;
     std::string image_name_;
 
     double aspect_ratio_;
@@ -53,17 +50,17 @@ private:
     Vec3   defocus_disk_v_;  // 散焦纵向半径
 
 public:
-    Camera() 
-        : aspect_ratio_(1), 
+    Camera() : 
+        aspect_ratio_(1), 
         vfov_(90), 
         background_(.7, .8, 1.), 
-        image_height_(256), 
-        image_width_(256), 
+        image_height_(0), 
+        image_width_(0), 
         channel_(4),
         samples_per_pixel_(16), 
         sqrt_spp_(4),
         max_depth_(10),
-        lookfrom_(0, 0, -1), 
+        lookfrom_(0, 0, 1), 
         lookat_(0, 0, 0), 
         vup_(0, 1, 0),
         defocus_angle_(0), 
@@ -118,19 +115,19 @@ public:
     }
 
     // 渲染图像
-    void render(const std::shared_ptr<Hittable>& world, const std::shared_ptr<Hittable>& light = nullptr)
+    void render(const shared_ptr<Hittable>& world, const shared_ptr<Hittable>& light = nullptr)
         const
     {
         rendering.store(true);
         // OpenMP并发
-#pragma omp parallel for
+//#pragma omp parallel for
         for (int i = 0; i < image_height_; ++i)
         {
             for (int j = 0; j < image_width_; ++j)
             {
                 Color pixel_color(0, 0, 0);
                 // 对每个像素中的采样点进行分层，采样更均匀
-#pragma omp parallel for
+//#pragma omp parallel for
                 for (int s_i = 0; s_i < sqrt_spp_; ++s_i)
                 {
                     for (int s_j = 0; s_j < sqrt_spp_; ++s_j)
@@ -146,7 +143,7 @@ public:
             }
         }
         rendering.store(false);
-        rendering_info = "Done.";
+        info = "Done.";
     }
 
 public:
@@ -232,7 +229,7 @@ public:
 
 private:
     // 获取光线击中处的颜色
-    Color ray_color(const Ray& r_in, const std::shared_ptr<Hittable>& world, const std::shared_ptr<Hittable>& light, const int& depth) 
+    Color ray_color(const Ray& r_in, const shared_ptr<Hittable>& world, const shared_ptr<Hittable>& light, const int& depth) 
         const
     {
         // 到达弹射次数上限，不再累加任何颜色

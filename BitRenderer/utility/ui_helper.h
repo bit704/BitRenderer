@@ -4,13 +4,11 @@
 #ifndef UI_HELPER_H
 #define UI_HELPER_H
 
-#include <d3d12.h>
-#include <dxgi1_4.h>
-#include <tchar.h>
-
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx12.h"
+
+#include "common.h"
 
 #ifdef _DEBUG
 #define DX12_ENABLE_DEBUG_LAYER

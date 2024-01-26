@@ -12,16 +12,15 @@ class Quad : public Hittable
 private:
     Point3 Q_;
     Vec3 u_, v_;
-    std::shared_ptr<Material> material_;
+    shared_ptr<Material> material_;
     AABB bbox_;
     Vec3 normal_;
+    Vec3 w_; // 单位法向量
     double D_; // Ax+By+Cz=D
-    Vec3 w_; // 参见RayTracingTheNextWeek 6.4
     double area_;
 
 public:
-
-    Quad(const Point3& Q, const Vec3& u, const Vec3& v, std::shared_ptr<Material> m)
+    Quad(const Point3& Q, const Vec3& u, const Vec3& v, shared_ptr<Material> m)
         : Q_(Q), u_(u), v_(v), material_(m)
     {
         Vec3 n = cross(u, v);
@@ -32,8 +31,6 @@ public:
         bbox_ = AABB(Q_, Q_ + u_ + v_).pad();
     }
 
-    ~Quad() = default;
-
     Quad(const Quad&) = delete;
     Quad& operator=(const Quad&) = delete;
 
@@ -41,34 +38,7 @@ public:
     Quad& operator=(Quad&&) = delete;
 
 public:
-    double pdf_value(const Point3& origin, const Vec3& v) 
-        const override
-    {
-        HitRecord rec;
-        if (!this->hit(Ray(origin, v), Interval(1e-3, kInfinitDouble), rec))
-            return 0;
-
-        auto distance_squared = rec.t * rec.t * v.length_squared();
-        auto cosine = fabs(dot(v, rec.normal) / v.length());
-
-        return distance_squared / (cosine * area_);
-    }
-
-    Vec3 random(const Point3& origin) 
-        const override
-    {
-        // 平行四边形上随机一点
-        auto p = Q_ + (random_double() * u_) + (random_double() * v_);
-        return p - origin;
-    }
-
-    AABB get_bbox() 
-        const override 
-    { 
-        return bbox_;
-    }
-
-    bool hit(const Ray& r, Interval ray_t, HitRecord& rec) 
+    bool hit(const Ray& r, const Interval& interval, HitRecord& rec)
         const override 
     {
         auto denom = dot(normal_, r.get_direction());
@@ -80,7 +50,7 @@ public:
         auto t = (D_ - dot(normal_, r.get_origin())) / denom;
 
         // 超出光线范围
-        if (!ray_t.contains(t))
+        if (!interval.contains(t))
             return false;
 
         Point3 intersection = r.at(t); // 交点
@@ -100,6 +70,33 @@ public:
         return true;
     }
 
+    AABB get_bbox()
+        const override
+    {
+        return bbox_;
+    }
+
+    double pdf_value(const Point3& origin, const Vec3& v)
+        const override
+    {
+        HitRecord rec;
+        if (!this->hit(Ray(origin, v), Interval(1e-3, kInfinitDouble), rec))
+            return 0;
+
+        auto distance_squared = rec.t * rec.t * v.length_squared();
+        auto cosine = fabs(dot(v, rec.normal) / v.length());
+
+        return distance_squared / (cosine * area_);
+    }
+
+    Vec3 random(const Point3& origin)
+        const override
+    {
+        // 平行四边形上随机一点
+        auto p = Q_ + (random_double() * u_) + (random_double() * v_);
+        return p - origin;
+    }
+
 private:
     // 判断平行四边形所在平面上一点是否在平行四边形内并设定uv坐标
     virtual bool is_interior(double a, double b, HitRecord& rec) const
@@ -113,8 +110,8 @@ private:
 };
 
 // 两点生成立方体
-inline std::shared_ptr<HittableList> construct_box(const Point3& a, const Point3& b,
-    std::shared_ptr<Material> mat)
+inline shared_ptr<HittableList> construct_box(const Point3& a, const Point3& b,
+    shared_ptr<Material> mat)
 {
     auto sides = std::make_shared<HittableList>();
 

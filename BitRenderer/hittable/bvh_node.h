@@ -9,7 +9,7 @@
 class BVHNode : public Hittable
 {
 private:
-    std::shared_ptr<Hittable> left_, right_;
+    shared_ptr<Hittable> left_, right_;
     AABB bbox_;
 
 public:
@@ -18,7 +18,7 @@ public:
     BVHNode(const HittableList& list) 
         : BVHNode(list.get_objects(), 0, list.get_objects().size()) {}
 
-    BVHNode(const std::vector<std::shared_ptr<Hittable>>& src_objects, size_t start, size_t end)
+    BVHNode(const std::vector<shared_ptr<Hittable>>& src_objects, size_t start, size_t end)
     {
         int axis = random_int(0, 2);
         auto comparator = (axis == 0) ? box_x_compare
@@ -64,14 +64,14 @@ public:
     BVHNode& operator=(BVHNode&&) = delete;
 
 public:
-    bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const override
+    bool hit(const Ray& r, const Interval& interval, HitRecord& rec) const override
     {
-        if (!bbox_.hit(r, ray_t))
+        if (!bbox_.hit(r, interval))
             return false;
 
-        bool hit_left = left_->hit(r, ray_t, rec);
+        bool hit_left = left_->hit(r, interval, rec);
         // 若击中左节点，更新击中时光线位置t为光线的最大击中距离，再算击中右节点
-        bool hit_right = right_->hit(r, Interval(ray_t.get_min(), hit_left ? rec.t : ray_t.get_max()), rec);
+        bool hit_right = right_->hit(r, Interval(interval.get_min(), hit_left ? rec.t : interval.get_max()), rec);
 
         return hit_left || hit_right;
     }
@@ -79,23 +79,23 @@ public:
     AABB get_bbox() const override { return bbox_; }
 
 private:
-    static bool box_compare(const std::shared_ptr<Hittable> a, const std::shared_ptr<Hittable> b, 
+    static bool box_compare(const shared_ptr<Hittable> a, const shared_ptr<Hittable> b, 
         int axis_index)
     {
         return a->get_bbox().axis(axis_index).get_min() < b->get_bbox().axis(axis_index).get_min();
     }
 
-    static bool box_x_compare(const std::shared_ptr<Hittable> a, const std::shared_ptr<Hittable> b)
+    static bool box_x_compare(const shared_ptr<Hittable> a, const shared_ptr<Hittable> b)
     {
         return box_compare(a, b, 0);
     }
 
-    static bool box_y_compare(const std::shared_ptr<Hittable> a, const std::shared_ptr<Hittable> b)
+    static bool box_y_compare(const shared_ptr<Hittable> a, const shared_ptr<Hittable> b)
     {
         return box_compare(a, b, 1);
     }
 
-    static bool box_z_compare(const std::shared_ptr<Hittable> a, const std::shared_ptr<Hittable> b)
+    static bool box_z_compare(const shared_ptr<Hittable> a, const shared_ptr<Hittable> b)
     {
         return box_compare(a, b, 2);
     }

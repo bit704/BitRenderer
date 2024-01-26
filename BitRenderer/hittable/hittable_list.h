@@ -4,21 +4,18 @@
 #ifndef HITTABLE_LIST_H
 #define HITTABLE_LIST_H
 
-#include <memory>
-#include <vector>
-
 #include "hittable.h"
 
 class HittableList : public Hittable
 {
 private:
-    std::vector<std::shared_ptr<Hittable>> objects_;
+    std::vector<shared_ptr<Hittable>> objects_;
     AABB bbox_;
 
 public:
     HittableList() = default;
 
-    HittableList(std::shared_ptr<Hittable> object)
+    HittableList(shared_ptr<Hittable> object)
     {
         add(object);
     }
@@ -35,13 +32,13 @@ public:
         objects_.clear(); 
     }
 
-    void add(std::shared_ptr<Hittable> object)
+    void add(shared_ptr<Hittable> object)
     {
         objects_.push_back(object);
         bbox_ = AABB(bbox_, object->get_bbox()); // 并集运算
     }
 
-    bool hit(const Ray& r, Interval interval, HitRecord& rec) 
+    bool hit(const Ray& r, const Interval& interval, HitRecord& rec)
         const override
     {
         HitRecord temp_rec;
@@ -61,7 +58,7 @@ public:
         return hit_anything;
     }
 
-    std::vector<std::shared_ptr<Hittable>> get_objects() 
+    std::vector<shared_ptr<Hittable>> get_objects() 
         const
     {
         return objects_;

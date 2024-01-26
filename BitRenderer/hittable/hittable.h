@@ -13,7 +13,7 @@ struct HitRecord
 {
     Point3 p;
     Vec3 normal;
-    std::shared_ptr<Material> material;
+    shared_ptr<Material> material;
     double t;
     bool front_face;
     double u, v;
@@ -21,7 +21,7 @@ struct HitRecord
     HitRecord() : p(), normal(), material(), t(0), front_face(false), u(0), v(0) {}
 
     // 确保法线面向观察者
-    // outward_normal为从球心指向光线击中点方向的法线
+    // outward_normal为代表正面的法线
     void set_face_normal(const Ray& r, const Vec3& outward_normal) 
     {
         front_face = dot(r.get_direction(), outward_normal) < 0;
@@ -35,7 +35,7 @@ class Hittable
 public:
     virtual ~Hittable() = default;
 
-    virtual bool hit(const Ray& r, Interval interval, HitRecord& rec) const = 0;
+    virtual bool hit(const Ray& r, const Interval& interval, HitRecord& rec) const = 0;
     virtual AABB get_bbox() const = 0;
 
     virtual double pdf_value(const Point3& o, const Vec3& v) const
@@ -54,7 +54,7 @@ public:
 class Translate : public Hittable
 {
 private:
-    std::shared_ptr<Hittable> object_;
+    shared_ptr<Hittable> object_;
     Vec3 offset_;
     AABB bbox_;
 
@@ -69,20 +69,20 @@ public:
     Translate(Translate&&) = delete;
     Translate& operator=(Translate&&) = delete;
 
-    Translate(std::shared_ptr<Hittable> p, const Vec3& displacement)
+    Translate(shared_ptr<Hittable> p, const Vec3& displacement)
         : object_(p), offset_(displacement)
     {
         bbox_ = object_->get_bbox() + offset_;
     }
 
 public:
-    bool hit(const Ray& r, Interval ray_t, HitRecord& rec) 
+    bool hit(const Ray& r, const Interval& interval, HitRecord& rec)
         const override
     {
         // 根据offset反向移动光线
         Ray offset_r(r.get_origin() - offset_, r.get_direction(), r.get_time());
 
-        if (!object_->hit(offset_r, ray_t, rec))
+        if (!object_->hit(offset_r, interval, rec))
             return false;
 
         // 将交点根据offset正向移动回去
@@ -101,7 +101,7 @@ public:
 class RotateY : public Hittable
 {
 private:
-    std::shared_ptr<Hittable> object_;
+    shared_ptr<Hittable> object_;
     double sin_theta_, cos_theta_;
     AABB bbox_;
 
@@ -116,7 +116,7 @@ public:
     RotateY(RotateY&&) = delete;
     RotateY& operator=(RotateY&&) = delete;
 
-    RotateY(std::shared_ptr<Hittable> p, double angle) : object_(p)
+    RotateY(shared_ptr<Hittable> p, double angle) : object_(p)
     {
         auto radians = degrees_to_radians(angle);
         sin_theta_ = sin(radians);
@@ -154,7 +154,7 @@ public:
     }
 
 public:
-    bool hit(const Ray& r, Interval ray_t, HitRecord& rec) 
+    bool hit(const Ray& r, const Interval& interval, HitRecord& rec)
         const override
     {
         // 将ray从世界空间转换到模型空间
@@ -169,7 +169,7 @@ public:
 
         Ray rotated_r(origin, direction, r.get_time());
 
-        if (!object_->hit(rotated_r, ray_t, rec))
+        if (!object_->hit(rotated_r, interval, rec))
             return false;
 
         auto p = rec.p;
