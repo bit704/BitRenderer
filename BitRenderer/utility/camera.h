@@ -139,6 +139,17 @@ public:
                         }
                     }
                 }
+                int miss_spp = samples_per_pixel_ - sqrt_spp_ * sqrt_spp_;
+                // 补上spp不是完全平方数时漏的采样数
+                while (miss_spp--)
+                {
+                    if (rendering.load())
+                    {
+                        Ray r = get_ray(i, j, random_int(0, sqrt_spp_), random_int(0, sqrt_spp_));
+                        pixel_color += ray_color(r, world, light, max_depth_);
+                    }
+                }
+
                 image_->set_pixel(i, j, pixel_color, samples_per_pixel_);
             }
         }
