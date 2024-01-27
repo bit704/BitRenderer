@@ -36,6 +36,7 @@ namespace fs = std::filesystem;
 using uint = unsigned int;
 using ulong = unsigned long;
 using ullong = unsigned long long;
+using llong = long long;
 
 extern const double kInfinitDouble;
 extern const double kPI;
@@ -57,7 +58,8 @@ double random_double(double min, double max);
 int    random_int(int min, int max);
 
 // 给输出数字加入千位分隔符
-std::string format_num(long long num);
+std::string operator ""_sep(ullong num);
+std::string format_num(ullong num);
 
 // 避免minwindef.h中宏max和std::max的冲突
 #undef max
@@ -75,7 +77,7 @@ inline double min3(double x, double y, double z)
 
 #define STR(x) std::to_string(x)
 
-std::string operator ""str(const char*, size_t);
+std::string operator ""_str(const char*, size_t);
 
 void add_info(std::string new_info);
 std::string return_info();

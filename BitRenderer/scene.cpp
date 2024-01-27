@@ -20,13 +20,13 @@ void scene_obj(const Camera& cam, const fs::path& obj_path)
         return;
     }
     auto end = steady_clock::now();
-    add_info("loading elapsed time: "str + STR(duration_cast<milliseconds>(end - start).count()) + "ms");
+    add_info("loading elapsed time: "_str + STR(duration_cast<milliseconds>(end - start).count()) + "ms");
 
     add_info("prepare BVH...");
     start = steady_clock::now();
     world->add(make_shared<BVHNode>(triangles));
     end = steady_clock::now();
-    add_info("BVH elapsed time: "str + STR(duration_cast<milliseconds>(end - start).count()) + "ms");
+    add_info("BVH elapsed time: "_str + STR(duration_cast<milliseconds>(end - start).count()) + "ms");
 
     cam.render(world);
     return;
@@ -59,7 +59,7 @@ bool load_obj(const char* filename, const char* basepath, bool triangulate, Hitt
     bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
         filename, basepath, triangulate);
 
-    add_info("load .obj: "str + filename);
+    add_info("load .obj: "_str + filename);
 
     if (!warn.empty())
     {
@@ -83,11 +83,11 @@ bool load_obj(const char* filename, const char* basepath, bool triangulate, Hitt
     ullong snum = shapes.size();
     ullong mnum = materials.size();
 
-    add_info("vertices: "str  + STR(vnum));
-    add_info("normals: "str   + STR(nnum));
-    add_info("texcoords: "str + STR(tnum));
-    add_info("shapes: "str    + STR(snum));
-    add_info("materials: "str + STR(mnum));
+    add_info("vertices: "_str  + STR(vnum));
+    add_info("normals: "_str   + STR(nnum));
+    add_info("texcoords: "_str + STR(tnum));
+    add_info("shapes: "_str    + STR(snum));
+    add_info("materials: "_str + STR(mnum));
 
     vertices  = std::vector<Point3>(vnum);
     normals   = std::vector<Vec3>(nnum);
@@ -129,17 +129,17 @@ bool load_obj(const char* filename, const char* basepath, bool triangulate, Hitt
 
     for (ullong i = 0; i < snum; i++)
     {
-        add_info("shape name: "str + shapes[i].name);
-        add_info("  mesh indices num: "str + STR(shapes[i].mesh.indices.size()));
-        add_info("  lines indices num: "str + STR(shapes[i].lines.indices.size()));
-        add_info("  points indices num: "str + STR(shapes[i].points.indices.size()));
+        add_info("shape name: "_str + shapes[i].name);
+        add_info("  mesh indices num: "_str + STR(shapes[i].mesh.indices.size()));
+        add_info("  lines indices num: "_str + STR(shapes[i].lines.indices.size()));
+        add_info("  points indices num: "_str + STR(shapes[i].points.indices.size()));
         
         ullong fnum = shapes[i].mesh.num_face_vertices.size();
 
         assert(fnum == shapes[i].mesh.material_ids.size());
         assert(fnum == shapes[i].mesh.smoothing_group_ids.size());
 
-        add_info("  faces num: "str + STR(fnum));
+        add_info("  faces num: "_str + STR(fnum));
 
         ullong index_offset = 0;
         for (ullong f = 0; f < fnum; f++)

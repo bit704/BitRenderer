@@ -43,7 +43,7 @@ int random_int(int min, int max)
     return static_cast<int>(random_double(min, max + 1));
 }
 
-std::string format_num(long long num)
+std::string format_num(ullong num)
 {
     static std::ostringstream oss;
     oss.str("");
@@ -51,7 +51,13 @@ std::string format_num(long long num)
     oss << num;
     return oss.str();
 }
-std::string operator ""str(const char* c_str, size_t)
+
+std::string operator ""_sep(ullong num)
+{
+    return format_num(num);
+}
+
+std::string operator ""_str(const char* c_str, size_t)
 {
     return std::string(c_str);
 }
