@@ -24,33 +24,39 @@ public:
         : min_(fmin(a.min_, b.min_)), max_(fmax(a.max_, b.max_)) {}
 
 public:
-    bool contains(double x) const 
+    bool contains(double x) 
+        const 
     {
         return min_ <= x && x <= max_;
     }
 
-    bool surrounds(double x) const
+    bool surrounds(double x) 
+        const
     {
         return min_ < x && x < max_;
     }
 
-    double get_size() const
+    double get_size() 
+        const
     {
         return max_ - min_;
     }
 
-    Interval expand(double delta) const
+    Interval expand(double delta) 
+        const
     {
         auto padding = delta / 2;
         return Interval(min_ - padding, max_ + padding);
     }
 
-    double get_min() const
+    double get_min() 
+        const
     {
         return min_;
     }
 
-    double get_max() const
+    double get_max() 
+        const
     {
         return max_;
     }

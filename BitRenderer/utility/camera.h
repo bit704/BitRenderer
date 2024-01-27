@@ -113,7 +113,6 @@ public:
     void render(const shared_ptr<Hittable>& world, const shared_ptr<Hittable>& light = nullptr)
         const
     {
-        rendering.store(true);
         // OpenMP并发
 #pragma omp parallel for
         for (int i = 0; i < image_height_; ++i)

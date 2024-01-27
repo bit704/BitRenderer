@@ -410,9 +410,10 @@ int main()
                 auto assemble = [&]()
                     {
                         // 设置统计数据
+                        rendering.store(true);
                         hit_count.store(0);
                         sample_count.store(0);
-                        add_info("Rendering...");
+                        add_info("----------------\nRendering...");
                         rendering_start = steady_clock::now();
 
                         // 设置参数
@@ -476,7 +477,6 @@ int main()
             if (ImGui::Button("Abort") && rendering.load())
             {
                 add_info("Aborting...");
-                rendering.store(false);
             }
 
             ImGui::SameLine();
@@ -547,7 +547,7 @@ int main()
             }
             auto duration_min = duration_cast<minutes>(duration);
             auto duration_sec = duration_cast<seconds>(duration);
-            ImGui::Text("elapsed time = %d min %d sec", duration_min.count(), duration_sec.count() % 60);
+            ImGui::Text("total elapsed time = %d min %d sec", duration_min.count(), duration_sec.count() % 60);
 
             if (image_data != nullptr)
             {

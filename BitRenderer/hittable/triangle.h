@@ -91,7 +91,8 @@ public:
         // 击中点
         rec.p = (1 - bc1 - bc2) * vertices[a_] + bc1 * vertices[b_] + bc2 * vertices[c_];
         // 法线
-        rec.normal = (1 - bc1 - bc2) * normals[an_] + bc1 * normals[bn_] + bc2 * normals[cn_];
+        Vec3 normal = (1 - bc1 - bc2) * normals[an_] + bc1 * normals[bn_] + bc2 * normals[cn_];
+        rec.set_face_normal(r, normal);
         //  纹理坐标
         rec.u = (1 - bc1 - bc2) * texcoords[at_].first + bc1 * texcoords[bt_].first + bc2 * texcoords[ct_].first;
         rec.v = (1 - bc1 - bc2) * texcoords[at_].second + bc1 * texcoords[bt_].second + bc2 * texcoords[ct_].second;

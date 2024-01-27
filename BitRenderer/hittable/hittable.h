@@ -20,7 +20,7 @@ struct HitRecord
 
     HitRecord() : p(), normal(), material(), t(0), front_face(false), u(0), v(0) {}
 
-    // 确保法线面向观察者
+    // 计算是否击中正面，同时确保返回的法线在击中光线的那一边
     // outward_normal为代表正面的法线
     void set_face_normal(const Ray& r, const Vec3& outward_normal) 
     {

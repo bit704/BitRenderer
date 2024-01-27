@@ -8,6 +8,30 @@ std::vector<Point3> vertices;
 std::vector<Point3> normals;
 std::vector<std::pair<double, double>> texcoords;
 
+void scene_obj(const Camera& cam, const fs::path& obj_path)
+{
+    shared_ptr<HittableList> world = make_shared<HittableList>();
+    HittableList triangles;
+
+    auto start = steady_clock::now();
+    if (!load_obj(obj_path.string().c_str(), obj_path.parent_path().string().c_str(), true, triangles))
+    {
+        add_info(obj_path.string() + "  failed to load.");
+        return;
+    }
+    auto end = steady_clock::now();
+    add_info("loading elapsed time: "str + STR(duration_cast<milliseconds>(end - start).count()) + "ms");
+
+    add_info("prepare BVH...");
+    start = steady_clock::now();
+    world->add(make_shared<BVHNode>(triangles));
+    end = steady_clock::now();
+    add_info("BVH elapsed time: "str + STR(duration_cast<milliseconds>(end - start).count()) + "ms");
+
+    cam.render(world);
+    return;
+}
+
 // 测试三角形
 void scene_test_triangle(const Camera& cam)
 {
@@ -30,16 +54,12 @@ bool load_obj(const char* filename, const char* basepath, bool triangulate, Hitt
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
 
-    auto start = steady_clock::now();
     std::string warn;
     std::string err;
     bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
         filename, basepath, triangulate);
-    auto end = steady_clock::now();
 
     add_info("load .obj: "str + filename);
-
-    add_info("elapsed time: "str + STR(duration_cast<milliseconds>(end - start).count()) + "ms");
 
     if (!warn.empty())
     {
@@ -109,7 +129,7 @@ bool load_obj(const char* filename, const char* basepath, bool triangulate, Hitt
 
     for (ullong i = 0; i < snum; i++)
     {
-        add_info("shape "str + STR(i) + ": " + shapes[i].name);
+        add_info("shape name: "str + shapes[i].name);
         add_info("  mesh indices num: "str + STR(shapes[i].mesh.indices.size()));
         add_info("  lines indices num: "str + STR(shapes[i].lines.indices.size()));
         add_info("  points indices num: "str + STR(shapes[i].points.indices.size()));
@@ -126,7 +146,7 @@ bool load_obj(const char* filename, const char* basepath, bool triangulate, Hitt
         {
             ullong v_per_f = shapes[i].mesh.num_face_vertices[f];
             // 每面顶点数必须为3
-            assert(v_per_f = 3);
+            assert(v_per_f == 3);
 
             tinyobj::index_t idx_a = shapes[i].mesh.indices[index_offset];
             int a  = idx_a.vertex_index;
@@ -153,26 +173,6 @@ bool load_obj(const char* filename, const char* basepath, bool triangulate, Hitt
     triangles = std::move(tris);
 
     return true;
-}
-
-void scene_obj(const Camera& cam, const fs::path& obj_path)
-{
-    shared_ptr<HittableList> world = make_shared<HittableList>();
-    HittableList triangles;
-
-    if (!load_obj(obj_path.string().c_str(), obj_path.parent_path().string().c_str(), true, triangles))
-    {
-        add_info(obj_path.string() + "  failed to load.");
-        return;
-    }
-
-    auto start = steady_clock::now();
-    world->add(make_shared<BVHNode>(triangles));
-    auto end = steady_clock::now();
-    add_info("BVH elapsed time: "str + STR(duration_cast<milliseconds>(end - start).count()) + "ms");
-
-    cam.render(world);
-    return;
 }
 
 void scene_checker(const Camera& cam)

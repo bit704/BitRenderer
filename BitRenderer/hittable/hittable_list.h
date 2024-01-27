@@ -15,9 +15,16 @@ private:
 public:
     HittableList() = default;
 
+    HittableList(shared_ptr<Hittable> object)
+    {
+        add(object);
+    }
+
     HittableList& operator=(std::vector<shared_ptr<Hittable>>&& objects)
     {
         objects_ = std::move(objects);
+        for(const auto& o : objects_)
+            bbox_ = AABB(bbox_, o->get_bbox());
         return *this;
     }
 
@@ -35,7 +42,7 @@ public:
 
     void add(shared_ptr<Hittable> object)
     {
-        objects_.push_back(object);
+        objects_.emplace_back(object);
         bbox_ = AABB(bbox_, object->get_bbox()); // 并集运算
     }
 
