@@ -86,6 +86,7 @@ public:
 
         u = std::clamp(u, 0., 1.);
         //v = std::clamp(v, 0., 1.); // 不翻转v
+        // uv以左下角为原点而图片以左上角为原点时
         v = 1.0 - std::clamp(v, 0., 1.); // 翻转v
 
         int i = static_cast<int>(v * image_read_.get_image_height());

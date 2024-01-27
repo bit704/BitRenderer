@@ -15,9 +15,10 @@ private:
 public:
     HittableList() = default;
 
-    HittableList(shared_ptr<Hittable> object)
+    HittableList& operator=(std::vector<shared_ptr<Hittable>>&& objects)
     {
-        add(object);
+        objects_ = std::move(objects);
+        return *this;
     }
 
     HittableList(const HittableList&) = delete;

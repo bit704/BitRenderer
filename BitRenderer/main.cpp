@@ -170,8 +170,9 @@ int main()
 
             ImGui::SeparatorText("scene");
 
-            if (!use_preset)
             {
+                if (use_preset) ImGui::BeginDisabled();
+
                 // 根据kLoadPath文件夹下文件刷新objs数组
                 auto objs_new = traverse_path(kLoadPath, std::regex(".*\\.obj"));
                 if (objs != objs_new)
@@ -202,7 +203,7 @@ int main()
                             samples_per_pixel = 100;
                             max_depth = 50;
                             vfov = 20;
-                            float lookfrom_t[3] = { 3, 3, 3 };
+                            float lookfrom_t[3] = { 2, 4, 2 };
                             memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
                             float lookat_t[3] = { 0, 0, 0 };
                             memcpy(lookat, lookat_t, 3 * sizeof(float));
@@ -220,9 +221,13 @@ int main()
                 HelpMarker(
                     "Please put .obj and associated files in .\\load\\ folder.\n"
                     "Available .obj will automatically show in this Checkbox.\n");
+            
+                if (use_preset) ImGui::EndDisabled();
             }
-            else
+
             {
+                if (!use_preset) ImGui::BeginDisabled();
+
                 //ImGui::SetNextItemWidth(200);
 
                 // 选择预置场景
@@ -315,6 +320,8 @@ int main()
                 ImGui::SameLine();
                 HelpMarker(
                     "Choose preset scene.\n");
+
+                if (!use_preset) ImGui::EndDisabled();
             }
 
             // 是否使用预置场景
@@ -493,13 +500,12 @@ int main()
 
             ImGui::SeparatorText("info");
 
-            static ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput | ImGuiInputTextFlags_ReadOnly;
+            static ImGuiInputTextFlags flags = ImGuiInputTextFlags_ReadOnly;
             static char text[256 * 128];
             std::string info = return_info();
             std::copy(info.begin(), info.end(), text);
             ImGui::InputTextMultiline("info", text, IM_ARRAYSIZE(text), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
             
-            ImGui::SameLine();
             HelpMarker(
                 "The latest 256 information.\n"
                 "Each shorter than 128.\n");

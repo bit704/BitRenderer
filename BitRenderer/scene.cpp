@@ -42,10 +42,14 @@ bool load_obj(const char* filename, const char* basepath, bool triangulate, Hitt
     add_info("elapsed time: "str + STR(duration_cast<milliseconds>(end - start).count()) + "ms");
 
     if (!warn.empty())
+    {
         LOG("WARN: ", warn);
+    }
 
     if (!err.empty())
+    {
         LOG("ERR: ", err);
+    }
 
     if (!ret)
     {
@@ -76,6 +80,7 @@ bool load_obj(const char* filename, const char* basepath, bool triangulate, Hitt
             static_cast<const double>(attrib.vertices[3 * v + 1]),
             static_cast<const double>(attrib.vertices[3 * v + 2]));
     }
+
     for (ullong n = 0; n < nnum; ++n)
     {
         normals[n] = Vec3(
@@ -91,7 +96,17 @@ bool load_obj(const char* filename, const char* basepath, bool triangulate, Hitt
             static_cast<const double>(attrib.texcoords[2 * t + 1]));
     }
 
-    auto white = make_shared<Lambertian>(Color(.73, .73, .73));
+    //auto white = make_shared<Lambertian>(Color(.73, .73, .73));
+    auto white = make_shared<Lambertian>(make_shared<ImageTexture>("earthmap.jpg"));
+    
+    ullong tot_fnum = 0; // 总面数
+    for (int i = 0; i < snum; i++)
+    {
+        tot_fnum += shapes[i].mesh.num_face_vertices.size();
+    }
+    std::vector<shared_ptr<Hittable>> tris = std::vector<shared_ptr<Hittable>>(tot_fnum);
+    ullong tri_index = 0;
+
     for (ullong i = 0; i < snum; i++)
     {
         add_info("shape "str + STR(i) + ": " + shapes[i].name);
@@ -104,14 +119,14 @@ bool load_obj(const char* filename, const char* basepath, bool triangulate, Hitt
         assert(fnum == shapes[i].mesh.material_ids.size());
         assert(fnum == shapes[i].mesh.smoothing_group_ids.size());
 
-        LOG("  faces num：", shapes[i].mesh.num_face_vertices.size());
+        add_info("  faces num: "str + STR(fnum));
 
         ullong index_offset = 0;
-        for (ullong f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++)
+        for (ullong f = 0; f < fnum; f++)
         {
-            ullong f_vnum = shapes[i].mesh.num_face_vertices[f];
+            ullong v_per_f = shapes[i].mesh.num_face_vertices[f];
             // 每面顶点数必须为3
-            assert(f_vnum = 3);
+            assert(v_per_f = 3);
 
             tinyobj::index_t idx_a = shapes[i].mesh.indices[index_offset];
             int a  = idx_a.vertex_index;
@@ -128,11 +143,15 @@ bool load_obj(const char* filename, const char* basepath, bool triangulate, Hitt
             int cn = idx_c.normal_index;
             int ct = idx_c.texcoord_index;
 
-            triangles.add(make_shared<Triangle>(a, an, at, b, bn, bt, c, cn, ct, white));
+            tris[tri_index + f] = make_shared<Triangle>(a, an, at, b, bn, bt, c, cn, ct, white);
 
-            index_offset += f_vnum;
+            index_offset += v_per_f;
         }
+        tri_index += fnum;
     }
+
+    triangles = std::move(tris);
+
     return true;
 }
 
@@ -147,7 +166,11 @@ void scene_obj(const Camera& cam, const fs::path& obj_path)
         return;
     }
 
+    auto start = steady_clock::now();
     world->add(make_shared<BVHNode>(triangles));
+    auto end = steady_clock::now();
+    add_info("BVH elapsed time: "str + STR(duration_cast<milliseconds>(end - start).count()) + "ms");
+
     cam.render(world);
     return;
 }
