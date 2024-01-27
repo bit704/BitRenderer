@@ -27,13 +27,7 @@ public:
         : a_(a), an_(an), at_(at), b_(b), bn_(bn), bt_(bt), c_(c), cn_(cn), ct_(ct),
         material_(material)
     {
-        Point3 min_pole(min3(vertices[a_].x(), vertices[b_].x(),vertices[c_].x()),
-                        min3(vertices[a_].y(), vertices[b_].y(),vertices[c_].y()),
-                        min3(vertices[a_].z(), vertices[b_].z(),vertices[c_].z()));
-        Point3 max_pole(max3(vertices[a_].x(), vertices[b_].x(), vertices[c_].x()),
-                        max3(vertices[a_].y(), vertices[b_].y(), vertices[c_].y()),
-                        max3(vertices[a_].z(), vertices[b_].z(), vertices[c_].z()));
-        bbox_ = AABB(min_pole, max_pole).pad();
+        bbox_ = AABB(AABB(vertices[a_], vertices[b_]).pad(), AABB(vertices[a_], vertices[c_]).pad());
     }
 
     Triangle(const Triangle&) = delete;
