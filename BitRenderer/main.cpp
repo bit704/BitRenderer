@@ -5,15 +5,6 @@
 #include "resource.h"
 #include "status.h"
 
-std::atomic_ullong hit_count(0);     // 击中次数统计
-std::atomic_ullong sample_count(0);  // 采样次数统计
-std::atomic_bool   rendering(false); // 标志是否正在渲染
-std::string        info = "None";    // 反馈信息
-
-std::vector<Point3> vertices; // 顶点
-std::vector<Point3> normals;  // 法线
-std::vector<std::pair<double, double>> texcoords; // 纹理坐标
-
 int main()
 {
     // 创建应用程序窗口
@@ -91,7 +82,7 @@ int main()
     ImGuiWindowFlags_ custom_window_flag = ImGuiWindowFlags_None;
     // 全部固定
     //ImGuiWindowFlags_ custom_window_flag = (ImGuiWindowFlags_)(ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-    ImVec4 clear_color = ImVec4(1.f, 1.f, 1.f, 1.f); // 背景颜色
+    ImVec4 clear_color = ImVec4(1.f, 1.f, 1.f, 1.f); // 窗口背景颜色
     bool use_preset    = false;
 
     // 渲染参数
@@ -211,7 +202,7 @@ int main()
                             samples_per_pixel = 100;
                             max_depth = 50;
                             vfov = 20;
-                            float lookfrom_t[3] = { 0, 0, 10 };;
+                            float lookfrom_t[3] = { 3, 3, 3 };
                             memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
                             float lookat_t[3] = { 0, 0, 0 };
                             memcpy(lookat, lookat_t, 3 * sizeof(float));
@@ -220,8 +211,7 @@ int main()
                             float background_t[3] = { .7f, .8f, 1 };
                             memcpy(background, background_t, 3 * sizeof(float));
 
-                            auto filename = objs[obj_current_idx].filename().string();
-                            image_name = filename.substr(0, filename.size() - 4) + ".png"; // 去掉末尾的".obj"再加上".png"
+                            image_name = objs[obj_current_idx].stem().string() + ".png"; // 去掉末尾的".obj"再加上".png"
                         }
                     }
                     ImGui::EndCombo();
@@ -413,9 +403,9 @@ int main()
                 auto assemble = [&]()
                     {
                         // 设置统计数据
-                        hit_count = 0;
-                        sample_count = 0;
-                        info = "Rendering...";
+                        hit_count.store(0);
+                        sample_count.store(0);
+                        add_info("Rendering...");
                         rendering_start = steady_clock::now();
 
                         // 设置参数
@@ -437,14 +427,14 @@ int main()
                 {
                     if (obj_current_idx == 0)
                     {
-                        info = "No .obj sccene";
+                        add_info("No .obj sccene");
                     }
                     else
                     {
                         assemble();
 
-                        auto path = objs[obj_current_idx].string();
-                        t = std::thread(scene_obj, std::cref(cam), std::cref(path));
+                        t = std::thread(scene_obj, std::cref(cam), std::cref(objs[obj_current_idx]));
+                        //t = std::thread(scene_test_triangle, std::cref(cam));
 
                         if (t.joinable())
                             t.detach();
@@ -454,7 +444,7 @@ int main()
                 {
                     if (scene_current_idx == 0)
                     {
-                        info = "No preset scene.";
+                        add_info("No preset scene.");
                     }
                     else
                     {
@@ -478,31 +468,41 @@ int main()
             // 结束渲染
             if (ImGui::Button("Abort") && rendering.load())
             {
-                info = "Aborting...";
+                add_info("Aborting...");
                 rendering.store(false);
             }
 
             ImGui::SameLine();
             if (ImGui::Button("Save"))
             {
-                info = "Saving...";
                 if (image_data == nullptr)
                 {
-                    info = "No Image.";
+                    add_info("No Image.");
                 }
                 else if (rendering.load())
                 {
-                    info = "Still rendering!";
+                    add_info("Still rendering!");
                 }
                 else
                 {
+                    add_info("Saving...");
                     cam.save_image();
-                    info = "Image has be saved to ./output/ folder.";
+                    add_info("Image has be saved to ./output/ folder.");
                 }
             }
 
             ImGui::SeparatorText("info");
-            ImGui::Text(info.c_str());
+
+            static ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput | ImGuiInputTextFlags_ReadOnly;
+            static char text[256 * 128];
+            std::string info = return_info();
+            std::copy(info.begin(), info.end(), text);
+            ImGui::InputTextMultiline("info", text, IM_ARRAYSIZE(text), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
+            
+            ImGui::SameLine();
+            HelpMarker(
+                "The latest 256 information.\n"
+                "Each shorter than 128.\n");
 
             ImGui::End();
         }
@@ -541,7 +541,7 @@ int main()
             }
             auto duration_min = duration_cast<minutes>(duration);
             auto duration_sec = duration_cast<seconds>(duration);
-            ImGui::Text("cal time = %d min %d sec", duration_min.count(), duration_sec.count() % 60);
+            ImGui::Text("elapsed time = %d min %d sec", duration_min.count(), duration_sec.count() % 60);
 
             if (image_data != nullptr)
             {

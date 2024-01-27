@@ -8,7 +8,7 @@
 #include "singleton.h"
 
 #define PRINT_LOCATION std::cout << __FILE__ << "第" << __LINE__ << "行（" << __FUNCTION__ << "）：";
-#define LOG(...) { PRINT_LOCATION Logger::get_instance().print_info(__VA_ARGS__); }
+#define LOG(...) PRINT_LOCATION Logger::get_instance().print_info(__VA_ARGS__) // 外层不可省略{}
 
 class Logger : public Singleton<Logger>
 {

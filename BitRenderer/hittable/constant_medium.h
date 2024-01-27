@@ -45,8 +45,11 @@ public:
         if (!boundary_->hit(r, Interval(rec1.t + 1e-4, kInfinitDouble), rec2))
             return false;
 
-        if (debugging) 
-            LOG("ray_tmin=", rec1.t , ", ray_tmax=", rec2.t)
+        if (debugging)
+        {
+            LOG("ray_tmin=", rec1.t, ", ray_tmax=", rec2.t);
+        }
+            
 
         if (rec1.t < interval.get_min()) 
             rec1.t = interval.get_min();
@@ -71,9 +74,9 @@ public:
 
         if (debugging)
         {
-            LOG("hit_distance = ", hit_distance)
-            LOG("rec.t = ", rec.t)
-            LOG("rec.p = ", rec.p)
+            LOG("hit_distance = ", hit_distance);
+            LOG("rec.t = ", rec.t);
+            LOG("rec.p = ", rec.p);
         }
 
         rec.normal = Vec3(1, 0, 0);  // 任意

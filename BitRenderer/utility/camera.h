@@ -8,11 +8,6 @@
 #include "material.h"
 #include "logger.h"
 
-extern std::atomic_ullong hit_count;
-extern std::atomic_ullong sample_count;
-extern std::atomic_bool   rendering;
-extern std::string        info;
-
 class Camera
 {
 private:
@@ -120,14 +115,14 @@ public:
     {
         rendering.store(true);
         // OpenMP并发
-//#pragma omp parallel for
+#pragma omp parallel for
         for (int i = 0; i < image_height_; ++i)
         {
             for (int j = 0; j < image_width_; ++j)
             {
                 Color pixel_color(0, 0, 0);
                 // 对每个像素中的采样点进行分层，采样更均匀
-//#pragma omp parallel for
+#pragma omp parallel for
                 for (int s_i = 0; s_i < sqrt_spp_; ++s_i)
                 {
                     for (int s_j = 0; s_j < sqrt_spp_; ++s_j)
@@ -154,7 +149,7 @@ public:
             }
         }
         rendering.store(false);
-        info = "Done.";
+        add_info("Done.");
     }
 
 public:

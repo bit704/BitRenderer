@@ -1,8 +1,14 @@
 # custom
 *.lnk
+
 **/output/*
 !**/output/.gitkeep
+
 imgui.ini
+
+**/load/*
+!**/load/.gitkeep
+!**/load/earthmap.jpg
 
 #######################################################
 

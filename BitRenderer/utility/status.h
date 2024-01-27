@@ -4,6 +4,8 @@
 #ifndef STATUS_H
 #define STATUS_H
 
+#include <windows.h> // status.h
+
 #include "common.h"
 
 static MEMORYSTATUSEX statex;

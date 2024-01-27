@@ -6,6 +6,10 @@ const double kEpsilon = 1e-8;
 const char* kLoadPath   = ".\\load\\";
 const char* kOutputPath = ".\\output\\";
 
+std::atomic_ullong hit_count(0);
+std::atomic_ullong sample_count(0);
+std::atomic_bool   rendering(false);
+
 std::vector<fs::path> traverse_path(std::string dir, std::regex rule)
 {
     std::vector<fs::path> founds = { "None" };
@@ -46,4 +50,29 @@ std::string format_num(long long num)
     oss.imbue(std::locale("en_US.UTF-8"));
     oss << num;
     return oss.str();
+}
+std::string operator ""str(const char* c_str, size_t)
+{
+    return std::string(c_str);
+}
+
+std::deque<std::string> info; // 输出信息
+std::mutex mtx;
+
+void add_info(std::string new_info)
+{
+    assert(new_info.size() < 128);
+    std::lock_guard<std::mutex> lock(mtx);
+    info.emplace_back(new_info);
+    if (info.size() > 256)
+        info.pop_front();
+}
+
+std::string return_info()
+{
+    std::lock_guard<std::mutex> lock(mtx);
+    std::stringstream ss;
+    for (auto s : info)
+        ss << s << std::endl;
+    return ss.str();
 }

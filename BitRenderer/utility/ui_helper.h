@@ -4,6 +4,10 @@
 #ifndef UI_HELPER_H
 #define UI_HELPER_H
 
+#include <d3d12.h>   // ui_helper.h
+#include <dxgi1_4.h> // ui_helper.h
+#include <tchar.h>   // ui_helper.h
+
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx12.h"
