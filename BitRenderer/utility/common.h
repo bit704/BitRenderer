@@ -72,7 +72,7 @@ inline double max3(double x, double y, double z)
 
 inline double min3(double x, double y, double z)
 {
-    return std::min(z, std::min(y, z));
+    return std::min(x, std::min(y, z));
 }
 
 #define STR(x) std::to_string(x)
