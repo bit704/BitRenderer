@@ -53,7 +53,7 @@ public:
     }
 };
 
-// 用于光源采样
+// 用于对可击中物体表面采样
 class HittablePDF : public PDF 
 {
 private:

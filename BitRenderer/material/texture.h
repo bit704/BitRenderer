@@ -78,7 +78,8 @@ public:
     ImageTexture(std::string filename) : image_read_(filename) {}
 
 public:
-    Color value(double u, double v, const Point3& p) const override
+    Color value(double u, double v, const Point3& p)
+        const override
     {
         // 纯红说明纹理没有读取成功
         if (image_read_.get_image_height() <= 0) 
@@ -107,7 +108,8 @@ public:
     NoiseTexture(double sc) : scale_(sc) {}
 
 public:
-    Color value(double u, double v, const Point3& p) const override
+    Color value(double u, double v, const Point3& p) 
+        const override
     {
         auto s = scale_ * p;
         return Color(1, 1, 1) * .5 * (1 + sin(s.z() + 10 * noise_.turb(s)));

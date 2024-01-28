@@ -35,15 +35,19 @@ class Hittable
 public:
     virtual ~Hittable() = default;
 
-    virtual bool hit(const Ray& r, const Interval& interval, HitRecord& rec) const = 0;
-    virtual AABB get_bbox() const = 0;
+    virtual bool hit(const Ray& r, const Interval& interval, HitRecord& rec) 
+        const = 0;
+    virtual AABB get_bbox() 
+        const = 0;
 
-    virtual double pdf_value(const Point3& o, const Vec3& v) const
+    virtual double pdf_value(const Point3& o, const Vec3& v) 
+        const
     {
         return 0.;
     }
 
-    virtual Vec3 random(const Vec3& o) const
+    virtual Vec3 random(const Vec3& o) 
+        const
     {
         return Vec3(1, 0, 0);
     }
@@ -59,21 +63,17 @@ private:
     AABB bbox_;
 
 public:
-    Translate() = delete;
-
-    ~Translate() = default;
+    Translate(shared_ptr<Hittable> p, const Vec3& displacement)
+        : object_(p), offset_(displacement)
+    {
+        bbox_ = object_->get_bbox() + offset_;
+    }
 
     Translate(const Translate&) = delete;
     Translate& operator=(const Translate&) = delete;
 
     Translate(Translate&&) = delete;
     Translate& operator=(Translate&&) = delete;
-
-    Translate(shared_ptr<Hittable> p, const Vec3& displacement)
-        : object_(p), offset_(displacement)
-    {
-        bbox_ = object_->get_bbox() + offset_;
-    }
 
 public:
     bool hit(const Ray& r, const Interval& interval, HitRecord& rec)
@@ -106,16 +106,6 @@ private:
     AABB bbox_;
 
 public:
-    RotateY() = delete;
-
-    ~RotateY() = default;
-
-    RotateY(const RotateY&) = delete;
-    RotateY& operator=(const RotateY&) = delete;
-
-    RotateY(RotateY&&) = delete;
-    RotateY& operator=(RotateY&&) = delete;
-
     RotateY(shared_ptr<Hittable> p, double angle) : object_(p)
     {
         auto radians = degrees_to_radians(angle);
@@ -152,6 +142,12 @@ public:
 
         bbox_ = AABB(min_p, max_p);
     }
+
+    RotateY(const RotateY&) = delete;
+    RotateY& operator=(const RotateY&) = delete;
+
+    RotateY(RotateY&&) = delete;
+    RotateY& operator=(RotateY&&) = delete;
 
 public:
     bool hit(const Ray& r, const Interval& interval, HitRecord& rec)

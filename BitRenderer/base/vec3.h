@@ -63,17 +63,38 @@ public:
 	}
 
 public:
-	double length_squared() const
+	double x() 
+		const
+	{
+		return e_[0];
+	}
+
+	double y() 
+		const
+	{
+		return e_[1];
+	}
+
+	double z() 
+		const
+	{
+		return e_[2];
+	}
+
+	double length_squared() 
+		const
 	{
 		return e_[0] * e_[0] + e_[1] * e_[1] + e_[2] * e_[2];
 	}
 
-	double length() const
+	double length() 
+		const
 	{
 		return std::sqrt(length_squared());
 	}
 
-	bool near_zero() const
+	bool near_zero()
+		const
 	{
 		return (fabs(e_[0]) < kEpsilon) && (fabs(e_[1]) < kEpsilon) && (fabs(e_[2]) < kEpsilon);
 	}
@@ -86,21 +107,6 @@ public:
 	static Vec3 random(double min, double max) 
 	{
 		return Vec3(random_double(min, max), random_double(min, max), random_double(min, max));
-	}
-
-	double x() const
-	{
-		return e_[0];
-	}
-
-	double y() const
-	{
-		return e_[1];
-	}
-
-	double z() const
-	{
-		return e_[2];
 	}
 };
 

@@ -120,7 +120,7 @@ bool load_obj(const char* filename, const char* basepath, bool triangulate, Hitt
     auto white = make_shared<Lambertian>(make_shared<ImageTexture>("earthmap.jpg"));
     
     ullong tot_fnum = 0; // 总面数
-    for (int i = 0; i < snum; i++)
+    for (ullong i = 0; i < snum; i++)
     {
         tot_fnum += shapes[i].mesh.num_face_vertices.size();
     }

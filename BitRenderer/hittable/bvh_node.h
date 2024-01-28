@@ -64,7 +64,8 @@ public:
     BVHNode& operator=(BVHNode&&) = delete;
 
 public:
-    bool hit(const Ray& r, const Interval& interval, HitRecord& rec) const override
+    bool hit(const Ray& r, const Interval& interval, HitRecord& rec) 
+        const override
     {
         if (!bbox_.hit(r, interval))
             return false;
@@ -76,7 +77,11 @@ public:
         return hit_left || hit_right;
     }
 
-    AABB get_bbox() const override { return bbox_; }
+    AABB get_bbox() 
+        const override
+    {
+        return bbox_; 
+    }
 
 private:
     static bool box_compare(const shared_ptr<Hittable> a, const shared_ptr<Hittable> b, 
