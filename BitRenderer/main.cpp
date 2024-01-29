@@ -80,10 +80,10 @@ int main()
     // 窗口设置项
     ImGuiComboFlags   flags = 0;
     ImGuiWindowFlags_ custom_window_flag = ImGuiWindowFlags_None;
-    // 全部固定
-    //ImGuiWindowFlags_ custom_window_flag = (ImGuiWindowFlags_)(ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+    ImGuiInputTextFlags info_flag = ImGuiInputTextFlags_ReadOnly;
     ImVec4 clear_color = ImVec4(1.f, 1.f, 1.f, 1.f); // 窗口背景颜色
-    bool use_preset    = false;
+    bool use_preset = false;
+    int rastering_preview_mode = 0;
 
     // 渲染参数
     std::vector<fs::path> objs = { "None" };
@@ -91,16 +91,16 @@ int main()
     const char* scenes[] = { "None", "scene_checker", "scene_cornell_box", "scene_composite1", "scene_composite2" };
     int scene_current_idx = 0;
     int image_width = 600;
-    const char* aspect_ratios[] = { "16/9", "2/1", "3/2", "4/3", "1/1" };
+    const char* aspect_ratios[] = { "1/1", "4/3", "3/2", "16/9", "2/1" };
     int aspect_ratio_idx = 0;
-    double aspect_ratio = 16. / 9.;
-    int samples_per_pixel = 100;
-    int max_depth = 50;
+    double aspect_ratio = 1;
+    int samples_per_pixel = 30;
+    int max_depth = 10;
     int vfov = 20;
     float lookfrom[3] = { 0, 0, 1 };
     float lookat[3]   = { 0, 0, 0 };
     float vup[3]      = { 0, 1, 0 };
-    float background[3] = { .7f, .8f, 1 };
+    float background[3] = { 1, 1, 1 };
     std::string image_name = "default.png";
 
     // 渲染数据
@@ -136,42 +136,18 @@ int main()
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        // 菜单
-        {
-            ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always, ImVec2(0, 0));      
-            // 与Win32窗口同尺寸
-            ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always); 
-            ImGui::SetNextWindowBgAlpha(0);
-
-            ImGui::Begin("MENU", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBringToFrontOnFocus);
-
-            if (ImGui::BeginMenuBar())
-            {
-                if (ImGui::BeginMenu("Mode"))
-                {
-                    if (ImGui::MenuItem("Tracer"))
-                    {
-
-                    }
-                    if (ImGui::MenuItem("Rasterizer"))
-                    {
-
-                    }
-                    ImGui::EndMenu();
-                }
-                ImGui::EndMenuBar();
-            }
-            ImGui::End();
-        }
-
         // 设置
         {
-            ImGui::Begin("SETUP", nullptr, custom_window_flag);
+            ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always, ImVec2(0, 0));
+            ImGui::SetNextWindowSize(ImVec2(460, 800), ImGuiCond_Always);
+
+            ImGui::Begin("SETUP", nullptr, custom_window_flag 
+                | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);
 
             ImGui::SeparatorText("scene");
 
             {
-                if (use_preset) ImGui::BeginDisabled();
+                ImGui::BeginDisabled(use_preset);
 
                 // 根据kLoadPath文件夹下文件刷新objs数组
                 auto objs_new = traverse_path(kLoadPath, std::regex(".*\\.obj"));
@@ -200,16 +176,16 @@ int main()
                         {
                             image_width = 600;
                             aspect_ratio_idx = 0;
-                            samples_per_pixel = 100;
-                            max_depth = 50;
+                            samples_per_pixel = 30;
+                            max_depth = 10;
                             vfov = 20;
-                            float lookfrom_t[3] = { 2, 4, 2 };
+                            float lookfrom_t[3] = { 5, 3, 5 };
                             memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
                             float lookat_t[3] = { 0, 0, 0 };
                             memcpy(lookat, lookat_t, 3 * sizeof(float));
                             float vup_t[3] = { 0, 1, 0 };
                             memcpy(vup, vup_t, 3 * sizeof(float));
-                            float background_t[3] = { .7f, .8f, 1 };
+                            float background_t[3] = { 1, 1, 1 };
                             memcpy(background, background_t, 3 * sizeof(float));
 
                             image_name = objs[obj_current_idx].stem().string() + ".png"; // 去掉末尾的".obj"再加上".png"
@@ -222,11 +198,15 @@ int main()
                     "Please put .obj and associated files in .\\load\\ folder.\n"
                     "Available .obj will automatically show in this Checkbox.\n");
             
-                if (use_preset) ImGui::EndDisabled();
+
+                ImGui::EndDisabled();
             }
 
+            // 是否使用预置场景
+            ImGui::Checkbox("use preset", &use_preset);
+
             {
-                if (!use_preset) ImGui::BeginDisabled();
+                ImGui::BeginDisabled(!use_preset);
 
                 //ImGui::SetNextItemWidth(200);
 
@@ -253,9 +233,9 @@ int main()
                         if (scene_current_idx == 1)
                         {
                             image_width = 600;
-                            aspect_ratio_idx = 0;
-                            samples_per_pixel = 100;
-                            max_depth = 50;
+                            aspect_ratio_idx = 3;
+                            samples_per_pixel = 30;
+                            max_depth = 10;
                             vfov = 20;
                             float lookfrom_t[3] = { 10, 3, 10 };
                             memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
@@ -269,9 +249,9 @@ int main()
                         else if (scene_current_idx == 2)
                         {
                             image_width = 600;
-                            aspect_ratio_idx = 4;
-                            samples_per_pixel = 100;
-                            max_depth = 50;
+                            aspect_ratio_idx = 0;
+                            samples_per_pixel = 30;
+                            max_depth = 10;
                             vfov = 40;
                             float lookfrom_t[3] = { 278, 278, -800 };
                             memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
@@ -285,9 +265,9 @@ int main()
                         else if (scene_current_idx == 3)
                         {
                             image_width = 600;
-                            aspect_ratio_idx = 0;
-                            samples_per_pixel = 100;
-                            max_depth = 50;
+                            aspect_ratio_idx = 3;
+                            samples_per_pixel = 30;
+                            max_depth = 10;
                             vfov = 20;
                             float lookfrom_t[3] = { 13, 2, 3 };
                             memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
@@ -301,9 +281,9 @@ int main()
                         else if (scene_current_idx == 4)
                         {
                             image_width = 600;
-                            aspect_ratio_idx = 4;
-                            samples_per_pixel = 100;
-                            max_depth = 50;
+                            aspect_ratio_idx = 0;
+                            samples_per_pixel = 30;
+                            max_depth = 10;
                             vfov = 40;
                             float lookfrom_t[3] = { 478, 278, -600 };
                             memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
@@ -321,91 +301,29 @@ int main()
                 HelpMarker(
                     "Choose preset scene.\n");
 
-                if (!use_preset) ImGui::EndDisabled();
+                ImGui::EndDisabled();
             }
-
-            // 是否使用预置场景
-            ImGui::Checkbox("use preset", &use_preset);
-
-            ImGui::SeparatorText("camera");
-
-            // 输入图片宽度
-            ImGui::InputInt("image width", &image_width);
-            ImGui::SameLine(); 
-            HelpMarker("1~4096");
-            if (image_width < 1)
-                image_width = 1;
-            if (image_width > 4096)
-                image_width = 4096;
-
-            // 选择图片宽高比
-            const char* combo_preview_value_ar = aspect_ratios[aspect_ratio_idx];
-            if (ImGui::BeginCombo("aspect ratio", combo_preview_value_ar, flags))
-            {
-                for (int n = 0; n < IM_ARRAYSIZE(aspect_ratios); n++)
-                {
-                    const bool is_selected = (aspect_ratio_idx == n);
-                    if (ImGui::Selectable(aspect_ratios[n], is_selected))
-                        aspect_ratio_idx = n;
-
-                    if (is_selected)
-                        ImGui::SetItemDefaultFocus();
-                }
-                ImGui::EndCombo();
-            }
-            switch (aspect_ratio_idx)
-            {
-            case 0: aspect_ratio = 16. / 9.; break;
-            case 1: aspect_ratio = 2. / 1.; break;
-            case 2: aspect_ratio = 3. / 2.; break;
-            case 3: aspect_ratio = 4. / 3.; break;
-            case 4: aspect_ratio = 1.; break;
-            }
-
-            // 设置背景颜色
-            ImGui::ColorEdit3("background color", background);
-            ImGui::SameLine();
-            HelpMarker(
-                "Click on the color square to open a color picker.\n"
-                "Click and hold to use drag and drop.\n"
-                "Right-click on the color square to show options.\n"
-                "CTRL+click on individual component to input value.\n");
-
-            // 输入spp
-            ImGui::InputInt("samples per pixel", &samples_per_pixel);
-            ImGui::SameLine();
-            HelpMarker("1~10000");
-            if (samples_per_pixel < 1)
-                samples_per_pixel = 1;
-            if (samples_per_pixel > 10000)
-                samples_per_pixel = 10000;
-
-            // 输入最大深度
-            ImGui::InputInt("max depth", &max_depth);
-            ImGui::SameLine();
-            HelpMarker("1~400");
-            if (max_depth < 1)
-                max_depth = 1;
-            if (max_depth > 400)
-                max_depth = 400;
-
-            // 设置相机外参
-            ImGui::InputFloat3("lookfrom", lookfrom, "%.1f");
-            ImGui::InputFloat3("lookat", lookat, "%.1f");
-            ImGui::InputFloat3("vup", vup, "%.1f");
-
-            // 设置vfov
-            ImGui::DragInt("vfov", &vfov, 1, 1, 179, "%d°", ImGuiSliderFlags_AlwaysClamp);
-            ImGui::SameLine();
-            HelpMarker(
-                "Drag to edit value.\n"
-                "Hold SHIFT/ALT for faster/slower edit.\n"
-                "Double-click or CTRL+click to input value.");
 
             ImGui::SeparatorText("command");
 
+            ImVec2 window_pos = ImGui::GetWindowPos();
+            ImVec2 window_size = ImGui::GetWindowSize();
+            ImVec2 window_center = ImVec2(window_pos.x + window_size.x * .5f, window_pos.y + window_size.y * .5f);
+            
+            // 选择光栅化预览模式
+            ImGui::Text("Rastering Preview");
+            ImGui::Text("            ");
+            ImGui::SameLine(); ImGui::RadioButton("normal",    &rastering_preview_mode, 0); 
+            ImGui::SameLine(); ImGui::RadioButton("wireframe", &rastering_preview_mode, 1);
+            ImGui::SameLine(); ImGui::RadioButton("depth",     &rastering_preview_mode, 2);
+
+            ImGui::Text("Ray Tracing");
+            ImGui::Text("                    "); 
+
             // 开始渲染
-            if (ImGui::Button("Render") && !rendering.load())
+            ImGui::BeginDisabled(rendering.load());
+            ImGui::SameLine();
+            if (ImGui::Button("Start") && !rendering.load())
             {
                 auto assemble = [&]()
                     {
@@ -460,10 +378,10 @@ int main()
 
                         switch (scene_current_idx)
                         {
-                        case 1: t = std::thread(scene_checker,     std::cref(cam)); break;
+                        case 1: t = std::thread(scene_checker, std::cref(cam)); break;
                         case 2: t = std::thread(scene_cornell_box, std::cref(cam)); break;
-                        case 3: t = std::thread(scene_composite1,  std::cref(cam)); break;
-                        case 4: t = std::thread(scene_composite2,  std::cref(cam)); break;
+                        case 3: t = std::thread(scene_composite1, std::cref(cam)); break;
+                        case 4: t = std::thread(scene_composite2, std::cref(cam)); break;
                         }
 
                         if (t.joinable())
@@ -471,13 +389,18 @@ int main()
                     }
                 }
             }
-
+            ImGui::EndDisabled();
+        
+            ImGui::BeginDisabled(!rendering.load());
             ImGui::SameLine();
             // 结束渲染
             if (ImGui::Button("Abort") && rendering.load())
             {
                 add_info("Aborting...");
+                rendering.store(false);
             }
+            ImGui::EndDisabled();
+
 
             ImGui::SameLine();
             if (ImGui::Button("Save"))
@@ -498,13 +421,86 @@ int main()
                 }
             }
 
+            ImGui::SeparatorText("camera");
+
+            // 输入图片宽度
+            ImGui::InputInt("image width", &image_width);
+            ImGui::SameLine(); 
+            HelpMarker("1~4096");
+            if (image_width < 1)
+                image_width = 1;
+            if (image_width > 4096)
+                image_width = 4096;
+
+            // 选择图片宽高比
+            const char* combo_preview_value_ar = aspect_ratios[aspect_ratio_idx];
+            if (ImGui::BeginCombo("aspect ratio", combo_preview_value_ar, flags))
+            {
+                for (int n = 0; n < IM_ARRAYSIZE(aspect_ratios); n++)
+                {
+                    const bool is_selected = (aspect_ratio_idx == n);
+                    if (ImGui::Selectable(aspect_ratios[n], is_selected))
+                        aspect_ratio_idx = n;
+
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
+            switch (aspect_ratio_idx)
+            {
+            case 0: aspect_ratio = 1      ; break;
+            case 1: aspect_ratio = 4. / 3.; break;
+            case 2: aspect_ratio = 3. / 2.; break;
+            case 3: aspect_ratio = 16./ 9.; break;
+            case 4: aspect_ratio = 2      ; break;
+            }
+
+            // 设置vfov
+            ImGui::DragInt("vfov", &vfov, 1, 1, 179, "%d°", ImGuiSliderFlags_AlwaysClamp);
+            ImGui::SameLine();
+            HelpMarker(
+                "Drag to edit value.\n"
+                "Hold SHIFT/ALT for faster/slower edit.\n"
+                "Double-click or CTRL+click to input value.");
+
+            // 设置背景颜色
+            ImGui::ColorEdit3("background color", background);
+            ImGui::SameLine();
+            HelpMarker(
+                "Click on the color square to open a color picker.\n"
+                "Click and hold to use drag and drop.\n"
+                "Right-click on the color square to show options.\n"
+                "CTRL+click on individual component to input value.\n");
+
+            // 输入spp
+            ImGui::InputInt("samples per pixel", &samples_per_pixel);
+            ImGui::SameLine();
+            HelpMarker("1~10000");
+            if (samples_per_pixel < 1)
+                samples_per_pixel = 1;
+            if (samples_per_pixel > 10000)
+                samples_per_pixel = 10000;
+
+            // 输入最大深度
+            ImGui::InputInt("max depth", &max_depth);
+            ImGui::SameLine();
+            HelpMarker("1~400");
+            if (max_depth < 1)
+                max_depth = 1;
+            if (max_depth > 400)
+                max_depth = 400;
+
+            // 设置相机外参
+            ImGui::InputFloat3("lookfrom", lookfrom, "%.1f");
+            ImGui::InputFloat3("lookat", lookat, "%.1f");
+            ImGui::InputFloat3("vup", vup, "%.1f");
+
             ImGui::SeparatorText("info");
 
-            static ImGuiInputTextFlags flags = ImGuiInputTextFlags_ReadOnly;
-            static char text[256 * 128];
             std::string info = return_info();
             std::copy(info.begin(), info.end(), text);
-            ImGui::InputTextMultiline("info", text, IM_ARRAYSIZE(text), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
+            ImGui::InputTextMultiline("info", text, IM_ARRAYSIZE(text), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 12), info_flag);
             
             HelpMarker(
                 "The latest 256 information.\n"
@@ -513,29 +509,10 @@ int main()
             ImGui::End();
         }
 
-        // 状态
-        {
-            ImGui::Begin("STATUS", nullptr, custom_window_flag);
-
-            ImGui::Text("UI fps = %.2f", io.Framerate);
-            ImGui::Text("UI 1/fps = %.2f ms", 1000. / io.Framerate);
-            ImGui::Text("sys memory load = %lld", get_memory_load());
-
-            // 每300ms统计一次cpu占用率
-            auto cpu_now = steady_clock::now();
-            if (duration_cast<milliseconds>(cpu_now - cpu_start).count() > 300)
-            {
-                cpu_usage = get_cpu_usage(cpu_idle_prev, cpu_kernel_prev, cpu_user_prev);
-                cpu_start = steady_clock::now();
-            }
-
-            ImGui::Text("sys cpu usage = %.2f", cpu_usage);
-            ImGui::End();
-        }
-
         // 渲染
         {
-            ImGui::Begin("RENDER", nullptr, custom_window_flag);
+            ImGui::Begin("RENDER", nullptr, custom_window_flag 
+                | ImGuiWindowFlags_NoCollapse);
 
             ImGui::Text("image size = %d x %d", cam.get_image_width(), cam.get_image_height());
             ImGui::Text(("hit count = " + format_num(hit_count.load())).c_str());
@@ -561,7 +538,26 @@ int main()
             ImGui::End();
         }
 
-        // 渲染
+        // 状态
+        {
+            ImGui::Begin("STATUS", nullptr, custom_window_flag);
+
+            ImGui::Text("UI fps = %.2f", io.Framerate);
+            ImGui::Text("UI 1/fps = %.2f ms", 1000. / io.Framerate);
+            ImGui::Text("sys memory load = %lld", get_memory_load());
+
+            // 每300ms统计一次cpu占用率
+            auto cpu_now = steady_clock::now();
+            if (duration_cast<milliseconds>(cpu_now - cpu_start).count() > 300)
+            {
+                cpu_usage = get_cpu_usage(cpu_idle_prev, cpu_kernel_prev, cpu_user_prev);
+                cpu_start = steady_clock::now();
+            }
+
+            ImGui::Text("sys cpu usage = %.2f", cpu_usage);
+            ImGui::End();
+        }
+
         ImGui::Render();
 
         FrameContext* frameCtx = WaitForNextFrameResources();

@@ -79,6 +79,7 @@ inline double min3(double x, double y, double z)
 
 std::string operator ""_str(const char*, size_t);
 
+extern char text[256 * 128];
 void add_info(std::string new_info);
 std::string return_info();
 

@@ -28,7 +28,7 @@ void scene_obj(const Camera& cam, const fs::path& obj_path)
     end = steady_clock::now();
     add_info("BVH elapsed time: "_str + STR(duration_cast<milliseconds>(end - start).count()) + "ms");
 
-    cam.render(world);
+    cam.trace(world);
     return;
 }
 
@@ -43,7 +43,7 @@ void scene_test_triangle(const Camera& cam)
     auto earthmap = make_shared<ImageTexture>("earthmap.jpg");
     world->add(make_shared<Triangle>(0, 0, 0, 1, 1, 1, 2, 2, 2, make_shared<Lambertian>(earthmap)));
 
-    cam.render(world);
+    cam.trace(world);
     return;
 }
 
@@ -184,7 +184,7 @@ void scene_checker(const Camera& cam)
     world->add(make_shared<Sphere>(Point3(0, -10, 0), 10, make_shared<Lambertian>(checker)));
     world->add(make_shared<Sphere>(Point3(0, 10, 0), 10, make_shared<Lambertian>(checker)));
 
-    cam.render(world);
+    cam.trace(world);
     return;
 }
 
@@ -226,7 +226,7 @@ void scene_cornell_box(const Camera& cam)
     // 对玻璃球采样
     light->add(make_shared<Sphere>(Point3(190, 90, 190), 90, m));
 
-    cam.render(world, light);
+    cam.trace(world, light);
     return;
 }
 
@@ -286,7 +286,7 @@ void scene_composite1(const Camera& cam)
     // BVH加速结构
     world->add(make_shared<BVHNode>(list));
 
-    cam.render(world);
+    cam.trace(world);
     return;
 }
 
@@ -366,6 +366,6 @@ void scene_composite2(const Camera& cam)
     auto m = shared_ptr<Material>();
     light->add(make_shared<Quad>(Point3(123, 554, 147), Vec3(300, 0, 0), Vec3(0, 0, 265), m));
 
-    cam.render(world, light);
+    cam.trace(world, light);
     return;
 }

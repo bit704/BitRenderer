@@ -62,6 +62,7 @@ std::string operator ""_str(const char* c_str, size_t)
     return std::string(c_str);
 }
 
+char text[256 * 128];
 std::deque<std::string> info; // 输出信息
 std::mutex mtx;
 

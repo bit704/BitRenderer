@@ -109,8 +109,8 @@ public:
         return image_->get_image_data();
     }
 
-    // 渲染图像
-    void render(const shared_ptr<Hittable>& world, const shared_ptr<Hittable>& light = nullptr)
+    // 光线追踪渲染图像
+    void trace(const shared_ptr<Hittable>& world, const shared_ptr<Hittable>& light = nullptr)
         const
     {
         // OpenMP并发
