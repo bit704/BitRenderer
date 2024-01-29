@@ -52,7 +52,7 @@ int main()
 
     // 设置IMGUI上下文
     IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
+    ImGuiContext* igc = ImGui::CreateContext();
 
     ImGuiIO& io = ImGui::GetIO(); 
     (void)io;
@@ -331,7 +331,8 @@ int main()
                         rendering.store(true);
                         hit_count.store(0);
                         sample_count.store(0);
-                        add_info("----------------\nRendering...");
+                        add_info("----------------");
+                        add_info("Rendering...");
                         rendering_start = steady_clock::now();
 
                         // 设置参数
@@ -506,13 +507,14 @@ int main()
 
             ImGui::SeparatorText("info");
 
-            std::string info = return_info();
-            std::copy(info.begin(), info.end(), text);
-            ImGui::InputTextMultiline("info", text, IM_ARRAYSIZE(text), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 12), info_flag);
-            
-            HelpMarker(
-                "The latest 256 information.\n"
-                "Each shorter than 128.\n");
+            ImGui::BeginChild("info", ImVec2(0.0f, 0.0f), ImGuiChildFlags_FrameStyle);
+
+            for(ulong i = 0; i < get_info_size(); ++i)
+                ImGui::Text(get_info(i));
+
+            if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+                ImGui::SetScrollHereY(1.0f);
+            ImGui::EndChild();
 
             ImGui::End();
         }

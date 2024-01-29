@@ -62,24 +62,23 @@ std::string operator ""_str(const char* c_str, size_t)
     return std::string(c_str);
 }
 
-char text[256 * 128];
 std::deque<std::string> info; // 输出信息
 std::mutex mtx;
 
 void add_info(std::string new_info)
 {
-    assert(new_info.size() < 128);
     std::lock_guard<std::mutex> lock(mtx);
     info.emplace_back(new_info);
-    if (info.size() > 256)
-        info.pop_front();
 }
 
-std::string return_info()
+const char* get_info(ullong i)
 {
     std::lock_guard<std::mutex> lock(mtx);
-    std::stringstream ss;
-    for (auto s : info)
-        ss << s << std::endl;
-    return ss.str();
+    return info[i].c_str();
+}
+
+ullong get_info_size()
+{
+    std::lock_guard<std::mutex> lock(mtx);
+    return info.size();
 }
