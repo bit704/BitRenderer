@@ -39,9 +39,11 @@ public:
 	void set_pixel(const int& row, const int& col, const int& r, const int& g, const int& b);
 	void write();
 
-	unsigned char* get_image_data() const
+	unsigned char** get_image_data_p2p()
 	{
-		return image_data_;
+		if (image_data_ == nullptr)
+			return nullptr;
+		return &image_data_;
 	}
 };
 

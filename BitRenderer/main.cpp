@@ -105,7 +105,7 @@ int main()
 
     // 渲染数据
     Camera cam;
-    unsigned char* image_data = nullptr;
+    unsigned char** image_data_p2p = nullptr; //指向图像数据指针的指针
     std::thread t;
      
     // 统计数据
@@ -346,7 +346,7 @@ int main()
                         cam.set_background(Color(background));
                         cam.set_image_name(image_name);
 
-                        image_data = cam.initialize();
+                        image_data_p2p = cam.initialize();
                     };
 
                 if (!use_preset)
@@ -401,11 +401,19 @@ int main()
             }
             ImGui::EndDisabled();
 
+            ImGui::BeginDisabled(image_data_p2p == nullptr || *image_data_p2p == nullptr || rendering.load());
+            ImGui::SameLine();
+            if (ImGui::Button("Clear") && image_data_p2p != nullptr && *image_data_p2p != nullptr && !rendering.load())
+            {
+                free(*image_data_p2p);
+                *image_data_p2p = nullptr;
+            }
+            ImGui::EndDisabled();
 
             ImGui::SameLine();
             if (ImGui::Button("Save"))
             {
-                if (image_data == nullptr)
+                if (image_data_p2p == nullptr || *image_data_p2p == nullptr)
                 {
                     add_info("No Image.");
                 }
@@ -526,10 +534,10 @@ int main()
             auto duration_sec = duration_cast<seconds>(duration);
             ImGui::Text("total elapsed time = %d min %d sec", duration_min.count(), duration_sec.count() % 60);
 
-            if (image_data != nullptr)
+            if (image_data_p2p != nullptr && *image_data_p2p != nullptr)
             {
                 // 加载纹理
-                bool ret = LoadTextureFromImageData(image_data, cam.get_image_width(), cam.get_image_height(), g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture);
+                bool ret = LoadTextureFromImageData(*image_data_p2p, cam.get_image_width(), cam.get_image_height(), g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture);
                 IM_ASSERT(ret);
                 // 传递SRV GPU句柄，而不是CPU句柄。传递内部指针值, 转换为ImTextureID。
                 ImGui::Image((ImTextureID)my_texture_srv_gpu_handle.ptr, ImVec2((float)cam.get_image_width(), (float)cam.get_image_height()));

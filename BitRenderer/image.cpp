@@ -62,6 +62,11 @@ void ImageWrite::set_pixel(const int& row, const int& col, Color c, const int& s
 // 写入指定图片
 void ImageWrite::write()
 {
+	if (image_data_ == nullptr)
+	{
+		LOG("Write Fail");
+		return;
+	}
 	stbi_write_png(image_path_.c_str(), width_, height_, channel_, image_data_, 0);
 }
 

@@ -69,8 +69,8 @@ public:
     Camera& operator=(Camera&&) = delete;
 
 public:
-    // 初始化，并返回渲染图像数组的指针
-    unsigned char* initialize()
+    // 初始化，并返回渲染图像数组的指针的指针
+    unsigned char** initialize()
     {
         image_height_ = static_cast<int>(image_width_ / aspect_ratio_);
         image_height_ = (image_height_ < 1) ? 1 : image_height_;
@@ -106,7 +106,7 @@ public:
         defocus_disk_u_ = u_ * defocus_radius;
         defocus_disk_v_ = v_ * defocus_radius;
 
-        return image_->get_image_data();
+        return image_->get_image_data_p2p();
     }
 
     // 光线追踪渲染图像
@@ -155,8 +155,7 @@ public:
     void save_image() 
         const
     {
-        if(image_->get_image_data() != nullptr)
-            image_->write();
+        image_->write();
     }
 
     void set_image_width(const int& image_width)
