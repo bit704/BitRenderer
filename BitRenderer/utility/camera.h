@@ -163,7 +163,7 @@ public:
         {
             int x = image_width_ * t;
             int y = image_height_  * t;
-            image_->set_pixel(x, y, 0, 0, 0);
+            image_->set_pixel(x, y, 255, 0, 0);
         }
     }
 
