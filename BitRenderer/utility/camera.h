@@ -70,12 +70,13 @@ public:
 
 public:
     // 初始化，并返回渲染图像数组的指针的指针
-    unsigned char** initialize()
+    unsigned char** initialize(bool new_image)
     {
         image_height_ = static_cast<int>(image_width_ / aspect_ratio_);
         image_height_ = (image_height_ < 1) ? 1 : image_height_;
-
-        image_ = std::make_unique<ImageWrite>(image_name_, image_width_, image_height_, channel_);
+        
+        if(new_image)
+            image_ = std::make_unique<ImageWrite>(image_name_, image_width_, image_height_, channel_);
 
         camera_center_ = lookfrom_;
 
@@ -126,7 +127,7 @@ public:
                 {
                     for (int s_j = 0; s_j < sqrt_spp_; ++s_j)
                     {
-                        if (rendering.load())
+                        if (tracing.load())
                         {
                             Ray r = get_ray(i, j, s_i, s_j);
                             pixel_color += ray_color(r, world, light, max_depth_);
@@ -137,7 +138,7 @@ public:
                 // 补上spp不是完全平方数时漏的采样数
                 while (miss_spp--)
                 {
-                    if (rendering.load())
+                    if (tracing.load())
                     {
                         Ray r = get_ray(i, j, random_int(0, sqrt_spp_), random_int(0, sqrt_spp_));
                         pixel_color += ray_color(r, world, light, max_depth_);
@@ -147,8 +148,30 @@ public:
                 image_->set_pixel(i, j, pixel_color, samples_per_pixel_);
             }
         }
-        rendering.store(false);
+        tracing.store(false);
         add_info("Done.");
+    }
+
+    // 光栅化渲染图像
+    void rasterize()
+        const
+    {
+        image_->flush_white();
+
+        // 测试代码，从图像的左上到右下画一条黑线
+        for (float t = 0.; t < 1.; t += .001) 
+        {
+            int x = image_width_ * t;
+            int y = image_height_  * t;
+            image_->set_pixel(x, y, 0, 0, 0);
+        }
+    }
+
+    // 清除图像为白色
+    void clear()
+        const
+    {
+        image_->flush_white();
     }
 
 public:
@@ -178,6 +201,12 @@ public:
     void set_aspect_ratio(const double& aspect_ratio)
     {
         aspect_ratio_ = aspect_ratio;
+    }
+
+    double get_aspect_ratio()
+        const 
+    {
+        return aspect_ratio_;
     }
 
     void set_samples_per_pixel(const int& samples_per_pixel)

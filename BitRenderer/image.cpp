@@ -70,6 +70,15 @@ void ImageWrite::write()
 	stbi_write_png(image_path_.c_str(), width_, height_, channel_, image_data_, 0);
 }
 
+void ImageWrite::flush_white()
+{
+	for (int i = 0; i < width_; ++i)
+	{
+		for (int j = 0; j < height_; ++j)
+			set_pixel(i, j, 255, 255, 255);
+	}
+}
+
 ImageWrite::~ImageWrite()
 {
 	LOG("free the image for write");

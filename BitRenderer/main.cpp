@@ -109,12 +109,38 @@ int main()
     std::thread t;
      
     // 统计数据
-    auto rendering_start = steady_clock::now(); // 记录渲染开始时间
+    auto tracing_start = steady_clock::now(); // 记录渲染开始时间
     nanoseconds duration(0); // 记录渲染用时
     double cpu_usage = 0.;
     auto   cpu_start = steady_clock::now(); // 记录CPU占用率计算间隔
     FILETIME cpu_idle_prev, cpu_kernel_prev, cpu_user_prev; // 记录CPU时间
     GetSystemTimes(&cpu_idle_prev, &cpu_kernel_prev, &cpu_user_prev);
+
+    // 组装渲染配置
+    auto assemble = [&]()
+        {
+            // 图片尺寸发生变化时需要重新生成图片
+            bool new_image = (image_width != cam.get_image_width()) ||
+                             (aspect_ratio != cam.get_aspect_ratio());
+
+            // 设置参数
+            cam.set_image_width(image_width);
+            cam.set_aspect_ratio(aspect_ratio);
+            cam.set_samples_per_pixel(samples_per_pixel);
+            cam.set_max_depth(max_depth);
+            cam.set_vfov(vfov);
+            cam.set_lookfrom(Point3(lookfrom));
+            cam.set_lookat(Point3(lookat));
+            cam.set_vup(Vec3(vup));
+            cam.set_background(Color(background));
+            cam.set_image_name(image_name);       
+
+            image_data_p2p = cam.initialize(new_image);
+        };
+
+    // 软件界面初始化时显示默认白图
+    assemble();
+    cam.clear();
 
     bool done = false;
     while (!done)
@@ -206,7 +232,7 @@ int main()
             ImGui::Checkbox("use preset", &use_preset);
 
             {
-                ImGui::BeginDisabled(!use_preset);
+                ImGui::BeginDisabled(!use_preset);                
 
                 //ImGui::SetNextItemWidth(200);
 
@@ -223,12 +249,17 @@ int main()
                         if (is_selected)
                             ImGui::SetItemDefaultFocus();
 
-                        // 选择scene时将obj置为None
+                        // 选择scene时自动将obj置为None
                         obj_current_idx = 0;
 
                         // 各场景推荐参数
                         if (scene_current_idx != 0)
+                        {
+                            // 选择预置场景时清楚图片，去掉光栅化预览遗留的结果
+                            cam.clear();
                             image_name = std::string(scenes[scene_current_idx]) + ".png";
+                        }
+                            
 
                         if (scene_current_idx == 1)
                         {
@@ -313,42 +344,28 @@ int main()
             // 选择光栅化预览模式
             ImGui::Text("Rastering Preview");
             ImGui::Text("            ");
-            ImGui::SameLine(); ImGui::RadioButton("normal",    &rastering_preview_mode, 0); 
+            ImGui::SameLine(); ImGui::RadioButton("Shade",    &rastering_preview_mode, 0); 
             ImGui::SameLine(); ImGui::RadioButton("wireframe", &rastering_preview_mode, 1);
             ImGui::SameLine(); ImGui::RadioButton("depth",     &rastering_preview_mode, 2);
 
             ImGui::Text("Ray Tracing");
             ImGui::Text("                    "); 
 
-            // 开始渲染
-            ImGui::BeginDisabled(rendering.load());
+            // 开始光线追踪
+            ImGui::BeginDisabled(tracing.load());
             ImGui::SameLine();
-            if (ImGui::Button("Start") && !rendering.load())
+            if (ImGui::Button("Start") && !tracing.load())
             {
-                auto assemble = [&]()
+                auto tracing_statistics = [&]()
                     {
                         // 设置统计数据
-                        rendering.store(true);
+                        tracing.store(true);
                         hit_count.store(0);
                         sample_count.store(0);
-                        add_info("----------------");
-                        add_info("Rendering...");
-                        rendering_start = steady_clock::now();
-
-                        // 设置参数
-                        cam.set_image_width(image_width);
-                        cam.set_aspect_ratio(aspect_ratio);
-                        cam.set_samples_per_pixel(samples_per_pixel);
-                        cam.set_max_depth(max_depth);
-                        cam.set_vfov(vfov);
-                        cam.set_lookfrom(Point3(lookfrom));
-                        cam.set_lookat(Point3(lookat));
-                        cam.set_vup(Vec3(vup));
-                        cam.set_background(Color(background));
-                        cam.set_image_name(image_name);
-
-                        image_data_p2p = cam.initialize();
+                        tracing_start = steady_clock::now();
                     };
+
+                assemble();
 
                 if (!use_preset)
                 {
@@ -358,9 +375,11 @@ int main()
                     }
                     else
                     {
-                        assemble();
-
-                        t = std::thread(scene_obj, std::cref(cam), std::cref(objs[obj_current_idx]));
+                        add_info("----------------");
+                        add_info("Rendering obj...");
+                        
+                        tracing_statistics();
+                        t = std::thread(scene_obj_trace, std::cref(cam), std::cref(objs[obj_current_idx]));
                         //t = std::thread(scene_test_triangle, std::cref(cam));
 
                         if (t.joinable())
@@ -375,8 +394,10 @@ int main()
                     }
                     else
                     {
-                        assemble();
+                        add_info("----------------");
+                        add_info("Rendering preset...");
 
+                        tracing_statistics();
                         switch (scene_current_idx)
                         {
                         case 1: t = std::thread(scene_checker, std::cref(cam)); break;
@@ -392,22 +413,21 @@ int main()
             }
             ImGui::EndDisabled();
         
-            ImGui::BeginDisabled(!rendering.load());
+            ImGui::BeginDisabled(!tracing.load());
             ImGui::SameLine();
             // 结束渲染
-            if (ImGui::Button("Abort") && rendering.load())
+            if (ImGui::Button("Abort") && tracing.load())
             {
                 add_info("Aborting...");
-                rendering.store(false);
+                tracing.store(false);
             }
             ImGui::EndDisabled();
 
-            ImGui::BeginDisabled(image_data_p2p == nullptr || *image_data_p2p == nullptr || rendering.load());
+            ImGui::BeginDisabled(image_data_p2p == nullptr || *image_data_p2p == nullptr || tracing.load());
             ImGui::SameLine();
-            if (ImGui::Button("Clear") && image_data_p2p != nullptr && *image_data_p2p != nullptr && !rendering.load())
+            if (ImGui::Button("Clear") && image_data_p2p != nullptr && *image_data_p2p != nullptr && !tracing.load())
             {
-                free(*image_data_p2p);
-                *image_data_p2p = nullptr;
+                cam.clear();
             }
             ImGui::EndDisabled();
 
@@ -418,9 +438,9 @@ int main()
                 {
                     add_info("No Image.");
                 }
-                else if (rendering.load())
+                else if (tracing.load())
                 {
-                    add_info("Still rendering!");
+                    add_info("Still tracing!");
                 }
                 else
                 {
@@ -528,9 +548,9 @@ int main()
             ImGui::Text(("hit count = " + format_num(hit_count.load())).c_str());
             ImGui::Text("average depth = %.2f", (double)hit_count.load() / (sample_count.load() + 1));
             
-            if (rendering.load())
+            if (tracing.load())
             {
-                duration = steady_clock::now() - rendering_start;
+                duration = steady_clock::now() - tracing_start;
             }
             auto duration_min = duration_cast<minutes>(duration);
             auto duration_sec = duration_cast<seconds>(duration);
@@ -566,6 +586,16 @@ int main()
 
             ImGui::Text("sys cpu usage = %.2f", cpu_usage);
             ImGui::End();
+        }
+
+        // 光栅化预览
+        {
+            // 只有在未开始光线追踪且选择的是不为None的obj场景的情况下才进行光栅化预览
+            if (!tracing.load() && !use_preset && obj_current_idx != 0)
+            {
+                assemble();
+                scene_obj_rasterize(cam, objs[obj_current_idx]);
+            }
         }
 
         ImGui::Render();

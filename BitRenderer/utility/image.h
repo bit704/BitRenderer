@@ -38,6 +38,7 @@ public:
 	void set_pixel(const int& row, const int& col, Color c, const int& samples_per_pixel);
 	void set_pixel(const int& row, const int& col, const int& r, const int& g, const int& b);
 	void write();
+	void flush_white();
 
 	unsigned char** get_image_data_p2p()
 	{

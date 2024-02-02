@@ -17,10 +17,13 @@ extern std::vector<std::pair<double, double>> texcoords;
 
 void scene_test_triangle(const Camera& cam);
 
-bool load_obj(const char* filename, const char* basepath, bool triangulate, HittableList& triangles);
+bool load_obj_hittable(const char* filename, const char* basepath, bool triangulate, HittableList& triangles);
 
-// 加载obj的场景
-void scene_obj(const Camera& cam, const fs::path& obj_path);
+// 光线追踪离线渲染场景
+void scene_obj_trace(const Camera& cam, const fs::path& obj_path);
+
+// 光栅化实时渲染场景 
+void scene_obj_rasterize(const Camera& cam, const fs::path& obj_path);
 
 // 3D棋盘格纹理，两个球
 void scene_checker(const Camera& cam);

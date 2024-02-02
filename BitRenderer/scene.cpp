@@ -8,13 +8,21 @@ std::vector<Point3> vertices;
 std::vector<Point3> normals;
 std::vector<std::pair<double, double>> texcoords;
 
-void scene_obj(const Camera& cam, const fs::path& obj_path)
+void scene_obj_rasterize(const Camera& cam, const fs::path& obj_path)
+{
+    // TODO 从obj_path为光栅化渲染加载三角形网格
+    // TODO 光栅化渲染图像，参数未定 
+    cam.rasterize();
+    return;
+}
+
+void scene_obj_trace(const Camera& cam, const fs::path& obj_path)
 {
     shared_ptr<HittableList> world = make_shared<HittableList>();
     HittableList triangles;
 
     auto start = steady_clock::now();
-    if (!load_obj(obj_path.string().c_str(), obj_path.parent_path().string().c_str(), true, triangles))
+    if (!load_obj_hittable(obj_path.string().c_str(), obj_path.parent_path().string().c_str(), true, triangles))
     {
         add_info(obj_path.string() + "  failed to load.");
         return;
@@ -47,8 +55,8 @@ void scene_test_triangle(const Camera& cam)
     return;
 }
 
-// 加载模型
-bool load_obj(const char* filename, const char* basepath, bool triangulate, HittableList& triangles)
+// 为光线追踪加载三角形网格
+bool load_obj_hittable(const char* filename, const char* basepath, bool triangulate, HittableList& triangles)
 {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
