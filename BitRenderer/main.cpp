@@ -594,7 +594,7 @@ int main()
             if (!tracing.load() && !use_preset && obj_current_idx != 0)
             {
                 assemble();
-                scene_obj_rasterize(cam, objs[obj_current_idx]);
+                scene_obj_rasterize(cam, objs[obj_current_idx],rastering_preview_mode);
             }
         }
 

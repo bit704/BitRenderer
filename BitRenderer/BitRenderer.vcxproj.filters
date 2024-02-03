@@ -146,6 +146,12 @@
     <ClInclude Include="utility\image.h">
       <Filter>头文件\utility</Filter>
     </ClInclude>
+    <ClInclude Include="base\geometry.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="rst_tri.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BitRenderer.rc">

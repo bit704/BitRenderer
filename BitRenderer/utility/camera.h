@@ -7,6 +7,8 @@
 #include "image.h"
 #include "material.h"
 #include "logger.h"
+#include "geometry.h"
+#include "rst_tri.h"
 
 class Camera
 {
@@ -151,20 +153,67 @@ public:
         tracing.store(false);
         add_info("Done.");
     }
+    void draw_line(vec4 x, vec4 y,vec3 color)
+    {
+        
+        float x0 = (x.data[0] + 1) * image_width_ /2;
+        float x1 = (y.data[0] + 1) * image_width_ / 2;
+        float y0 = (x.data[1] + 1) * image_height_ / 2;
+        float y1 = (y.data[1] + 1) * image_height_ / 2;
 
-    // 光栅化渲染图像
-    void rasterize()
-        const
+        x0 = std::max(0.f, std::min((float)image_width_, x0));
+        x1 = std::max(0.f, std::min((float)image_width_, x1));
+        y0 = std::max(0.f, std::min((float)image_height_, y0));
+        y1 = std::max(0.f, std::min((float)image_height_, y1));
+
+        bool steep = false;
+        if (std::abs(x0 - x1) < std::abs(y0 - y1)) {
+            std::swap(x0, y0);
+            std::swap(x1, y1);
+            steep = true;
+        }
+        if (x0 > x1) {
+            std::swap(x0, x1);
+            std::swap(y0, y1);
+        }
+        for (float x_ = x0; x_ <= x1;x_++ ) {
+            float t = (x_ - x0) / (float)(x1 - x0);
+            float y_ = y0 * (1. - t) + y1 * t;
+            if (steep) {
+                image_->set_pixel(x_ , y_, color[0],color[1],color[2]);
+            }
+            else {
+                image_->set_pixel(y_, x_ , color[0], color[1], color[2]);
+            }
+        }
+    }
+    // 光栅化渲染图像,wireframe
+    void rasterize(std::vector<Rst_Tri> triangles)
     {
         image_->flush_white();
+        mat<4, 4> mvp;
+        mvp = get_project_matrix() * get_view_matrix();
 
-        // 测试代码，从图像的左上到右下画一条黑线
-        for (float t = 0.; t < 1.; t += .001) 
+        vec3 line_color = { 0,0,0 };
+
+        for (int i = 0;i < triangles.size();i++)
         {
-            int x = image_width_ * t;
-            int y = image_height_  * t;
-            image_->set_pixel(x, y, 255, 0, 0);
+            //对顶点进行坐标变换
+            Rst_Tri t = triangles[i];
+            
+            t.vertex[0] = mvp * t.vertex[0];
+            t.vertex[1] = mvp * t.vertex[1];
+            t.vertex[2] = mvp * t.vertex[2];
+
+            t.vertex_homo_divi();
+            
+            //画线
+            draw_line(t.vertex[0], t.vertex[1], line_color);
+            draw_line(t.vertex[1], t.vertex[2], line_color);
+            draw_line(t.vertex[2], t.vertex[0], line_color);
         }
+        
+        
     }
 
     // 清除图像为白色
@@ -342,6 +391,44 @@ private:
     {
         auto p = random_in_unit_disk();
         return camera_center_ + (p[0] * defocus_disk_u_) + (p[1] * defocus_disk_v_);
+    }
+    //返回视图矩阵
+    mat<4, 4> get_view_matrix()
+        const
+    {
+        mat<4, 4> view;
+
+        Vec3 f = (lookat_ - lookfrom_);
+        f.normalise();
+        Vec3 t = vup_;
+        t.normalise();
+        Vec3 s = cross(f, t);
+        s.normalise();
+        Vec3 u = cross(s,f);
+        
+
+        view = { {{ s.x(),s.y(),s.z(),-dot(s,lookfrom_)},
+                    { u.x(),u.y(),u.z(),-dot(u,lookfrom_)},
+                    { -f.x(),-f.y(),-f.z(),-dot(f,lookfrom_)},
+                    {0,0,0,1}
+                   }};
+
+        return view;
+    }
+    //返回投影矩阵
+    mat<4, 4> get_project_matrix()
+        const
+    {
+        float far = 100.f;
+        float near = 0.1f;
+        mat<4, 4> project;
+
+        project = { {{1/ (tan(degrees_to_radians(vfov_) / 2) * aspect_ratio_),0,0,0},
+                    {0,1/tan(degrees_to_radians(vfov_) / 2) ,0,0},
+                    {0,0,-(far + near)/(far - near),2 * near * far / (near - far)},
+                    {0,0,-1,0}
+                  } };
+        return project;
     }
 
 };

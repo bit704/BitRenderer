@@ -97,6 +97,7 @@ public:
     {
         return bbox_;
     }
+
 };
 
 #endif // !HITTABLE_LIST_H

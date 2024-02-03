@@ -157,6 +157,7 @@
   <ItemGroup>
     <ClInclude Include="base\aabb.h" />
     <ClInclude Include="base\color.h" />
+    <ClInclude Include="base\geometry.h" />
     <ClInclude Include="base\interval.h" />
     <ClInclude Include="base\onb.h" />
     <ClInclude Include="base\point3.h" />
@@ -173,6 +174,7 @@
     <ClInclude Include="material\pdf.h" />
     <ClInclude Include="material\perlin.h" />
     <ClInclude Include="material\texture.h" />
+    <ClInclude Include="rst_tri.h" />
     <ClInclude Include="utility\camera.h" />
     <ClInclude Include="utility\common.h" />
     <ClInclude Include="utility\image.h" />
