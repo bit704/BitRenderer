@@ -4,7 +4,7 @@
 #ifndef RAY_H
 #define RAY_H
 
-#include "point3.h"
+#include "vec.h"
 
 class Ray
 {

@@ -16,9 +16,6 @@
     <Filter Include="头文件\base">
       <UniqueIdentifier>{29cce369-3c91-4c25-a873-380c3546336d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="头文件\hittable">
-      <UniqueIdentifier>{e521eb5a-9132-40e9-a281-671c0639b88b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="头文件\material">
       <UniqueIdentifier>{78ef286e-9441-4f42-ad81-67bafbcb3c83}</UniqueIdentifier>
     </Filter>
@@ -30,6 +27,9 @@
     </Filter>
     <Filter Include="头文件\rasterize">
       <UniqueIdentifier>{76db5165-7e4d-4b92-b324-b0731e423671}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\trace">
+      <UniqueIdentifier>{e521eb5a-9132-40e9-a281-671c0639b88b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -71,41 +71,17 @@
     <ClInclude Include="base\aabb.h">
       <Filter>头文件\base</Filter>
     </ClInclude>
-    <ClInclude Include="base\color.h">
-      <Filter>头文件\base</Filter>
-    </ClInclude>
     <ClInclude Include="base\interval.h">
       <Filter>头文件\base</Filter>
     </ClInclude>
     <ClInclude Include="base\onb.h">
       <Filter>头文件\base</Filter>
     </ClInclude>
-    <ClInclude Include="base\point3.h">
-      <Filter>头文件\base</Filter>
-    </ClInclude>
     <ClInclude Include="base\ray.h">
       <Filter>头文件\base</Filter>
     </ClInclude>
-    <ClInclude Include="base\vec3.h">
+    <ClInclude Include="base\vec.h">
       <Filter>头文件\base</Filter>
-    </ClInclude>
-    <ClInclude Include="hittable\bvh_node.h">
-      <Filter>头文件\hittable</Filter>
-    </ClInclude>
-    <ClInclude Include="hittable\constant_medium.h">
-      <Filter>头文件\hittable</Filter>
-    </ClInclude>
-    <ClInclude Include="hittable\hittable.h">
-      <Filter>头文件\hittable</Filter>
-    </ClInclude>
-    <ClInclude Include="hittable\hittable_list.h">
-      <Filter>头文件\hittable</Filter>
-    </ClInclude>
-    <ClInclude Include="hittable\quad.h">
-      <Filter>头文件\hittable</Filter>
-    </ClInclude>
-    <ClInclude Include="hittable\sphere.h">
-      <Filter>头文件\hittable</Filter>
     </ClInclude>
     <ClInclude Include="material\material.h">
       <Filter>头文件\material</Filter>
@@ -137,9 +113,6 @@
     <ClInclude Include="utility\ui_helper.h">
       <Filter>头文件\utility</Filter>
     </ClInclude>
-    <ClInclude Include="hittable\triangle.h">
-      <Filter>头文件\hittable</Filter>
-    </ClInclude>
     <ClInclude Include="utility\resource.h">
       <Filter>头文件\utility</Filter>
     </ClInclude>
@@ -152,8 +125,29 @@
     <ClInclude Include="rasterize\triangle_rasterize.h">
       <Filter>头文件\rasterize</Filter>
     </ClInclude>
-    <ClInclude Include="base\geometry.h">
+    <ClInclude Include="base\mat.h">
       <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="trace\bvh_node.h">
+      <Filter>头文件\trace</Filter>
+    </ClInclude>
+    <ClInclude Include="trace\constant_medium.h">
+      <Filter>头文件\trace</Filter>
+    </ClInclude>
+    <ClInclude Include="trace\hittable.h">
+      <Filter>头文件\trace</Filter>
+    </ClInclude>
+    <ClInclude Include="trace\hittable_list.h">
+      <Filter>头文件\trace</Filter>
+    </ClInclude>
+    <ClInclude Include="trace\quad.h">
+      <Filter>头文件\trace</Filter>
+    </ClInclude>
+    <ClInclude Include="trace\sphere.h">
+      <Filter>头文件\trace</Filter>
+    </ClInclude>
+    <ClInclude Include="trace\triangle.h">
+      <Filter>头文件\trace</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

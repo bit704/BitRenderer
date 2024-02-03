@@ -6,7 +6,7 @@
 
 #include "hittable.h"
 #include "onb.h"
-#include "vec3.h"
+#include "vec.h"
 
 class Sphere : public Hittable
 {
@@ -51,9 +51,9 @@ public:
     {
         Point3 now_center = is_moving_ ? get_center(r.get_time()) : center_;
         Vec3 oc = r.get_origin() - now_center;
-        auto a = r.get_direction().length_squared();
+        auto a = r.get_direction().norm2();
         auto half_b = dot(oc, r.get_direction());
-        auto c = oc.length_squared() - radius_ * radius_;
+        auto c = oc.norm2() - radius_ * radius_;
 
         auto discriminant = half_b * half_b - a * c;
         if (discriminant < 0) 
@@ -106,7 +106,7 @@ public:
         if (!this->hit(Ray(o, v), Interval(0.001, kInfinitDouble), rec))
             return 0;
 
-        auto cos_theta_max = std::sqrt(1 - radius_ * radius_ / (center_ - o).length_squared());
+        auto cos_theta_max = std::sqrt(1 - radius_ * radius_ / (center_ - o).norm2());
         auto solid_angle = 2 * kPI * (1 - cos_theta_max);
 
         return  1 / solid_angle;
@@ -115,7 +115,7 @@ public:
     Vec3 random(const Point3& o) const override
     {
         Vec3 direction = center_ - o;
-        auto distance_squared = direction.length_squared();
+        auto distance_squared = direction.norm2();
         ONB uvw;
         uvw.build_from_w(direction);
         return uvw.local(random_to_sphere(radius_, distance_squared));

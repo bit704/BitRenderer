@@ -4,29 +4,28 @@
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
-#include "color.h"
+#include "vec.h"
 #include "perlin.h"
-#include "point3.h"
 
 class Texture
 {
 public:
     virtual ~Texture() = default;
-    virtual Color value(double u, double v, const Point3& p) const = 0;
+    virtual Color3 value(double u, double v, const Point3& p) const = 0;
 };
 
 // 坐标无关恒定颜色纹理
 class SolidColor : public Texture
 {
 private:
-    Color color_value_;
+    Color3 color_value_;
 
 public:
-    SolidColor(Color c) : color_value_(c) {}
-    SolidColor(double r, double g, double b) : SolidColor(Color(r, g, b)) {}
+    SolidColor(Color3 c) : color_value_(c) {}
+    SolidColor(double r, double g, double b) : SolidColor(Color3(r, g, b)) {}
 
 public:
-    Color value(double u, double v, const Point3& p) 
+    Color3 value(double u, double v, const Point3& p) 
         const override
     {
         return color_value_;
@@ -44,7 +43,7 @@ public:
     CheckerTexture(double scale, shared_ptr<Texture> even, shared_ptr<Texture> odd)
         : inv_scale_(1.0 / scale), even_(even), odd_(odd) {}
 
-    CheckerTexture(double scale, Color c1, Color c2)
+    CheckerTexture(double scale, Color3 c1, Color3 c2)
         : inv_scale_(1.0 / scale),
         even_(std::make_shared<SolidColor>(c1)),
         odd_(std::make_shared<SolidColor>(c2)) {}
@@ -56,7 +55,7 @@ public:
     CheckerTexture& operator=(CheckerTexture&&) = delete;
 
 public:
-    Color value(double u, double v, const Point3& p)
+    Color3 value(double u, double v, const Point3& p)
         const override
     {
         auto x_int = static_cast<int>(std::floor(inv_scale_ * p.x()));
@@ -78,12 +77,12 @@ public:
     ImageTexture(std::string filename) : image_read_(filename) {}
 
 public:
-    Color value(double u, double v, const Point3& p)
+    Color3 value(double u, double v, const Point3& p)
         const override
     {
         // 纯红说明纹理没有读取成功
         if (image_read_.get_image_height() <= 0) 
-            return Color(1., 0., 0.);
+            return Color3(1., 0., 0.);
 
         u = std::clamp(u, 0., 1.);
         //v = std::clamp(v, 0., 1.); // 不翻转v
@@ -108,11 +107,11 @@ public:
     NoiseTexture(double sc) : scale_(sc) {}
 
 public:
-    Color value(double u, double v, const Point3& p) 
+    Color3 value(double u, double v, const Point3& p) 
         const override
     {
         auto s = scale_ * p;
-        return Color(1, 1, 1) * .5 * (1 + sin(s.z() + 10 * noise_.turb(s)));
+        return Color3(1, 1, 1) * .5 * (1 + sin(s.z() + 10 * noise_.turb(s)));
     }
 };
 

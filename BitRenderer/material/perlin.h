@@ -5,7 +5,7 @@
 #define PERLIN_H
 
 #include "common.h"
-#include "point3.h"
+#include "vec.h"
 
 class Perlin
 {
@@ -49,7 +49,8 @@ public:
     Perlin& operator=(Perlin&&) = delete;
 
 public:
-    double noise(const Point3& p) const
+    double noise(const Point3& p) 
+        const
     {
         auto u = p.x() - floor(p.x());
         auto v = p.y() - floor(p.y());

@@ -9,7 +9,7 @@
 
 extern std::vector<Point3> vertices;
 extern std::vector<Point3> normals;
-extern std::vector<std::pair<double, double>> texcoords;
+extern std::vector<Texcoord2> texcoords;
 
 class Triangle : public Hittable
 {
@@ -94,8 +94,8 @@ public:
         Vec3 normal = (1 - bc1 - bc2) * normals[an_] + bc1 * normals[bn_] + bc2 * normals[cn_];
         rec.set_face_normal(r, normal);
         //  纹理坐标
-        rec.u = (1 - bc1 - bc2) * texcoords[at_].first + bc1 * texcoords[bt_].first + bc2 * texcoords[ct_].first;
-        rec.v = (1 - bc1 - bc2) * texcoords[at_].second + bc1 * texcoords[bt_].second + bc2 * texcoords[ct_].second;
+        rec.u = (1 - bc1 - bc2) * texcoords[at_].u() + bc1 * texcoords[bt_].u() + bc2 * texcoords[ct_].u();
+        rec.v = (1 - bc1 - bc2) * texcoords[at_].v() + bc1 * texcoords[bt_].v() + bc2 * texcoords[ct_].v();
         rec.material = material_;
 
         return true;

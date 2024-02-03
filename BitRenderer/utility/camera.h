@@ -7,7 +7,7 @@
 #include "image.h"
 #include "material.h"
 #include "logger.h"
-#include "geometry.h"
+#include "mat.h"
 #include "triangle_rasterize.h"
 
 class Camera
@@ -23,7 +23,7 @@ private:
     double vfov_;  // 垂直fov
     int    image_width_;
     int    image_height_;
-    Color  background_;
+    Color3  background_;
     int    channel_;
     Point3 camera_center_;
     Point3 pixel00_loc_; // (0,0)处像素的位置
@@ -136,7 +136,7 @@ public:
         {
             for (int j = 0; j < image_width_; ++j)
             {
-                Color pixel_color(0, 0, 0);
+                Color3 pixel_color(0, 0, 0);
                 // 对每个像素中的采样点进行分层，采样更均匀
 #pragma omp parallel for
                 for (int s_i = 0; s_i < sqrt_spp_; ++s_i)
@@ -171,13 +171,13 @@ public:
 
 private:
     // 获取光线击中处的颜色
-    Color ray_color(const Ray& r_in, const shared_ptr<Hittable>& world, const shared_ptr<Hittable>& light, const int& depth) 
+    Color3 ray_color(const Ray& r_in, const shared_ptr<Hittable>& world, const shared_ptr<Hittable>& light, const int& depth) 
         const
     {
         // 到达弹射次数上限，不再累加任何颜色
         if (depth <= 0)
         {
-            return Color(0, 0, 0);
+            return Color3(0, 0, 0);
         }
 
         ++hit_count;
@@ -283,10 +283,10 @@ private:
     void rasterize_wireframe(const std::vector<TriangleRasterize>& triangles)
         const
     {
-        mat<4, 4> mvp;
+        Mat<4, 4> mvp;
         mvp = get_project_matrix() * get_view_matrix();
 
-        vec3 line_color = { 0,0,0 };
+        Vec3 line_color = { 0,0,0 };
 
         for (int i = 0; i < triangles.size(); i++)
         {
@@ -313,10 +313,10 @@ private:
     }
 
     //返回视图矩阵
-    mat<4, 4> get_view_matrix()
+    Mat<4, 4> get_view_matrix()
         const
     {
-        mat<4, 4> view;
+        Mat<4, 4> view;
 
         Vec3 f = (lookat_ - lookfrom_);
         f.normalize();
@@ -326,64 +326,68 @@ private:
         s.normalize();
         Vec3 u = cross(s, f);
 
-
-        view = { {{ s.x(),s.y(),s.z(),-dot(s,lookfrom_)},
-                    { u.x(),u.y(),u.z(),-dot(u,lookfrom_)},
-                    { -f.x(),-f.y(),-f.z(),-dot(f,lookfrom_)},
-                    {0,0,0,1}
-                   } };
+        view = 
+        {{
+            { s.x(),  s.y(),  s.z(), -dot(s,lookfrom_)},
+            { u.x(),  u.y(),  u.z(), -dot(u,lookfrom_)},
+            {-f.x(), -f.y(), -f.z(), -dot(f,lookfrom_)},
+            {0, 0, 0, 1}
+        }};
 
         return view;
     }
 
     //返回投影矩阵
-    mat<4, 4> get_project_matrix()
+    Mat<4, 4> get_project_matrix()
         const
     {
-        float far = 100.f;
-        float near = 0.1f;
-        mat<4, 4> project;
+        float far  = 100.f;
+        float near = .1f;
+        Mat<4, 4> project;
 
-        project = { {{1 / (tan(degrees_to_radians(vfov_) / 2) * aspect_ratio_),0,0,0},
-                    {0,1 / tan(degrees_to_radians(vfov_) / 2) ,0,0},
-                    {0,0,-(far + near) / (far - near),2 * near * far / (near - far)},
-                    {0,0,-1,0}
-                  } };
+        project =
+        {{
+            {1 / (tan(degrees_to_radians(vfov_) / 2) * aspect_ratio_), 0, 0, 0},
+            {0, 1 / tan(degrees_to_radians(vfov_) / 2), 0, 0},
+            {0, 0, -(far + near) / (far - near),2 * near * far / (near - far)},
+            {0, 0, -1, 0}
+        }};
         return project;
     }
 
-    void draw_line(vec4 x, vec4 y, vec3 color)
+    void draw_line(const Point4& x, const Point4& y, const Color3& color)
         const
     {
-        float x0 = (x.data[0] + 1) * image_width_ / 2;
-        float x1 = (y.data[0] + 1) * image_width_ / 2;
-        float y0 = (x.data[1] + 1) * image_height_ / 2;
-        float y1 = (y.data[1] + 1) * image_height_ / 2;
+        float x0 = (x[0] + 1) * image_width_  / 2;
+        float x1 = (y[0] + 1) * image_width_  / 2;
+        float y0 = (x[1] + 1) * image_height_ / 2;
+        float y1 = (y[1] + 1) * image_height_ / 2;
 
-        x0 = std::max(0.f, std::min((float)image_width_, x0));
-        x1 = std::max(0.f, std::min((float)image_width_, x1));
+        x0 = std::max(0.f, std::min((float)image_width_,  x0));
+        x1 = std::max(0.f, std::min((float)image_width_,  x1));
         y0 = std::max(0.f, std::min((float)image_height_, y0));
         y1 = std::max(0.f, std::min((float)image_height_, y1));
 
         bool steep = false;
-        if (std::abs(x0 - x1) < std::abs(y0 - y1)) {
+        if (std::abs(x0 - x1) < std::abs(y0 - y1))
+        {
             std::swap(x0, y0);
             std::swap(x1, y1);
             steep = true;
         }
-        if (x0 > x1) {
+        if (x0 > x1)
+        {
             std::swap(x0, x1);
             std::swap(y0, y1);
         }
-        for (float x_ = x0; x_ <= x1; x_++) {
+        for (float x_ = x0; x_ <= x1; x_++)
+        {
             float t = (x_ - x0) / (float)(x1 - x0);
             float y_ = y0 * (1. - t) + y1 * t;
-            if (steep) {
+            if (steep)
                 image_->set_pixel(x_, y_, color[0], color[1], color[2]);
-            }
-            else {
+            else 
                 image_->set_pixel(y_, x_, color[0], color[1], color[2]);
-            }
         }
     }
 
@@ -466,7 +470,7 @@ public:
         focus_dist_ = focus_dist;
     }
 
-    void set_background(const Color& background)
+    void set_background(const Color3& background)
     {
         background_ = background;
     }

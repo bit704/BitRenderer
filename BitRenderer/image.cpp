@@ -36,7 +36,7 @@ inline double linear_to_gamma(double linear_component)
 	return pow(linear_component, 1 / 2.2);
 }
 
-void ImageWrite::set_pixel(const int& row, const int& col, Color c, const int& samples_per_pixel)
+void ImageWrite::set_pixel(const int& row, const int& col, Color3 c, const int& samples_per_pixel)
 {
 	// 一个像素采样几次就叠加了几个颜色，根据采样次数缩放回去
 	double scale = 1. / samples_per_pixel;
@@ -93,7 +93,7 @@ ImageRead::ImageRead(std::string image_name)
 	image_data_ = stbi_load(image_path.c_str(), &width_, &height_, &channel_, channel_);
 }
 
-Color ImageRead::get_pixel(const int& row, const int& col) const
+Color3 ImageRead::get_pixel(const int& row, const int& col) const
 {
 	unsigned char r = image_data_[(row * width_ + col) * channel_];
 	unsigned char g = image_data_[(row * width_ + col) * channel_ + 1];
@@ -103,7 +103,7 @@ Color ImageRead::get_pixel(const int& row, const int& col) const
 	{
 		return x / 255.;
 	};
-	return Color(scale(r), scale(g), scale(b));
+	return Color3(scale(r), scale(g), scale(b));
 }
 
 ImageRead::~ImageRead()

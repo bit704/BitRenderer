@@ -11,7 +11,7 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
-#include "color.h"
+#include "vec.h"
 #include "common.h"
 
 class ImageWrite 
@@ -35,7 +35,7 @@ public:
 	ImageWrite& operator=(ImageWrite&&) = delete;
 
 public:
-	void set_pixel(const int& row, const int& col, Color c, const int& samples_per_pixel);
+	void set_pixel(const int& row, const int& col, Color3 c, const int& samples_per_pixel);
 	void set_pixel(const int& row, const int& col, const int& r, const int& g, const int& b);
 	void write();
 	void flush_white();
@@ -70,7 +70,7 @@ public:
 
 
 public:
-	Color get_pixel(const int& row, const int& col) const;
+	Color3 get_pixel(const int& row, const int& col) const;
 
 	int get_image_width() const
 	{
