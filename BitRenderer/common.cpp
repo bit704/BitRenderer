@@ -9,6 +9,7 @@ const char* kOutputPath = ".\\output\\";
 std::atomic_ullong hit_count(0);
 std::atomic_ullong sample_count(0);
 std::atomic_bool   tracing(false);
+std::atomic_bool   stop_rastering(false);
 
 std::vector<fs::path> traverse_path(std::string dir, std::regex rule)
 {

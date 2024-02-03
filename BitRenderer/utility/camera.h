@@ -151,6 +151,7 @@ public:
             }
         }
         tracing.store(false);
+        stop_rastering.store(true);
         add_info("Done.");
     }
     void draw_line(vec4 x, vec4 y,vec3 color)

@@ -44,9 +44,10 @@ extern const double kEpsilon;    // 比较浮点数的阈值
 extern const char*  kLoadPath;   // 加载文件的位置
 extern const char*  kOutputPath; // 保存输出的位置
 
-extern std::atomic_ullong hit_count;    // 击中次数统计
-extern std::atomic_ullong sample_count; // 采样次数统计
-extern std::atomic_bool   tracing;    // 标志是否正在渲染
+extern std::atomic_ullong hit_count;      // 击中次数统计
+extern std::atomic_ullong sample_count;   // 采样次数统计
+extern std::atomic_bool   tracing;        // 标志是否正在渲染
+extern std::atomic_bool   stop_rastering; // 标志是否需要停止光栅化
 
 // 返回dir目录下（含递归目录）所有文件名满足rule的文件的路径
 std::vector<fs::path> traverse_path(std::string dir, std::regex rule);
