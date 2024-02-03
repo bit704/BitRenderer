@@ -28,6 +28,9 @@
     <Filter Include="imgui">
       <UniqueIdentifier>{cbafb22f-6308-4652-b49f-00420558da93}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\rasterize">
+      <UniqueIdentifier>{76db5165-7e4d-4b92-b324-b0731e423671}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -146,10 +149,10 @@
     <ClInclude Include="utility\image.h">
       <Filter>头文件\utility</Filter>
     </ClInclude>
-    <ClInclude Include="base\geometry.h">
-      <Filter>头文件\base</Filter>
+    <ClInclude Include="rasterize\triangle_rasterize.h">
+      <Filter>头文件\rasterize</Filter>
     </ClInclude>
-    <ClInclude Include="rst_tri.h">
+    <ClInclude Include="base\geometry.h">
       <Filter>头文件\base</Filter>
     </ClInclude>
   </ItemGroup>

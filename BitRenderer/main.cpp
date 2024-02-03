@@ -83,7 +83,7 @@ int main()
     ImGuiInputTextFlags info_flag = ImGuiInputTextFlags_ReadOnly;
     ImVec4 clear_color = ImVec4(1.f, 1.f, 1.f, 1.f); // 窗口背景颜色
     bool use_preset = false;
-    int rastering_preview_mode = 0;
+    int rastering_preview_mode = 0; // 0:shade 1:wireframe 2:depth
 
     // 渲染参数
     std::vector<fs::path> objs = { "None" };
@@ -344,10 +344,10 @@ int main()
             // 选择光栅化预览模式
             ImGui::Text("Rastering Preview");
             ImGui::Text("            ");
-            ImGui::SameLine(); ImGui::RadioButton("Shade",    &rastering_preview_mode, 0); 
+            ImGui::SameLine(); ImGui::RadioButton("shade",     &rastering_preview_mode, 0); 
             ImGui::SameLine(); ImGui::RadioButton("wireframe", &rastering_preview_mode, 1);
             ImGui::SameLine(); ImGui::RadioButton("depth",     &rastering_preview_mode, 2);
-
+            
             ImGui::Text("Ray Tracing");
             ImGui::Text("                    "); 
 
@@ -428,6 +428,7 @@ int main()
             if (ImGui::Button("Clear") && image_data_p2p != nullptr && *image_data_p2p != nullptr && !tracing.load())
             {
                 cam.clear();
+                stop_rastering.store(false);
             }
             ImGui::EndDisabled();
 
@@ -590,8 +591,13 @@ int main()
 
         // 光栅化预览
         {
-            // 只有在未开始光线追踪且选择的是不为None的obj场景的情况下才进行光栅化预览
-            if (!tracing.load() && !use_preset && obj_current_idx != 0)
+            // 只有在同时满足以下情况时才进行光栅化预览
+            // 未开始光线追踪
+            // 选择的是不为None的obj
+            // 需要停止光栅化（完成一个obj的光线追踪离线渲染且没有clear）
+            if (!tracing.load() && 
+                !use_preset && obj_current_idx != 0 && 
+                !stop_rastering.load())
             {
                 assemble();
                 scene_obj_rasterize(cam, objs[obj_current_idx],rastering_preview_mode);

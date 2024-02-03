@@ -110,7 +110,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <OpenMPSupport>true</OpenMPSupport>
-      <AdditionalIncludeDirectories>imgui;imgui/backends;stb_image;tiny_obj_loader;base;hittable;material;utility;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>imgui;imgui/backends;stb_image;tiny_obj_loader;base;rasterize;hittable;material;utility;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>common.h</PrecompiledHeaderFile>
@@ -174,7 +174,7 @@
     <ClInclude Include="material\pdf.h" />
     <ClInclude Include="material\perlin.h" />
     <ClInclude Include="material\texture.h" />
-    <ClInclude Include="rst_tri.h" />
+    <ClInclude Include="rasterize\triangle_rasterize.h" />
     <ClInclude Include="utility\camera.h" />
     <ClInclude Include="utility\common.h" />
     <ClInclude Include="utility\image.h" />

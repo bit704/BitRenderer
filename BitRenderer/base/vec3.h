@@ -108,7 +108,8 @@ public:
 	{
 		return Vec3(random_double(min, max), random_double(min, max), random_double(min, max));
 	}
-	void normalise()
+
+	void normalize()
 	{
 		float l = this->length();
 		e_[0] /= l;

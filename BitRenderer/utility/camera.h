@@ -8,7 +8,7 @@
 #include "material.h"
 #include "logger.h"
 #include "geometry.h"
-#include "rst_tri.h"
+#include "triangle_rasterize.h"
 
 class Camera
 {
@@ -70,6 +70,9 @@ public:
     Camera(Camera&&) = delete;
     Camera& operator=(Camera&&) = delete;
 
+/*
+ * 公用 
+ */
 public:
     // 初始化，并返回渲染图像数组的指针的指针
     unsigned char** initialize(bool new_image)
@@ -112,6 +115,17 @@ public:
         return image_->get_image_data_p2p();
     }
 
+    // 清除图像为白色
+    void clear()
+        const
+    {
+        image_->flush_white();
+    }
+
+/*
+ * 光线追踪 
+ */
+public:
     // 光线追踪渲染图像
     void trace(const shared_ptr<Hittable>& world, const shared_ptr<Hittable>& light = nullptr)
         const
@@ -151,162 +165,8 @@ public:
             }
         }
         tracing.store(false);
+        stop_rastering.store(true);
         add_info("Done.");
-    }
-    void draw_line(vec4 x, vec4 y,vec3 color)
-    {
-        
-        float x0 = (x.data[0] + 1) * image_width_ /2;
-        float x1 = (y.data[0] + 1) * image_width_ / 2;
-        float y0 = (x.data[1] + 1) * image_height_ / 2;
-        float y1 = (y.data[1] + 1) * image_height_ / 2;
-
-        x0 = std::max(0.f, std::min((float)image_width_, x0));
-        x1 = std::max(0.f, std::min((float)image_width_, x1));
-        y0 = std::max(0.f, std::min((float)image_height_, y0));
-        y1 = std::max(0.f, std::min((float)image_height_, y1));
-
-        bool steep = false;
-        if (std::abs(x0 - x1) < std::abs(y0 - y1)) {
-            std::swap(x0, y0);
-            std::swap(x1, y1);
-            steep = true;
-        }
-        if (x0 > x1) {
-            std::swap(x0, x1);
-            std::swap(y0, y1);
-        }
-        for (float x_ = x0; x_ <= x1;x_++ ) {
-            float t = (x_ - x0) / (float)(x1 - x0);
-            float y_ = y0 * (1. - t) + y1 * t;
-            if (steep) {
-                image_->set_pixel(x_ , y_, color[0],color[1],color[2]);
-            }
-            else {
-                image_->set_pixel(y_, x_ , color[0], color[1], color[2]);
-            }
-        }
-    }
-    // 光栅化渲染图像,wireframe
-    void rasterize(std::vector<Rst_Tri> triangles)
-    {
-        image_->flush_white();
-        mat<4, 4> mvp;
-        mvp = get_project_matrix() * get_view_matrix();
-
-        vec3 line_color = { 0,0,0 };
-
-        for (int i = 0;i < triangles.size();i++)
-        {
-            //对顶点进行坐标变换
-            Rst_Tri t = triangles[i];
-            
-            t.vertex[0] = mvp * t.vertex[0];
-            t.vertex[1] = mvp * t.vertex[1];
-            t.vertex[2] = mvp * t.vertex[2];
-
-            t.vertex_homo_divi();
-            
-            //画线
-            draw_line(t.vertex[0], t.vertex[1], line_color);
-            draw_line(t.vertex[1], t.vertex[2], line_color);
-            draw_line(t.vertex[2], t.vertex[0], line_color);
-        }
-        
-        
-    }
-
-    // 清除图像为白色
-    void clear()
-        const
-    {
-        image_->flush_white();
-    }
-
-public:
-    void save_image() 
-        const
-    {
-        image_->write();
-    }
-
-    void set_image_width(const int& image_width)
-    {
-        image_width_ = image_width;
-    }
-
-    int get_image_width() 
-        const
-    {
-        return image_width_;
-    }
-
-    int get_image_height() 
-        const
-    {
-        return image_height_;
-    }
-
-    void set_aspect_ratio(const double& aspect_ratio)
-    {
-        aspect_ratio_ = aspect_ratio;
-    }
-
-    double get_aspect_ratio()
-        const 
-    {
-        return aspect_ratio_;
-    }
-
-    void set_samples_per_pixel(const int& samples_per_pixel)
-    {
-        samples_per_pixel_ = samples_per_pixel;
-        sqrt_spp_ = (int)std::sqrt(samples_per_pixel_);
-    }
-
-    void set_max_depth(const int& max_depth)
-    {
-        max_depth_ = max_depth;
-    }
-
-    void set_vfov(const double& vfov)
-    {
-        vfov_ = vfov;
-    }
-
-    void set_lookfrom(const Vec3& lookfrom)
-    {
-        lookfrom_ = lookfrom;
-    }
-
-    void set_lookat(const Vec3& lookat)
-    {
-        lookat_ = lookat;
-    }
-
-    void set_vup(const Vec3& vup)
-    {
-        vup_ = vup;
-    }
-
-    void set_defocus_angle(const double& defocus_angle)
-    {
-        defocus_angle_ = defocus_angle;
-    }
-
-    void set_focus_dist(const double& focus_dist)
-    {
-        focus_dist_ = focus_dist;
-    }
-
-    void set_background(const Color& background)
-    {
-        background_ = background;
-    }
-
-    void set_image_name(const std::string& image_name)
-    {
-        image_name_ = image_name;
     }
 
 private:
@@ -392,6 +252,66 @@ private:
         auto p = random_in_unit_disk();
         return camera_center_ + (p[0] * defocus_disk_u_) + (p[1] * defocus_disk_v_);
     }
+
+/*
+ * 光栅化 
+ */
+public:
+    // 光栅化渲染图像
+    void rasterize(const std::vector<TriangleRasterize>& triangles, const int& mode)
+        const
+    {
+        clear();
+
+        if (mode == 0)
+            rasterize_shade(triangles);
+        else if (mode == 1)
+            rasterize_wireframe(triangles);
+        else if (mode == 2)
+            rasterize_depth(triangles);
+        
+        return;       
+    }
+
+private:
+    void rasterize_shade(const std::vector<TriangleRasterize>& triangles)
+        const
+    {
+
+    }
+
+    void rasterize_wireframe(const std::vector<TriangleRasterize>& triangles)
+        const
+    {
+        mat<4, 4> mvp;
+        mvp = get_project_matrix() * get_view_matrix();
+
+        vec3 line_color = { 0,0,0 };
+
+        for (int i = 0; i < triangles.size(); i++)
+        {
+            //对顶点进行坐标变换
+            TriangleRasterize t = triangles[i];
+
+            t.vertex_[0] = mvp * t.vertex_[0];
+            t.vertex_[1] = mvp * t.vertex_[1];
+            t.vertex_[2] = mvp * t.vertex_[2];
+
+            t.vertex_homo_divi();
+
+            //画线
+            draw_line(t.vertex_[0], t.vertex_[1], line_color);
+            draw_line(t.vertex_[1], t.vertex_[2], line_color);
+            draw_line(t.vertex_[2], t.vertex_[0], line_color);
+        }
+    }
+
+    void rasterize_depth(const std::vector<TriangleRasterize>& triangles)
+        const
+    {
+        
+    }
+
     //返回视图矩阵
     mat<4, 4> get_view_matrix()
         const
@@ -399,22 +319,23 @@ private:
         mat<4, 4> view;
 
         Vec3 f = (lookat_ - lookfrom_);
-        f.normalise();
+        f.normalize();
         Vec3 t = vup_;
-        t.normalise();
+        t.normalize();
         Vec3 s = cross(f, t);
-        s.normalise();
-        Vec3 u = cross(s,f);
-        
+        s.normalize();
+        Vec3 u = cross(s, f);
+
 
         view = { {{ s.x(),s.y(),s.z(),-dot(s,lookfrom_)},
                     { u.x(),u.y(),u.z(),-dot(u,lookfrom_)},
                     { -f.x(),-f.y(),-f.z(),-dot(f,lookfrom_)},
                     {0,0,0,1}
-                   }};
+                   } };
 
         return view;
     }
+
     //返回投影矩阵
     mat<4, 4> get_project_matrix()
         const
@@ -423,14 +344,137 @@ private:
         float near = 0.1f;
         mat<4, 4> project;
 
-        project = { {{1/ (tan(degrees_to_radians(vfov_) / 2) * aspect_ratio_),0,0,0},
-                    {0,1/tan(degrees_to_radians(vfov_) / 2) ,0,0},
-                    {0,0,-(far + near)/(far - near),2 * near * far / (near - far)},
+        project = { {{1 / (tan(degrees_to_radians(vfov_) / 2) * aspect_ratio_),0,0,0},
+                    {0,1 / tan(degrees_to_radians(vfov_) / 2) ,0,0},
+                    {0,0,-(far + near) / (far - near),2 * near * far / (near - far)},
                     {0,0,-1,0}
                   } };
         return project;
     }
 
+    void draw_line(vec4 x, vec4 y, vec3 color)
+        const
+    {
+        float x0 = (x.data[0] + 1) * image_width_ / 2;
+        float x1 = (y.data[0] + 1) * image_width_ / 2;
+        float y0 = (x.data[1] + 1) * image_height_ / 2;
+        float y1 = (y.data[1] + 1) * image_height_ / 2;
+
+        x0 = std::max(0.f, std::min((float)image_width_, x0));
+        x1 = std::max(0.f, std::min((float)image_width_, x1));
+        y0 = std::max(0.f, std::min((float)image_height_, y0));
+        y1 = std::max(0.f, std::min((float)image_height_, y1));
+
+        bool steep = false;
+        if (std::abs(x0 - x1) < std::abs(y0 - y1)) {
+            std::swap(x0, y0);
+            std::swap(x1, y1);
+            steep = true;
+        }
+        if (x0 > x1) {
+            std::swap(x0, x1);
+            std::swap(y0, y1);
+        }
+        for (float x_ = x0; x_ <= x1; x_++) {
+            float t = (x_ - x0) / (float)(x1 - x0);
+            float y_ = y0 * (1. - t) + y1 * t;
+            if (steep) {
+                image_->set_pixel(x_, y_, color[0], color[1], color[2]);
+            }
+            else {
+                image_->set_pixel(y_, x_, color[0], color[1], color[2]);
+            }
+        }
+    }
+
+/*
+ * getter/setter
+ */
+public:
+    void save_image()
+        const
+    {
+        image_->write();
+    }
+
+    void set_image_width(const int& image_width)
+    {
+        image_width_ = image_width;
+    }
+
+    int get_image_width()
+        const
+    {
+        return image_width_;
+    }
+
+    int get_image_height()
+        const
+    {
+        return image_height_;
+    }
+
+    void set_aspect_ratio(const double& aspect_ratio)
+    {
+        aspect_ratio_ = aspect_ratio;
+    }
+
+    double get_aspect_ratio()
+        const
+    {
+        return aspect_ratio_;
+    }
+
+    void set_samples_per_pixel(const int& samples_per_pixel)
+    {
+        samples_per_pixel_ = samples_per_pixel;
+        sqrt_spp_ = (int)std::sqrt(samples_per_pixel_);
+    }
+
+    void set_max_depth(const int& max_depth)
+    {
+        max_depth_ = max_depth;
+    }
+
+    void set_vfov(const double& vfov)
+    {
+        vfov_ = vfov;
+    }
+
+    void set_lookfrom(const Vec3& lookfrom)
+    {
+        lookfrom_ = lookfrom;
+    }
+
+    void set_lookat(const Vec3& lookat)
+    {
+        lookat_ = lookat;
+    }
+
+    void set_vup(const Vec3& vup)
+    {
+        vup_ = vup;
+    }
+
+    void set_defocus_angle(const double& defocus_angle)
+    {
+        defocus_angle_ = defocus_angle;
+    }
+
+    void set_focus_dist(const double& focus_dist)
+    {
+        focus_dist_ = focus_dist;
+    }
+
+    void set_background(const Color& background)
+    {
+        background_ = background;
+    }
+
+    void set_image_name(const std::string& image_name)
+    {
+        image_name_ = image_name;
+    }
 };
 
 #endif // !CAMERA_H
