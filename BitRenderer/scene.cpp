@@ -3,26 +3,32 @@
 
 #include "scene.h"
 #include "logger.h"
-#include "rst_tri.h"
+#include "triangle_rasterize.h"
 
 std::vector<Point3> vertices;
 std::vector<Point3> normals;
 std::vector<std::pair<double, double>> texcoords;
 
-void scene_obj_rasterize(Camera& cam, const fs::path& obj_path, const int rst_mode)
+void scene_obj_rasterize(const Camera& cam, const fs::path& obj_path, const int& mode)
 {
-    // TODO 从obj_path为光栅化渲染加载三角形网格
-    // TODO 光栅化渲染图像，参数未定 
-    std::vector<Rst_Tri> triangles;
-    if (!load_obj_rst(obj_path.string().c_str(), obj_path.parent_path().string().c_str(), true, triangles))
+    static std::vector<TriangleRasterize> triangles;
+    static fs::path prev_obj_path;
+
+    // 避免每帧重复加载模型
+    if (prev_obj_path != obj_path)
     {
-        add_info(obj_path.string() + "  failed to load.");
-        return;
+        std::cout << "bobbo" << std::endl;
+        prev_obj_path = obj_path;
+        if (!load_obj_rasterize(obj_path.string().c_str(), obj_path.parent_path().string().c_str(), true, triangles))
+        {
+            add_info(obj_path.string() + "  failed to load for rastering.");
+            return;
+        }
     }
-    cam.rasterize(triangles);
+
+    cam.rasterize(triangles, mode);
     return;
 }
-
 
 void scene_obj_trace(const Camera& cam, const fs::path& obj_path)
 {
@@ -32,7 +38,7 @@ void scene_obj_trace(const Camera& cam, const fs::path& obj_path)
     auto start = steady_clock::now();
     if (!load_obj_hittable(obj_path.string().c_str(), obj_path.parent_path().string().c_str(), true, triangles))
     {
-        add_info(obj_path.string() + "  failed to load.");
+        add_info(obj_path.string() + "  failed to load for ray tracing.");
         return;
     }
     auto end = steady_clock::now();
@@ -62,7 +68,6 @@ void scene_test_triangle(const Camera& cam)
     cam.trace(world);
     return;
 }
-
 
 // 为光线追踪加载三角形网格
 bool load_obj_hittable(const char* filename, const char* basepath, bool triangulate, HittableList& triangles)
@@ -191,7 +196,9 @@ bool load_obj_hittable(const char* filename, const char* basepath, bool triangul
 
     return true;
 }
-bool load_obj_rst(const char* filename, const char* basepath, bool triangulate, std::vector<Rst_Tri>& triangles)
+
+// 为光栅化加载三角形网格
+bool load_obj_rasterize(const char* filename, const char* basepath, bool triangulate, std::vector<TriangleRasterize>& triangles)
 {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -201,8 +208,6 @@ bool load_obj_rst(const char* filename, const char* basepath, bool triangulate, 
     std::string err;
     bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
         filename, basepath, triangulate);
-
-    
 
     ullong vnum = attrib.vertices.size() / 3;
     ullong nnum = attrib.normals.size() / 3;
@@ -237,15 +242,13 @@ bool load_obj_rst(const char* filename, const char* basepath, bool triangulate, 
             static_cast<const double>(attrib.texcoords[2 * t + 1]));
     }
 
-    //auto white = make_shared<Lambertian>(Color(.73, .73, .73));
-    auto white = make_shared<Lambertian>(make_shared<ImageTexture>("earthmap.jpg"));
-
     ullong tot_fnum = 0; // 总面数
     for (ullong i = 0; i < snum; i++)
     {
         tot_fnum += shapes[i].mesh.num_face_vertices.size();
     }
-    std::vector<Rst_Tri> tris = std::vector<Rst_Tri>(tot_fnum);
+
+    std::vector<TriangleRasterize> tris = std::vector<TriangleRasterize>(tot_fnum);
     ullong tri_index = 0;
 
     for (ullong i = 0; i < snum; i++)
@@ -263,26 +266,25 @@ bool load_obj_rst(const char* filename, const char* basepath, bool triangulate, 
             assert(v_per_f == 3);
 
             tinyobj::index_t idx_a = shapes[i].mesh.indices[index_offset];
-            int a = idx_a.vertex_index;
+            int a  = idx_a.vertex_index;
             int an = idx_a.normal_index;
             int at = idx_a.texcoord_index;
 
             tinyobj::index_t idx_b = shapes[i].mesh.indices[index_offset + 1];
-            int b = idx_b.vertex_index;
+            int b  = idx_b.vertex_index;
             int bn = idx_b.normal_index;
             int bt = idx_b.texcoord_index;
 
             tinyobj::index_t idx_c = shapes[i].mesh.indices[index_offset + 2];
-            int c = idx_c.vertex_index;
+            int c  = idx_c.vertex_index;
             int cn = idx_c.normal_index;
             int ct = idx_c.texcoord_index;
 
             //根据索引存储三角形
-            Rst_Tri tri;
+            TriangleRasterize tri;
             tri.set_vertex(vertices[a], vertices[b], vertices[c]);
             tri.set_normal(normals[an], normals[bn], normals[cn]);
             tri.set_texcoord(texcoords[at], texcoords[bt], texcoords[ct]);
-
 
             tris[tri_index + f] = tri;
 
