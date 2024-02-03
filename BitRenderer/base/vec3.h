@@ -108,6 +108,13 @@ public:
 	{
 		return Vec3(random_double(min, max), random_double(min, max), random_double(min, max));
 	}
+	void normalise()
+	{
+		float l = this->length();
+		e_[0] /= l;
+		e_[1] /= l;
+		e_[2] /= l;
+	}
 };
 
 inline std::ostream& operator<<(std::ostream& out, const Vec3& v)

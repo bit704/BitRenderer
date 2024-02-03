@@ -3,18 +3,26 @@
 
 #include "scene.h"
 #include "logger.h"
+#include "rst_tri.h"
 
 std::vector<Point3> vertices;
 std::vector<Point3> normals;
 std::vector<std::pair<double, double>> texcoords;
 
-void scene_obj_rasterize(const Camera& cam, const fs::path& obj_path)
+void scene_obj_rasterize(Camera& cam, const fs::path& obj_path, const int rst_mode)
 {
     // TODO 从obj_path为光栅化渲染加载三角形网格
     // TODO 光栅化渲染图像，参数未定 
-    cam.rasterize();
+    std::vector<Rst_Tri> triangles;
+    if (!load_obj_rst(obj_path.string().c_str(), obj_path.parent_path().string().c_str(), true, triangles))
+    {
+        add_info(obj_path.string() + "  failed to load.");
+        return;
+    }
+    cam.rasterize(triangles);
     return;
 }
+
 
 void scene_obj_trace(const Camera& cam, const fs::path& obj_path)
 {
@@ -54,6 +62,7 @@ void scene_test_triangle(const Camera& cam)
     cam.trace(world);
     return;
 }
+
 
 // 为光线追踪加载三角形网格
 bool load_obj_hittable(const char* filename, const char* basepath, bool triangulate, HittableList& triangles)
@@ -179,6 +188,110 @@ bool load_obj_hittable(const char* filename, const char* basepath, bool triangul
     }
 
     triangles = std::move(tris);
+
+    return true;
+}
+bool load_obj_rst(const char* filename, const char* basepath, bool triangulate, std::vector<Rst_Tri>& triangles)
+{
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+
+    std::string warn;
+    std::string err;
+    bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
+        filename, basepath, triangulate);
+
+    
+
+    ullong vnum = attrib.vertices.size() / 3;
+    ullong nnum = attrib.normals.size() / 3;
+    ullong tnum = attrib.texcoords.size() / 2;
+    ullong snum = shapes.size();
+    ullong mnum = materials.size();
+
+    vertices = std::vector<Point3>(vnum);
+    normals = std::vector<Vec3>(nnum);
+    texcoords = std::vector<std::pair<double, double>>(tnum);
+
+    for (ullong v = 0; v < vnum; ++v)
+    {
+        vertices[v] = Point3(
+            static_cast<const double>(attrib.vertices[3 * v + 0]),
+            static_cast<const double>(attrib.vertices[3 * v + 1]),
+            static_cast<const double>(attrib.vertices[3 * v + 2]));
+    }
+
+    for (ullong n = 0; n < nnum; ++n)
+    {
+        normals[n] = Vec3(
+            static_cast<const double>(attrib.normals[3 * n + 0]),
+            static_cast<const double>(attrib.normals[3 * n + 1]),
+            static_cast<const double>(attrib.normals[3 * n + 2]));
+    }
+
+    for (ullong t = 0; t < tnum; ++t)
+    {
+        texcoords[t] = std::pair<double, double>(
+            static_cast<const double>(attrib.texcoords[2 * t + 0]),
+            static_cast<const double>(attrib.texcoords[2 * t + 1]));
+    }
+
+    //auto white = make_shared<Lambertian>(Color(.73, .73, .73));
+    auto white = make_shared<Lambertian>(make_shared<ImageTexture>("earthmap.jpg"));
+
+    ullong tot_fnum = 0; // 总面数
+    for (ullong i = 0; i < snum; i++)
+    {
+        tot_fnum += shapes[i].mesh.num_face_vertices.size();
+    }
+    std::vector<Rst_Tri> tris = std::vector<Rst_Tri>(tot_fnum);
+    ullong tri_index = 0;
+
+    for (ullong i = 0; i < snum; i++)
+    {
+        ullong fnum = shapes[i].mesh.num_face_vertices.size();
+
+        assert(fnum == shapes[i].mesh.material_ids.size());
+        assert(fnum == shapes[i].mesh.smoothing_group_ids.size());
+
+        ullong index_offset = 0;
+        for (ullong f = 0; f < fnum; f++)
+        {
+            ullong v_per_f = shapes[i].mesh.num_face_vertices[f];
+            // 每面顶点数必须为3
+            assert(v_per_f == 3);
+
+            tinyobj::index_t idx_a = shapes[i].mesh.indices[index_offset];
+            int a = idx_a.vertex_index;
+            int an = idx_a.normal_index;
+            int at = idx_a.texcoord_index;
+
+            tinyobj::index_t idx_b = shapes[i].mesh.indices[index_offset + 1];
+            int b = idx_b.vertex_index;
+            int bn = idx_b.normal_index;
+            int bt = idx_b.texcoord_index;
+
+            tinyobj::index_t idx_c = shapes[i].mesh.indices[index_offset + 2];
+            int c = idx_c.vertex_index;
+            int cn = idx_c.normal_index;
+            int ct = idx_c.texcoord_index;
+
+            //根据索引存储三角形
+            Rst_Tri tri;
+            tri.set_vertex(vertices[a], vertices[b], vertices[c]);
+            tri.set_normal(normals[an], normals[bn], normals[cn]);
+            tri.set_texcoord(texcoords[at], texcoords[bt], texcoords[ct]);
+
+
+            tris[tri_index + f] = tri;
+
+            index_offset += v_per_f;
+        }
+        tri_index += fnum;
+    }
+
+    triangles = tris;
 
     return true;
 }
