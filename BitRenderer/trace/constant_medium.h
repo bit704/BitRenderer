@@ -19,7 +19,7 @@ public:
     ConstantMedium(shared_ptr<Hittable> b, double d, shared_ptr<Texture> a)
         : boundary_(b), neg_inv_density_(-1 / d), phase_function_(std::make_shared<Isotropic>(a)) {}
 
-    ConstantMedium(shared_ptr<Hittable> b, double d, Color c)
+    ConstantMedium(shared_ptr<Hittable> b, double d, Color3 c)
         : boundary_(b), neg_inv_density_(-1 / d), phase_function_(std::make_shared<Isotropic>(c)) {}
 
     ConstantMedium(const ConstantMedium&) = delete;
@@ -62,7 +62,7 @@ public:
         if (rec1.t < 0)
             rec1.t = 0;
 
-        auto ray_step_length = r.get_direction().length(); // 步长
+        auto ray_step_length = r.get_direction().norm(); // 步长
         auto distance_inside_boundary = (rec2.t - rec1.t) * ray_step_length;
         auto hit_distance = neg_inv_density_ * log(random_double());
 

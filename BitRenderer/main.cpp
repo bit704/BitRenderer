@@ -132,7 +132,7 @@ int main()
             cam.set_lookfrom(Point3(lookfrom));
             cam.set_lookat(Point3(lookat));
             cam.set_vup(Vec3(vup));
-            cam.set_background(Color(background));
+            cam.set_background(Color3(background));
             cam.set_image_name(image_name);       
 
             image_data_p2p = cam.initialize(new_image);

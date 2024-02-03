@@ -13,11 +13,11 @@
 
 extern std::vector<Point3> vertices;
 extern std::vector<Point3> normals;
-extern std::vector<std::pair<double, double>> texcoords;
+extern std::vector<Texcoord2> texcoords;
 
 void scene_test_triangle(const Camera& cam);
 
-bool load_obj_hittable(const char* filename, const char* basepath, bool triangulate, HittableList& triangles);
+bool load_obj_trace(const char* filename, const char* basepath, bool triangulate, HittableList& triangles);
 bool load_obj_rasterize(const char* filename, const char* basepath, bool triangulate, std::vector<TriangleRasterize>& triangles);
 
 // 光线追踪离线渲染场景

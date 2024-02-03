@@ -4,7 +4,7 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 
-#include "color.h"
+#include "vec.h"
 #include "hittable.h"
 #include "onb.h"
 #include "pdf.h"
@@ -18,7 +18,7 @@ public:
     bool no_scatter_ = false; // 光线击中后不发生散射，如光源
 
     // 计算当前颜色
-    virtual Color eval_color(const HitRecord& rec, const Color& next_color = { 0., 0., 0. }, double brdf = 0., double pdf = 1.)
+    virtual Color3 eval_color(const HitRecord& rec, const Color3& next_color = { 0., 0., 0. }, double brdf = 0., double pdf = 1.)
         const = 0;
 
     // 计算新的出射光线方向
@@ -51,7 +51,7 @@ private:
     shared_ptr<Texture> albedo_;
 
 public:
-    Lambertian(const Color& a) : albedo_(std::make_shared<SolidColor>(a)) {}
+    Lambertian(const Color3& a) : albedo_(std::make_shared<SolidColor>(a)) {}
 
     Lambertian(shared_ptr<Texture> a) : albedo_(a) {}
 
@@ -68,7 +68,7 @@ public:
     }
 
 public:
-    Color eval_color(const HitRecord& rec, const Color& next_color, double brdf, double pdf)
+    Color3 eval_color(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
          const override
     {
         return albedo_->value(rec.u, rec.v, rec.p) * next_color * brdf / pdf;
@@ -102,7 +102,7 @@ private:
     shared_ptr<Texture> albedo_;
 
 public:
-    Isotropic(Color c) : albedo_(std::make_shared<SolidColor>(c)) {}
+    Isotropic(Color3 c) : albedo_(std::make_shared<SolidColor>(c)) {}
     Isotropic(shared_ptr<Texture> a) : albedo_(a) {}
 
     Isotropic(const Isotropic& other) : albedo_(other.albedo_) {}
@@ -118,7 +118,7 @@ public:
     }
 
 public:
-    Color eval_color(const HitRecord& rec, const Color& next_color, double brdf, double pdf)
+    Color3 eval_color(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
         const override
     {
         return albedo_->value(rec.u, rec.v, rec.p) * next_color * brdf / pdf;
@@ -148,17 +148,17 @@ public:
 class Metal : public Material
 {
 private:
-    Color  albedo_;
+    Color3  albedo_;
     double fuzz_;
 
 public:
-    Metal(const Color& a, double f) : albedo_(a), fuzz_(f < 1 ? f : 1) 
+    Metal(const Color3& a, double f) : albedo_(a), fuzz_(f < 1 ? f : 1) 
     {
         skip_pdf_ = true;
     }
 
 public:
-    Color eval_color(const HitRecord& rec, const Color& next_color, double brdf, double pdf)
+    Color3 eval_color(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
         const override
     {
         return albedo_ * next_color;
@@ -184,10 +184,10 @@ public:
     }
 
 public:
-    Color eval_color(const HitRecord& rec, const Color& next_color, double brdf, double pdf)
+    Color3 eval_color(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
         const override
     {
-        return Color(1., 1., 1.) * next_color;
+        return Color3({ 1., 1., 1. }) * next_color;
     }
 
     Ray sample_ray(const Ray& r_in, const HitRecord& rec)
@@ -231,7 +231,7 @@ public:
     {
         no_scatter_ = true;
     }
-    DiffuseLight(Color c) : emit_(std::make_shared<SolidColor>(c))
+    DiffuseLight(Color3 c) : emit_(std::make_shared<SolidColor>(c))
     {
         no_scatter_ = true;
     }
@@ -249,15 +249,15 @@ public:
     }
 
 public:
-    Color eval_color(const HitRecord& rec, const Color& next_color, double brdf, double pdf)
+    Color3 eval_color(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
         const override
     {
-        Color this_color;
+        Color3 this_color;
         // 正面发光，背面剔除
         if (rec.front_face)
             this_color =  emit_->value(rec.u, rec.v, rec.p);
         else
-            this_color =  Color(0, 0, 0);
+            this_color =  Color3(0, 0, 0);
 
         return this_color;
     }

@@ -110,7 +110,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <OpenMPSupport>true</OpenMPSupport>
-      <AdditionalIncludeDirectories>imgui;imgui/backends;stb_image;tiny_obj_loader;base;rasterize;hittable;material;utility;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>imgui;imgui/backends;stb_image;tiny_obj_loader;base;rasterize;trace;material;utility;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>common.h</PrecompiledHeaderFile>
@@ -156,25 +156,23 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base\aabb.h" />
-    <ClInclude Include="base\color.h" />
-    <ClInclude Include="base\geometry.h" />
     <ClInclude Include="base\interval.h" />
+    <ClInclude Include="base\mat.h" />
     <ClInclude Include="base\onb.h" />
-    <ClInclude Include="base\point3.h" />
     <ClInclude Include="base\ray.h" />
-    <ClInclude Include="base\vec3.h" />
-    <ClInclude Include="hittable\bvh_node.h" />
-    <ClInclude Include="hittable\constant_medium.h" />
-    <ClInclude Include="hittable\hittable.h" />
-    <ClInclude Include="hittable\hittable_list.h" />
-    <ClInclude Include="hittable\quad.h" />
-    <ClInclude Include="hittable\sphere.h" />
-    <ClInclude Include="hittable\triangle.h" />
+    <ClInclude Include="base\vec.h" />
     <ClInclude Include="material\material.h" />
     <ClInclude Include="material\pdf.h" />
     <ClInclude Include="material\perlin.h" />
     <ClInclude Include="material\texture.h" />
     <ClInclude Include="rasterize\triangle_rasterize.h" />
+    <ClInclude Include="trace\bvh_node.h" />
+    <ClInclude Include="trace\constant_medium.h" />
+    <ClInclude Include="trace\hittable.h" />
+    <ClInclude Include="trace\hittable_list.h" />
+    <ClInclude Include="trace\quad.h" />
+    <ClInclude Include="trace\sphere.h" />
+    <ClInclude Include="trace\triangle.h" />
     <ClInclude Include="utility\camera.h" />
     <ClInclude Include="utility\common.h" />
     <ClInclude Include="utility\image.h" />

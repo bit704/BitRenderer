@@ -24,7 +24,7 @@ public:
         : Q_(Q), u_(u), v_(v), material_(m)
     {
         Vec3 n = cross(u, v);
-        area_ = n.length();
+        area_ = n.norm();
         normal_ = unit_vector(n);
         D_ = dot(normal_, Q);
         w_ = n / dot(n, n);
@@ -83,8 +83,8 @@ public:
         if (!this->hit(Ray(origin, v), Interval(1e-3, kInfinitDouble), rec))
             return 0;
 
-        auto distance_squared = rec.t * rec.t * v.length_squared();
-        auto cosine = fabs(dot(v, rec.normal) / v.length());
+        auto distance_squared = rec.t * rec.t * v.norm2();
+        auto cosine = fabs(dot(v, rec.normal) / v.norm());
 
         return distance_squared / (cosine * area_);
     }
