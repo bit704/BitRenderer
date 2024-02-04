@@ -7,8 +7,8 @@
 #include "common.h"
 #include "hittable.h"
 
-extern std::vector<Point3> vertices;
-extern std::vector<Point3> normals;
+extern std::vector<Point3>    vertices;
+extern std::vector<Vec3>      normals;
 extern std::vector<Texcoord2> texcoords;
 
 class Triangle : public Hittable

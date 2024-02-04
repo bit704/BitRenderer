@@ -9,9 +9,9 @@
 class TriangleRasterize
 {
 public:
-    Vec4 vertex_[3];
-    Vec3 normal_[3];
-    Vec2 texcoord_[3];
+    Point4    vertex_[3];
+    Vec3      normal_[3];
+    Texcoord2 texcoord_[3];
 
     TriangleRasterize()
     {
@@ -44,20 +44,9 @@ public:
 
     void vertex_homo_divi()
     {
-        vertex_[0][0] /= vertex_[0][3];
-        vertex_[0][1] /= vertex_[0][3];
-        vertex_[0][2] /= vertex_[0][3];
-        vertex_[0][3] /= vertex_[0][3];
-
-        vertex_[1][0] /= vertex_[1][3];
-        vertex_[1][1] /= vertex_[1][3];
-        vertex_[1][2] /= vertex_[1][3];
-        vertex_[1][3] /= vertex_[1][3];
-
-        vertex_[2][0] /= vertex_[2][3];
-        vertex_[2][1] /= vertex_[2][3];
-        vertex_[2][2] /= vertex_[2][3];
-        vertex_[2][3] /= vertex_[2][3];
+        vertex_[0] /= vertex_[0][3];
+        vertex_[1] /= vertex_[1][3];
+        vertex_[2] /= vertex_[2][3];
     }
 };
 #endif // !TRIANGLE_RASTERIZE_H

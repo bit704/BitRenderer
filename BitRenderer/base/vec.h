@@ -266,11 +266,11 @@ public:
 using Vec2      = Vec<2>;
 using Vec3      = Vec<3>;
 using Vec4      = Vec<4>;
-using Point3    = Vec3;
-using Point4    = Vec4;
-using Color3    = Vec3;
-using Color4    = Vec4;
-using Texcoord2 = Vec2;
+using Point3    = Vec<3>;
+using Point4    = Vec<4>;
+using Color3    = Vec<3>;
+using Color4    = Vec<4>;
+using Texcoord2 = Vec<2>;
 
 template<int n>
 std::ostream& operator<<(std::ostream& out, const Vec<n>& v)

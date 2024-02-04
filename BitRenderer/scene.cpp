@@ -5,8 +5,8 @@
 #include "logger.h"
 #include "triangle_rasterize.h"
 
-std::vector<Point3> vertices;
-std::vector<Point3> normals;
+std::vector<Point3>    vertices;
+std::vector<Vec3>      normals;
 std::vector<Texcoord2> texcoords;
 
 void scene_obj_rasterize(const Camera& cam, const fs::path& obj_path, const int& mode)
