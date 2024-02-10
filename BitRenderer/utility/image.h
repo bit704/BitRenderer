@@ -55,7 +55,7 @@ private:
 	unsigned char* image_data_;
 	std::string image_path_;
 	int width_, height_;
-	int channel_ = 3;
+	int channel_;
 
 public:
 	ImageRead(std::string image_name);

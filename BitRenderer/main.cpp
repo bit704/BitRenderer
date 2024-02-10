@@ -84,7 +84,7 @@ int main()
     ImGuiInputTextFlags info_flag = ImGuiInputTextFlags_ReadOnly;
     ImVec4 clear_color = ImVec4(1.f, 1.f, 1.f, 1.f); // 窗口背景颜色
     bool use_preset = false;
-    int rastering_preview_mode = 0; // 0:shade 1:wireframe 2:depth
+    int rastering_preview_mode = 0; // 0:wireframe 1:depth 2:shade 
 
     // 渲染参数
     std::vector<fs::path> objs = { "None" };
@@ -372,10 +372,10 @@ int main()
             
             // 选择光栅化预览模式
             ImGui::Text("Rastering Preview");
-            ImGui::Text("            ");
-            ImGui::SameLine(); ImGui::RadioButton("shade",     &rastering_preview_mode, 0); 
-            ImGui::SameLine(); ImGui::RadioButton("wireframe", &rastering_preview_mode, 1);
-            ImGui::SameLine(); ImGui::RadioButton("depth",     &rastering_preview_mode, 2);
+            ImGui::Text("            ");            
+            ImGui::SameLine(); ImGui::RadioButton("wireframe", &rastering_preview_mode, 0);
+            ImGui::SameLine(); ImGui::RadioButton("depth",     &rastering_preview_mode, 1);
+            ImGui::SameLine(); ImGui::RadioButton("shade",     &rastering_preview_mode, 2);
             
             ImGui::Text("Ray Tracing");
             ImGui::Text("                    "); 
@@ -549,6 +549,8 @@ int main()
             ImGui::InputFloat3("lookfrom", lookfrom, "%.1f");
             ImGui::InputFloat3("lookat", lookat, "%.1f");
             ImGui::InputFloat3("vup", vup, "%.1f");
+            ImGui::SameLine();
+            HelpMarker("Up direction of the camera.\n");
 
             ImGui::SeparatorText("info");
 
