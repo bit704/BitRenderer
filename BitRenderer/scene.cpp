@@ -68,15 +68,16 @@ void scene_test_triangle(const Camera& cam)
     return;
 }
 
-// 为光线追踪加载三角形网格
-bool load_obj_trace(const char* filename, const char* basepath, bool triangulate, HittableList& triangles)
-{
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
+static tinyobj::attrib_t attrib;
+static std::vector<tinyobj::shape_t> shapes;
+static std::vector<tinyobj::material_t> materials;
+static ullong vnum = 0, nnum = 0, tnum = 0, snum = 0, mnum = 0, tot_fnum = 0;
 
+bool load_obj_internal(const char* filename, const char* basepath, bool triangulate)
+{
     std::string warn;
     std::string err;
+
     bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
         filename, basepath, triangulate);
 
@@ -84,34 +85,34 @@ bool load_obj_trace(const char* filename, const char* basepath, bool triangulate
 
     if (!warn.empty())
     {
-        LOG("WARN: ", warn);
+        add_info("WARN: " + warn);
     }
 
     if (!err.empty())
     {
-        LOG("ERR: ", err);
+        add_info("ERR: " + err);
     }
 
     if (!ret)
     {
-        LOG("Failed to load/parse .obj.\n");
+        add_info("Failed to load/parse .obj.");
         return false;
     }
 
-    ullong vnum = attrib.vertices.size()  / 3;
-    ullong nnum = attrib.normals.size()   / 3;
-    ullong tnum = attrib.texcoords.size() / 2;
-    ullong snum = shapes.size();
-    ullong mnum = materials.size();
+    vnum = attrib.vertices.size() / 3;
+    nnum = attrib.normals.size() / 3;
+    tnum = attrib.texcoords.size() / 2;
+    snum = shapes.size();
+    mnum = materials.size();
 
-    add_info("vertices: "_str  + STR(vnum));
-    add_info("normals: "_str   + STR(nnum));
-    add_info("texcoords: "_str + STR(tnum));
-    add_info("shapes: "_str    + STR(snum));
-    add_info("materials: "_str + STR(mnum));
+    add_info("vertices: "  + STR(vnum));
+    add_info("normals: "   + STR(nnum));
+    add_info("texcoords: " + STR(tnum));
+    add_info("shapes: "    + STR(snum));
+    add_info("materials: " + STR(mnum));
 
-    vertices  = std::vector<Point3>(vnum);
-    normals   = std::vector<Vec3>(nnum);
+    vertices = std::vector<Point3>(vnum);
+    normals = std::vector<Vec3>(nnum);
     texcoords = std::vector<Texcoord2>(tnum);
 
     for (ullong v = 0; v < vnum; ++v)
@@ -137,14 +138,22 @@ bool load_obj_trace(const char* filename, const char* basepath, bool triangulate
             static_cast<const double>(attrib.texcoords[2 * t + 1]));
     }
 
-    //auto white = make_shared<Lambertian>(Color3(.73, .73, .73));
-    auto white = make_shared<Lambertian>(make_shared<ImageTexture>("earthmap.jpg"));
-    
-    ullong tot_fnum = 0; // 总面数
     for (ullong i = 0; i < snum; i++)
     {
         tot_fnum += shapes[i].mesh.num_face_vertices.size();
     }
+
+    return true;
+}
+
+// 为光线追踪加载三角形网格
+bool load_obj_trace(const char* filename, const char* basepath, bool triangulate, HittableList& triangles)
+{
+    // 不必再次加载obj，光栅化已加载
+
+    //auto white = make_shared<Lambertian>(Color3(.73, .73, .73));
+    auto white = make_shared<Lambertian>(make_shared<ImageTexture>("earthmap.jpg"));
+
     std::vector<shared_ptr<Hittable>> tris = std::vector<shared_ptr<Hittable>>(tot_fnum);
     ullong tri_index = 0;
 
@@ -199,52 +208,9 @@ bool load_obj_trace(const char* filename, const char* basepath, bool triangulate
 // 为光栅化加载三角形网格
 bool load_obj_rasterize(const char* filename, const char* basepath, bool triangulate, std::vector<TriangleRasterize>& triangles)
 {
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
-
-    std::string warn;
-    std::string err;
-    bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
-        filename, basepath, triangulate);
-
-    ullong vnum = attrib.vertices.size() / 3;
-    ullong nnum = attrib.normals.size() / 3;
-    ullong tnum = attrib.texcoords.size() / 2;
-    ullong snum = shapes.size();
-    ullong mnum = materials.size();
-
-    vertices = std::vector<Point3>(vnum);
-    normals = std::vector<Vec3>(nnum);
-    texcoords = std::vector<Texcoord2>(tnum);
-
-    for (ullong v = 0; v < vnum; ++v)
+    if (!load_obj_internal(filename, basepath, triangulate))
     {
-        vertices[v] = Point3(
-            static_cast<const double>(attrib.vertices[3 * v + 0]),
-            static_cast<const double>(attrib.vertices[3 * v + 1]),
-            static_cast<const double>(attrib.vertices[3 * v + 2]));
-    }
-
-    for (ullong n = 0; n < nnum; ++n)
-    {
-        normals[n] = Vec3(
-            static_cast<const double>(attrib.normals[3 * n + 0]),
-            static_cast<const double>(attrib.normals[3 * n + 1]),
-            static_cast<const double>(attrib.normals[3 * n + 2]));
-    }
-
-    for (ullong t = 0; t < tnum; ++t)
-    {
-        texcoords[t] = Texcoord2(
-            static_cast<const double>(attrib.texcoords[2 * t + 0]),
-            static_cast<const double>(attrib.texcoords[2 * t + 1]));
-    }
-
-    ullong tot_fnum = 0; // 总面数
-    for (ullong i = 0; i < snum; i++)
-    {
-        tot_fnum += shapes[i].mesh.num_face_vertices.size();
+        return false;
     }
 
     std::vector<TriangleRasterize> tris = std::vector<TriangleRasterize>(tot_fnum);
