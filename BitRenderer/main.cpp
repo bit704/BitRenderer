@@ -88,6 +88,7 @@ int main()
 
     // 渲染参数
     std::vector<fs::path> objs = { "None" };
+    int obj_pre_idx = 0;
     int obj_current_idx = 0;
     const char* scenes[] = { "None", "scene_checker", "scene_cornell_box", "scene_composite1", "scene_composite2" };
     int scene_current_idx = 0;
@@ -122,7 +123,7 @@ int main()
         {
             // 图片尺寸发生变化时需要重新生成图片
             bool new_image = (image_width != cam.get_image_width()) ||
-                             (aspect_ratio != cam.get_aspect_ratio());
+                (aspect_ratio != cam.get_aspect_ratio());
 
             // 设置参数
             cam.set_image_width(image_width);
@@ -175,6 +176,8 @@ int main()
         int now_window_width = now_window_rect.right - now_window_rect.left;
         int now_window_height = now_window_rect.bottom - now_window_rect.top;
 
+        assemble();
+
         // 设置
         {
             ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always, ImVec2(0, 0));
@@ -195,21 +198,29 @@ int main()
                     objs = std::move(objs_new);
 
                 // 选择obj
-                auto combo_obj_str = objs[obj_current_idx].filename().string();
+                auto combo_obj_str = objs[obj_current_idx].stem().string();
                 const char* combo_obj = combo_obj_str.c_str(); // 必须分两步，否则combo_obj指向已经销毁的实例
                 if (ImGui::BeginCombo("load obj", combo_obj, flags))
                 {
                     for (int n = 0; n < objs.size(); n++)
                     {
                         const bool is_selected = (obj_current_idx == n);
-                        if (ImGui::Selectable(objs[n].filename().string().c_str(), is_selected))
+                        if (ImGui::Selectable(objs[n].stem().string().c_str(), is_selected))
+                        {
+                            if (obj_pre_idx != obj_current_idx)
+                            {
+                                // 选择新obj时无需再停止光栅化
+                                stop_rastering.store(false);
+                            }
+                            obj_pre_idx = obj_current_idx;
                             obj_current_idx = n;
+                        }                           
 
                         if (is_selected)
                             ImGui::SetItemDefaultFocus();
 
                         // 选择obj时将scene置为None
-                        scene_current_idx = 0;
+                        scene_current_idx = 0;                        
 
                         // obj推荐参数，None选项不指定
                         if (obj_current_idx != 0)
@@ -258,7 +269,11 @@ int main()
                     {
                         const bool is_selected = (scene_current_idx == n);
                         if (ImGui::Selectable(scenes[n], is_selected))
+                        {
+                            // 选择scene时无需再停止光栅化
+                            stop_rastering.store(false);
                             scene_current_idx = n;
+                        }                            
 
                         if (is_selected)
                             ImGui::SetItemDefaultFocus();
@@ -269,8 +284,9 @@ int main()
                         // 各场景推荐参数
                         if (scene_current_idx != 0)
                         {
-                            // 选择预置场景时清楚图片，去掉光栅化预览遗留的结果
-                            cam.clear();
+                            // 清除图片
+                            if(image_data_p2p != nullptr && *image_data_p2p != nullptr)
+                                cam.clear();
                             image_name = std::string(scenes[scene_current_idx]) + ".png";
                         }
                             
@@ -378,9 +394,8 @@ int main()
                     else
                     {
                         add_info("----------------");
-                        add_info("Rendering obj...");
+                        add_info("Rendering " + objs[obj_current_idx].stem().string() + "...");
 
-                        assemble();
                         tracing_statistics();
 
                         t = std::thread(scene_obj_trace, std::cref(cam), std::cref(objs[obj_current_idx]));
@@ -399,9 +414,8 @@ int main()
                     else
                     {
                         add_info("----------------");
-                        add_info("Rendering preset...");
+                        add_info("Rendering "_str + scenes[scene_current_idx] + "...");
 
-                        assemble();
                         tracing_statistics();
 
                         switch (scene_current_idx)
@@ -426,7 +440,7 @@ int main()
             {
                 add_info("Aborting...");
                 tracing.store(false);
-
+                stop_rastering.store(true);                
             }
             ImGui::EndDisabled();
 
@@ -459,16 +473,16 @@ int main()
             }
 
             ImGui::SameLine();
-            HelpMarker("Only Abort or Clear can discard Ray Tracing result.\n");
+            HelpMarker("Clear will discard Ray Tracing result and restart Rasterizing.\n");
 
             ImGui::SeparatorText("camera");
 
             // 输入图片宽度
             ImGui::InputInt("image width", &image_width);
             ImGui::SameLine(); 
-            HelpMarker("1~1024\n");
-            if (image_width < 1)
-                image_width = 1;
+            HelpMarker("256~1024\n");
+            if (image_width < 256)
+                image_width = 256;
             if (image_width > 1024)
                 image_width = 1024;
 
@@ -608,15 +622,16 @@ int main()
         {
             // 只有在同时满足以下情况时才进行光栅化预览
             // 未开始光线追踪
+            // 没有停止光栅化（完成一个obj的光线追踪离线渲染且没有clear时停止光栅化）
             // 选择的是不为None的obj
-            // 需要停止光栅化（完成一个obj的光线追踪离线渲染且没有clear）
-            if (!tracing.load() && 
-                !use_preset && obj_current_idx != 0 && 
-                !stop_rastering.load())
+            if (!tracing.load() && !stop_rastering.load())
             {
-                assemble();
-                scene_obj_rasterize(cam, objs[obj_current_idx],rastering_preview_mode);
-            }
+                cam.clear();
+                if (!use_preset && obj_current_idx != 0)
+                {
+                    scene_obj_rasterize(cam, objs[obj_current_idx], rastering_preview_mode);
+                }
+            }       
         }
 
         ImGui::Render();
