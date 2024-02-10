@@ -358,15 +358,16 @@ private:
     void draw_line(const Point4& x, const Point4& y, const Color3& color)
         const
     {
-        float x0 = (x[0] + 1) * image_width_  / 2;
-        float x1 = (y[0] + 1) * image_width_  / 2;
-        float y0 = (x[1] + 1) * image_height_ / 2;
-        float y1 = (y[1] + 1) * image_height_ / 2;
+        // NDC坐标范围为[-1,1]，变换到[0,1]再缩放
+        float x0 = (x[0] + 1) / 2 * (image_width_ - 1);
+        float x1 = (y[0] + 1) / 2 * (image_width_ - 1);
+        float y0 = (x[1] + 1) / 2 * (image_height_ - 1);
+        float y1 = (y[1] + 1) / 2 * (image_height_ - 1);
 
-        x0 = std::max(0.f, std::min((float)(image_width_ - 1),  x0));
-        x1 = std::max(0.f, std::min((float)(image_width_ - 1),  x1));
-        y0 = std::max(0.f, std::min((float)(image_height_ - 1), y0));
-        y1 = std::max(0.f, std::min((float)(image_height_ - 1), y1));
+        x0 = std::clamp(x0, 0.f, (float)(image_width_ - 1));
+        x1 = std::clamp(x1, 0.f, (float)(image_width_ - 1));
+        y0 = std::clamp(y0, 0.f, (float)(image_height_ - 1));
+        y1 = std::clamp(y1, 0.f, (float)(image_height_ - 1));
 
         bool steep = false;
         if (std::abs(x0 - x1) < std::abs(y0 - y1))
