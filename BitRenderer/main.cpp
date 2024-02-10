@@ -16,13 +16,14 @@ int main()
 
     ::RegisterClassExW(&wc);
 
-    // 获取桌面可用区域大小，最大化窗口
-    RECT rect;
-    SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
-    int width  = rect.right - rect.left;
-    int height = rect.bottom - rect.top;
+    // 获取桌面可用区域大小（除开任务栏），以最大化窗口
+    RECT max_window_rect;
+    SystemParametersInfo(SPI_GETWORKAREA, 0, &max_window_rect, 0);
+    int max_window_width  = max_window_rect.right - max_window_rect.left;
+    int max_window_height = max_window_rect.bottom - max_window_rect.top;
     HWND hwnd  = ::CreateWindowW(wc.lpszClassName, L"BitRenderer", WS_OVERLAPPEDWINDOW, 
-        rect.left, rect.top, width, height, nullptr, nullptr, wc.hInstance, nullptr);
+        max_window_rect.left, max_window_rect.top, max_window_width, max_window_height, 
+        nullptr, nullptr, wc.hInstance, nullptr);
 
     // 初始化Direct3D
     if (!CreateDeviceD3D(hwnd))
@@ -138,9 +139,15 @@ int main()
             image_data_p2p = cam.initialize(new_image);
         };
 
-    // 软件界面初始化时显示默认白图
-    assemble();
-    cam.clear();
+    // 设置光追统计数据
+    auto tracing_statistics = [&]()
+        {
+            
+            tracing.store(true);
+            hit_count.store(0);
+            sample_count.store(0);
+            tracing_start = steady_clock::now();
+        };
 
     bool done = false;
     while (!done)
@@ -162,13 +169,20 @@ int main()
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
+        // 获取当前窗口大小（除开标题栏、菜单栏）
+        RECT now_window_rect;
+        GetClientRect(hwnd, &now_window_rect);
+        int now_window_width = now_window_rect.right - now_window_rect.left;
+        int now_window_height = now_window_rect.bottom - now_window_rect.top;
+
         // 设置
         {
             ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always, ImVec2(0, 0));
-            ImGui::SetNextWindowSize(ImVec2(460, 800), ImGuiCond_Always);
+            ImGui::SetNextWindowSize(ImVec2(now_window_width * .3, now_window_height), ImGuiCond_Always);
 
             ImGui::Begin("SETUP", nullptr, custom_window_flag 
-                | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);
+                | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize
+                | ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
 
             ImGui::SeparatorText("scene");
 
@@ -356,17 +370,6 @@ int main()
             ImGui::SameLine();
             if (ImGui::Button("Start") && !tracing.load())
             {
-                auto tracing_statistics = [&]()
-                    {
-                        // 设置统计数据
-                        tracing.store(true);
-                        hit_count.store(0);
-                        sample_count.store(0);
-                        tracing_start = steady_clock::now();
-                    };
-
-                assemble();
-
                 if (!use_preset)
                 {
                     if (obj_current_idx == 0)
@@ -377,8 +380,10 @@ int main()
                     {
                         add_info("----------------");
                         add_info("Rendering obj...");
-                        
+
+                        assemble();
                         tracing_statistics();
+
                         t = std::thread(scene_obj_trace, std::cref(cam), std::cref(objs[obj_current_idx]));
                         //t = std::thread(scene_test_triangle, std::cref(cam));
 
@@ -397,7 +402,9 @@ int main()
                         add_info("----------------");
                         add_info("Rendering preset...");
 
+                        assemble();
                         tracing_statistics();
+
                         switch (scene_current_idx)
                         {
                         case 1: t = std::thread(scene_checker, std::cref(cam)); break;
@@ -447,7 +454,7 @@ int main()
                 {
                     add_info("Saving...");
                     cam.save_image();
-                    add_info("Image has be saved to ./output/ folder.");
+                    add_info(image_name + " has been saved to ./output/ folder.");
                 }
             }
 
@@ -528,7 +535,8 @@ int main()
 
             ImGui::SeparatorText("info");
 
-            ImGui::BeginChild("info", ImVec2(0.0f, 0.0f), ImGuiChildFlags_FrameStyle);
+            ImGui::BeginChild("info", ImVec2(0.0f, 0.0f), 
+                ImGuiChildFlags_FrameStyle, ImGuiWindowFlags_HorizontalScrollbar);
 
             for(ulong i = 0; i < get_info_size(); ++i)
                 ImGui::Text(get_info(i));
@@ -542,8 +550,12 @@ int main()
 
         // 渲染
         {
-            ImGui::Begin("RENDER", nullptr, custom_window_flag 
-                | ImGuiWindowFlags_NoCollapse);
+            ImGui::SetNextWindowPos(ImVec2(now_window_width * .3, 0), ImGuiCond_Always, ImVec2(0, 0));
+            ImGui::SetNextWindowSize(ImVec2(now_window_width * .7, now_window_height), ImGuiCond_Always);
+
+            ImGui::Begin("RENDER", nullptr, custom_window_flag
+                | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize
+                | ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
 
             ImGui::Text("image size = %d x %d", cam.get_image_width(), cam.get_image_height());
             ImGui::Text(("hit count = " + format_num(hit_count.load())).c_str());
