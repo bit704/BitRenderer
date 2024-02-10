@@ -92,13 +92,24 @@ public:
 
         double viewport_width = viewport_height * (static_cast<double>(image_width_) / image_height_);
 
-        // 计算相机坐标系，右手系(z轴指向屏幕外)
-        w_ = unit_vector(lookfrom_ - lookat_); // 与相机视点方向相反 (0,0,-1)
-        u_ = unit_vector(cross(vup_, w_)); // 指向相机右方 (-1,0,0)
-        v_ = cross(w_, u_); // 指向相机上方 (0,1,0)
+        // 相机坐标系为右手系，z轴指向屏幕外（.obj坐标系与此相同）
+        // 
+        //     | y v_
+        //     |
+        //     |
+        //    / —————— x u_
+        //   /
+        //  / z w_
+        // 
+        w_ = unit_vector(lookfrom_ - lookat_); // 默认 (0,0,1)
+        u_ = unit_vector(cross(vup_, w_)); // 默认 (1,0,0)
+        v_ = cross(w_, u_); // 默认 (0,1,0)
+        w_.normalize();
+        u_.normalize();
+        v_.normalize();
 
         Vec3 viewport_u = viewport_width * u_;
-        Vec3 viewport_v = viewport_height * -v_;
+        Vec3 viewport_v = viewport_height * -v_; // 视口左上角为相机坐标系原点，因此对v_取负
 
         // 每像素对应的视口长度
         pixel_delta_u_ = viewport_u / image_width_;
@@ -160,20 +171,13 @@ public:
                         pixel_color += ray_color(r, world, light, max_depth_);
                     }
                 }
-
-                image_->set_pixel(i, j, pixel_color, samples_per_pixel_);
+                if (tracing.load())
+                {
+                    image_->set_pixel(i, j, pixel_color, samples_per_pixel_);
+                }
             }
         }
-        // tracing在到此前为true，说明光追未因为abort中断，不进行光栅化避免其覆盖结果
-        if (tracing.exchange(false))
-        {
-            stop_rastering.store(true);
-        }   
-        // 否则开始光栅化
-        else
-        {
-            stop_rastering.store(false);
-        }
+        tracing.store(false);
         add_info("Done.");
     }
 
@@ -269,8 +273,6 @@ public:
     void rasterize(const std::vector<TriangleRasterize>& triangles, const int& mode)
         const
     {
-        clear();
-
         if (mode == 0)
             rasterize_shade(triangles);
         else if (mode == 1)
@@ -326,19 +328,22 @@ private:
     {
         Mat<4, 4> view;
 
-        Vec3 f = (lookat_ - lookfrom_);
-        f.normalize();
-        Vec3 t = vup_;
-        t.normalize();
-        Vec3 s = cross(f, t);
-        s.normalize();
-        Vec3 u = cross(s, f);
-
+        // 相机坐标系为右手系，z轴指向屏幕外（.obj坐标系与此相同）
+        // 
+        //     | y v_
+        //     |
+        //     |
+        //    / —————— x u_
+        //   /
+        //  / z w_
+        // 
+        // 视口左上角为相机坐标系原点，因此对v_取负
+        //
         view = 
         {{
-            { s.x(),  s.y(),  s.z(), -dot(s,lookfrom_)},
-            { u.x(),  u.y(),  u.z(), -dot(u,lookfrom_)},
-            {-f.x(), -f.y(), -f.z(), -dot(f,lookfrom_)},
+            { u_.x(),  u_.y(),  u_.z(), -dot( u_, lookfrom_)},
+            {-v_.x(), -v_.y(), -v_.z(), -dot(-v_, lookfrom_)},
+            { w_.x(),  w_.y(),  w_.z(), -dot( w_, lookfrom_)},
             {0, 0, 0, 1}
         }};
 
