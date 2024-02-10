@@ -88,7 +88,8 @@ const std::string ImageRead::kInputPath_ = kLoadPath;
 ImageRead::ImageRead(std::string image_name)
 {
 	std::string image_path = kInputPath_ + image_name;
-	image_data_ = stbi_load(image_path.c_str(), &width_, &height_, &channel_, channel_);
+	// req_comp为0代表不设置期望通道数，按实际来
+	image_data_ = stbi_load(image_path.c_str(), &width_, &height_, &channel_, 0);
 }
 
 Color3 ImageRead::get_pixel(const int& row, const int& col) const
