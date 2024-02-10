@@ -81,6 +81,7 @@ bool load_obj_internal(const char* filename, const char* basepath, bool triangul
     bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
         filename, basepath, triangulate);
 
+    add_info("----------------");
     add_info("load .obj: "_str + filename);
 
     if (!warn.empty())
@@ -138,6 +139,7 @@ bool load_obj_internal(const char* filename, const char* basepath, bool triangul
             static_cast<const double>(attrib.texcoords[2 * t + 1]));
     }
 
+    tot_fnum = 0;
     for (ullong i = 0; i < snum; i++)
     {
         tot_fnum += shapes[i].mesh.num_face_vertices.size();

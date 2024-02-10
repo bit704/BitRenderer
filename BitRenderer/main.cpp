@@ -216,8 +216,8 @@ int main()
                         {
                             image_width = 600;
                             aspect_ratio_idx = 0;
-                            samples_per_pixel = 30;
-                            max_depth = 10;
+                            samples_per_pixel = 5;
+                            max_depth = 5;
                             vfov = 20;
                             float lookfrom_t[3] = { 5, 3, 5 };
                             memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
@@ -343,8 +343,7 @@ int main()
                     ImGui::EndCombo();
                 }
                 ImGui::SameLine();
-                HelpMarker(
-                    "Choose preset scene.\n");
+                HelpMarker("Choose preset scene.\n");
 
                 ImGui::EndDisabled();
             }
@@ -422,11 +421,12 @@ int main()
         
             ImGui::BeginDisabled(!tracing.load());
             ImGui::SameLine();
-            // 结束渲染
+            // 结束光追
             if (ImGui::Button("Abort") && tracing.load())
             {
                 add_info("Aborting...");
                 tracing.store(false);
+
             }
             ImGui::EndDisabled();
 
@@ -458,16 +458,19 @@ int main()
                 }
             }
 
+            ImGui::SameLine();
+            HelpMarker("Only Abort or Clear can discard Ray Tracing result.\n");
+
             ImGui::SeparatorText("camera");
 
             // 输入图片宽度
             ImGui::InputInt("image width", &image_width);
             ImGui::SameLine(); 
-            HelpMarker("1~4096");
+            HelpMarker("1~1024\n");
             if (image_width < 1)
                 image_width = 1;
-            if (image_width > 4096)
-                image_width = 4096;
+            if (image_width > 1024)
+                image_width = 1024;
 
             // 选择图片宽高比
             const char* combo_preview_value_ar = aspect_ratios[aspect_ratio_idx];
@@ -499,7 +502,7 @@ int main()
             HelpMarker(
                 "Drag to edit value.\n"
                 "Hold SHIFT/ALT for faster/slower edit.\n"
-                "Double-click or CTRL+click to input value.");
+                "Double-click or CTRL+click to input value.\n");
 
             // 设置背景颜色
             ImGui::ColorEdit3("background color", background);
@@ -513,7 +516,7 @@ int main()
             // 输入spp
             ImGui::InputInt("samples per pixel", &samples_per_pixel);
             ImGui::SameLine();
-            HelpMarker("1~10000");
+            HelpMarker("1~10000\n");
             if (samples_per_pixel < 1)
                 samples_per_pixel = 1;
             if (samples_per_pixel > 10000)

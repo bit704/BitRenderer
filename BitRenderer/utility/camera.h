@@ -164,8 +164,16 @@ public:
                 image_->set_pixel(i, j, pixel_color, samples_per_pixel_);
             }
         }
-        tracing.store(false);
-        stop_rastering.store(true);
+        // tracing在到此前为true，说明光追未因为abort中断，不进行光栅化避免其覆盖结果
+        if (tracing.exchange(false))
+        {
+            stop_rastering.store(true);
+        }   
+        // 否则开始光栅化
+        else
+        {
+            stop_rastering.store(false);
+        }
         add_info("Done.");
     }
 
