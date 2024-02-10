@@ -349,7 +349,7 @@ private:
         {{
             {1 / (tan(degrees_to_radians(vfov_) / 2) * aspect_ratio_), 0, 0, 0},
             {0, 1 / tan(degrees_to_radians(vfov_) / 2), 0, 0},
-            {0, 0, -(far + near) / (far - near),2 * near * far / (near - far)},
+            {0, 0, -(far + near) / (far - near), 2 * near * far / (near - far)},
             {0, 0, -1, 0}
         }};
         return project;
@@ -363,10 +363,10 @@ private:
         float y0 = (x[1] + 1) * image_height_ / 2;
         float y1 = (y[1] + 1) * image_height_ / 2;
 
-        x0 = std::max(0.f, std::min((float)image_width_,  x0));
-        x1 = std::max(0.f, std::min((float)image_width_,  x1));
-        y0 = std::max(0.f, std::min((float)image_height_, y0));
-        y1 = std::max(0.f, std::min((float)image_height_, y1));
+        x0 = std::max(0.f, std::min((float)(image_width_ - 1),  x0));
+        x1 = std::max(0.f, std::min((float)(image_width_ - 1),  x1));
+        y0 = std::max(0.f, std::min((float)(image_height_ - 1), y0));
+        y1 = std::max(0.f, std::min((float)(image_height_ - 1), y1));
 
         bool steep = false;
         if (std::abs(x0 - x1) < std::abs(y0 - y1))

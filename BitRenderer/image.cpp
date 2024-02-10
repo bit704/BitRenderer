@@ -72,11 +72,9 @@ void ImageWrite::write()
 
 void ImageWrite::flush_white()
 {
-	for (int i = 0; i < width_; ++i)
-	{
-		for (int j = 0; j < height_; ++j)
+	for (int i = 0; i < height_; ++i)
+		for (int j = 0; j < width_; ++j)
 			set_pixel(i, j, 255, 255, 255);
-	}
 }
 
 ImageWrite::~ImageWrite()
