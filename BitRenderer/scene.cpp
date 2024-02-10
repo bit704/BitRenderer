@@ -18,7 +18,7 @@ void scene_obj_rasterize(const Camera& cam, const fs::path& obj_path, const int&
     if (prev_obj_path != obj_path)
     {
         prev_obj_path = obj_path;
-        if (!load_obj_rasterize(obj_path.string().c_str(), obj_path.parent_path().string().c_str(), true, triangles))
+        if (!prepare_rasterize_data(obj_path.string().c_str(), obj_path.parent_path().string().c_str(), true, triangles))
         {
             add_info(obj_path.string() + "  failed to load for rastering.");
             return;
@@ -34,19 +34,16 @@ void scene_obj_trace(const Camera& cam, const fs::path& obj_path)
     shared_ptr<HittableList> world = make_shared<HittableList>();
     HittableList triangles;
 
-    auto start = steady_clock::now();
-    if (!load_obj_trace(obj_path.string().c_str(), obj_path.parent_path().string().c_str(), true, triangles))
+    if (!prepare_trace_data(obj_path.string().c_str(), obj_path.parent_path().string().c_str(), true, triangles))
     {
         add_info(obj_path.string() + "  failed to load for ray tracing.");
         return;
     }
-    auto end = steady_clock::now();
-    add_info("loading elapsed time: "_str + STR(duration_cast<milliseconds>(end - start).count()) + "ms");
 
-    add_info("prepare BVH...");
-    start = steady_clock::now();
+    add_info("construct BVH...");
+    auto start = steady_clock::now();
     world->add(make_shared<BVHNode>(triangles));
-    end = steady_clock::now();
+    auto end = steady_clock::now();
     add_info("BVH elapsed time: "_str + STR(duration_cast<milliseconds>(end - start).count()) + "ms");
 
     cam.trace(world);
@@ -73,6 +70,7 @@ static std::vector<tinyobj::shape_t> shapes;
 static std::vector<tinyobj::material_t> materials;
 static ullong vnum = 0, nnum = 0, tnum = 0, snum = 0, mnum = 0, tot_fnum = 0;
 
+// 加载obj
 bool load_obj_internal(const char* filename, const char* basepath, bool triangulate)
 {
     std::string warn;
@@ -105,11 +103,17 @@ bool load_obj_internal(const char* filename, const char* basepath, bool triangul
     tnum = attrib.texcoords.size() / 2;
     snum = shapes.size();
     mnum = materials.size();
+    tot_fnum = 0;
+    for (ullong i = 0; i < snum; i++)
+    {
+        tot_fnum += shapes[i].mesh.num_face_vertices.size();
+    }
 
     add_info("vertices: "  + STR(vnum));
     add_info("normals: "   + STR(nnum));
     add_info("texcoords: " + STR(tnum));
     add_info("shapes: "    + STR(snum));
+    add_info("faces: "     + STR(tot_fnum));
     add_info("materials: " + STR(mnum));
 
     vertices = std::vector<Point3>(vnum);
@@ -139,22 +143,15 @@ bool load_obj_internal(const char* filename, const char* basepath, bool triangul
             static_cast<const double>(attrib.texcoords[2 * t + 1]));
     }
 
-    tot_fnum = 0;
-    for (ullong i = 0; i < snum; i++)
-    {
-        tot_fnum += shapes[i].mesh.num_face_vertices.size();
-    }
-
     return true;
 }
 
-// 为光线追踪加载三角形网格
-bool load_obj_trace(const char* filename, const char* basepath, bool triangulate, HittableList& triangles)
+// 为光线追踪准备数据
+bool prepare_trace_data(const char* filename, const char* basepath, bool triangulate, HittableList& triangles)
 {
-    // 不必再次加载obj，光栅化已加载
+    // 光栅化已加载obj，不必再次加载
 
-    //auto white = make_shared<Lambertian>(Color3(.73, .73, .73));
-    auto white = make_shared<Lambertian>(make_shared<ImageTexture>("earthmap.jpg"));
+    auto test = make_shared<Lambertian>(make_shared<ImageTexture>("earthmap.jpg"));
 
     std::vector<shared_ptr<Hittable>> tris = std::vector<shared_ptr<Hittable>>(tot_fnum);
     ullong tri_index = 0;
@@ -195,7 +192,7 @@ bool load_obj_trace(const char* filename, const char* basepath, bool triangulate
             int cn = idx_c.normal_index;
             int ct = idx_c.texcoord_index;
 
-            tris[tri_index + f] = make_shared<Triangle>(a, an, at, b, bn, bt, c, cn, ct, white);
+            tris[tri_index + f] = make_shared<Triangle>(a, an, at, b, bn, bt, c, cn, ct, test);
 
             index_offset += v_per_f;
         }
@@ -207,8 +204,8 @@ bool load_obj_trace(const char* filename, const char* basepath, bool triangulate
     return true;
 }
 
-// 为光栅化加载三角形网格
-bool load_obj_rasterize(const char* filename, const char* basepath, bool triangulate, std::vector<TriangleRasterize>& triangles)
+// 为光栅化准备数据
+bool prepare_rasterize_data(const char* filename, const char* basepath, bool triangulate, std::vector<TriangleRasterize>& triangles)
 {
     if (!load_obj_internal(filename, basepath, triangulate))
     {

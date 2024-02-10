@@ -178,6 +178,7 @@ public:
             }
         }
         tracing.store(false);
+        stop_rastering.store(true);
         add_info("Done.");
     }
 
@@ -274,22 +275,15 @@ public:
         const
     {
         if (mode == 0)
-            rasterize_shade(triangles);
-        else if (mode == 1)
             rasterize_wireframe(triangles);
-        else if (mode == 2)
+        else if (mode == 1)
             rasterize_depth(triangles);
-        
+        else if (mode == 2)
+            rasterize_shade(triangles);
         return;       
     }
 
 private:
-    void rasterize_shade(const std::vector<TriangleRasterize>& triangles)
-        const
-    {
-
-    }
-
     void rasterize_wireframe(const std::vector<TriangleRasterize>& triangles)
         const
     {
@@ -319,8 +313,15 @@ private:
     void rasterize_depth(const std::vector<TriangleRasterize>& triangles)
         const
     {
-        
+
     }
+
+    void rasterize_shade(const std::vector<TriangleRasterize>& triangles)
+        const
+    {
+
+    }
+
 
     //返回视图矩阵
     Mat<4, 4> get_view_matrix()

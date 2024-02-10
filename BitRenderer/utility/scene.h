@@ -17,8 +17,8 @@ extern std::vector<Texcoord2> texcoords;
 
 void scene_test_triangle(const Camera& cam);
 
-bool load_obj_trace(const char* filename, const char* basepath, bool triangulate, HittableList& triangles);
-bool load_obj_rasterize(const char* filename, const char* basepath, bool triangulate, std::vector<TriangleRasterize>& triangles);
+bool prepare_trace_data(const char* filename, const char* basepath, bool triangulate, HittableList& triangles);
+bool prepare_rasterize_data(const char* filename, const char* basepath, bool triangulate, std::vector<TriangleRasterize>& triangles);
 
 // 光线追踪离线渲染场景
 void scene_obj_trace(const Camera& cam, const fs::path& obj_path);
