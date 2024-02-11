@@ -371,7 +371,7 @@ int main()
             ImVec2 window_center = ImVec2(window_pos.x + window_size.x * .5f, window_pos.y + window_size.y * .5f);
             
             // 选择光栅化预览模式
-            ImGui::Text("Rastering Preview");
+            ImGui::Text("Rasterizing Preview");
             ImGui::Text("            ");            
             ImGui::SameLine(); ImGui::RadioButton("wireframe", &rastering_preview_mode, 0);
             ImGui::SameLine(); ImGui::RadioButton("depth",     &rastering_preview_mode, 1);
@@ -606,7 +606,7 @@ int main()
 
             ImGui::Text("UI fps = %.2f", io.Framerate);
             ImGui::Text("UI 1/fps = %.2f ms", 1000. / io.Framerate);
-            ImGui::Text("sys memory load = %lld", get_memory_load());
+            ImGui::Text("sys memory load = %lld%%", get_memory_load());
 
             // 每300ms统计一次cpu占用率
             auto cpu_now = steady_clock::now();
@@ -616,7 +616,7 @@ int main()
                 cpu_start = steady_clock::now();
             }
 
-            ImGui::Text("sys cpu usage = %.2f", cpu_usage);
+            ImGui::Text("sys cpu usage = %.2f%%", cpu_usage);
             ImGui::End();
         }
 
