@@ -522,6 +522,7 @@ int main()
             ImGui::ColorEdit3("background color", background);
             ImGui::SameLine();
             HelpMarker(
+                "Only work for Ray Tracing for performance.\n"
                 "Click on the color square to open a color picker.\n"
                 "Click and hold to use drag and drop.\n"
                 "Right-click on the color square to show options.\n"
