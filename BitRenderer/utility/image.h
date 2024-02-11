@@ -35,10 +35,15 @@ public:
 	ImageWrite& operator=(ImageWrite&&) = delete;
 
 public:
-	void set_pixel(const int& row, const int& col, Color3 c, const int& samples_per_pixel);
+	// 直接设置图像像素值（值域为[0,255]的整数）
 	void set_pixel(const int& row, const int& col, const int& r, const int& g, const int& b);
+	// 设置图像像素为Color3 c（值域为[0,1]的浮点数）,先伽马矫正再缩放
+	void set_pixel(const int& row, const int& col, const Color3& c);
+	// 根据samples_per_pixel先缩放，再设置
+	void set_pixel(const int& row, const int& col, const Color3& c, const int& samples_per_pixel);
+	// 写入指定图片
 	void write();
-	void flush_white();
+	void flush();
 
 	unsigned char** get_image_data_p2p()
 	{

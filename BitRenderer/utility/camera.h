@@ -50,7 +50,7 @@ public:
     Camera() : 
         aspect_ratio_(1), 
         vfov_(90), 
-        background_(.7, .8, 1.), 
+        background_(1, 1, 1), 
         image_height_(0), 
         image_width_(0), 
         channel_(4),
@@ -90,7 +90,7 @@ public:
         double h = tan(theta / 2);
         double viewport_height = 2 * h * focus_dist_;
 
-        double viewport_width = viewport_height * (static_cast<double>(image_width_) / image_height_);
+        double viewport_width = viewport_height * aspect_ratio_;
 
         // 相机坐标系为右手系，z轴指向屏幕外（.obj坐标系与此相同）
         // 
@@ -125,12 +125,11 @@ public:
 
         return image_->get_image_data_p2p();
     }
-
-    // 清除图像为白色
+    
     void clear()
         const
     {
-        image_->flush_white();
+        image_->flush();
     }
 
 /*
