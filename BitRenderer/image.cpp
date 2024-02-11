@@ -20,7 +20,13 @@ ImageWrite::ImageWrite(std::string imageName, int image_width, int image_height,
 		memset(image_data_, 0, sizeof(unsigned char) * width_ * height_ * channel_);
 }
 
-// 设置像素
+// 伽马校正
+inline double linear_to_gamma(double linear_component)
+{
+	// 采用通用伽马值2.2，即放大暗部
+	return pow(linear_component, 1 / 2.2);
+}
+
 void ImageWrite::set_pixel(const int& row, const int& col, const int& r, const int& g, const int& b)
 {
 	image_data_[(row * width_ + col) * channel_] = r;
@@ -29,19 +35,8 @@ void ImageWrite::set_pixel(const int& row, const int& col, const int& r, const i
 	image_data_[(row * width_ + col) * channel_ + 3] = 255;
 }
 
-// 伽马校正
-inline double linear_to_gamma(double linear_component)
+void ImageWrite::set_pixel(const int& row, const int& col, const Color3& c)
 {
-	// 采用通用伽马值2.2，即放大暗部
-	return pow(linear_component, 1 / 2.2);
-}
-
-void ImageWrite::set_pixel(const int& row, const int& col, Color3 c, const int& samples_per_pixel)
-{
-	// 一个像素采样几次就叠加了几个颜色，根据采样次数缩放回去
-	double scale = 1. / samples_per_pixel;
-	c *= scale;
-
 	// 伽马校正
 	double r = linear_to_gamma(c.x());
 	double g = linear_to_gamma(c.y());
@@ -51,7 +46,7 @@ void ImageWrite::set_pixel(const int& row, const int& col, Color3 c, const int& 
 	if (r != r) r = 0.;
 	if (g != g) g = 0.;
 	if (b != b) b = 0.;
-	
+
 	// 将值限制在[0,1]，缩放到[0,256)，再向下取整
 	r = std::clamp(r, 0., 1.) * 255.999;
 	g = std::clamp(g, 0., 1.) * 255.999;
@@ -59,7 +54,14 @@ void ImageWrite::set_pixel(const int& row, const int& col, Color3 c, const int& 
 	set_pixel(row, col, (int)r, (int)g, (int)b);
 }
 
-// 写入指定图片
+void ImageWrite::set_pixel(const int& row, const int& col, const Color3& c, const int& samples_per_pixel)
+{
+	// 一个像素采样几次就叠加了几个颜色，根据采样次数缩放回去
+	double scale = 1. / samples_per_pixel;
+	set_pixel(row, col, c * scale);
+}
+
+
 void ImageWrite::write()
 {
 	if (image_data_ == nullptr)
@@ -70,7 +72,7 @@ void ImageWrite::write()
 	stbi_write_png(image_path_.c_str(), width_, height_, channel_, image_data_, 0);
 }
 
-void ImageWrite::flush_white()
+void ImageWrite::flush()
 {
 	for (int i = 0; i < height_; ++i)
 		for (int j = 0; j < width_; ++j)
