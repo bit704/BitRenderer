@@ -92,7 +92,7 @@ public:
 
         double viewport_width = viewport_height * aspect_ratio_;
 
-        // 相机坐标系为右手系，z轴指向屏幕外
+        // 相机坐标系为右手系，z轴指向屏幕外（与.obj坐标系一致）
         // 
         //     | y v_
         //     |
@@ -330,8 +330,8 @@ private:
 
         view = 
         {{            
-            {-v_.x(), -v_.y(), -v_.z(), -dot(-v_, lookfrom_)},
             { u_.x(),  u_.y(),  u_.z(), -dot( u_, lookfrom_)},
+            {-v_.x(), -v_.y(), -v_.z(), -dot(-v_, lookfrom_)},
             { w_.x(),  w_.y(),  w_.z(), -dot( w_, lookfrom_)},
             {0, 0, 0, 1}
         }};
@@ -357,40 +357,41 @@ private:
         return project;
     }
 
-    void draw_line(const Point4& x, const Point4& y, const Color3& color)
+    void draw_line(const Point4& a, const Point4& b, const Color3& color)
         const
     {
         // NDC坐标范围为[-1,1]，变换到[0,1]再缩放
-        float x0 = (x[0] + 1) / 2 * (image_width_ - 1);
-        float x1 = (y[0] + 1) / 2 * (image_width_ - 1);
-        float y0 = (x[1] + 1) / 2 * (image_height_ - 1);
-        float y1 = (y[1] + 1) / 2 * (image_height_ - 1);
+        float x_a = (a[0] + 1) / 2 * (image_width_ - 1);
+        float x_b = (b[0] + 1) / 2 * (image_width_ - 1);
+        float y_a = (a[1] + 1) / 2 * (image_height_ - 1);
+        float y_b = (b[1] + 1) / 2 * (image_height_ - 1);
 
-        x0 = std::clamp(x0, 0.f, (float)(image_width_ - 1));
-        x1 = std::clamp(x1, 0.f, (float)(image_width_ - 1));
-        y0 = std::clamp(y0, 0.f, (float)(image_height_ - 1));
-        y1 = std::clamp(y1, 0.f, (float)(image_height_ - 1));
+        x_a = std::clamp(x_a, 0.f, (float)(image_width_ - 1));
+        x_b = std::clamp(x_b, 0.f, (float)(image_width_ - 1));
+        y_a = std::clamp(y_a, 0.f, (float)(image_height_ - 1));
+        y_b = std::clamp(y_b, 0.f, (float)(image_height_ - 1));
 
         bool steep = false;
-        if (std::abs(x0 - x1) < std::abs(y0 - y1))
+        if (std::abs(x_a - x_b) < std::abs(y_a - y_b))
         {
-            std::swap(x0, y0);
-            std::swap(x1, y1);
+            std::swap(x_a, y_a);
+            std::swap(x_b, y_b);
             steep = true;
         }
-        if (x0 > x1)
+        if (x_a > x_b)
         {
-            std::swap(x0, x1);
-            std::swap(y0, y1);
+            std::swap(x_a, x_b);
+            std::swap(y_a, y_b);
         }
-        for (float x_ = x0; x_ <= x1; x_++)
+        for (float x_ = x_a; x_ <= x_b; x_++)
         {
-            float t = (x_ - x0) / (float)(x1 - x0);
-            float y_ = y0 * (1. - t) + y1 * t;
+            float t = (x_ - x_a) / (float)(x_b - x_a);
+            float y_ = y_a * (1. - t) + y_b * t;            
             if (steep)
-                image_->set_pixel(y_, x_, color[0], color[1], color[2]);
-            else 
                 image_->set_pixel(x_, y_, color[0], color[1], color[2]);
+            else 
+                // set_pixel输入为row,col，因此未调换时输入y_,x_
+                image_->set_pixel(y_, x_, color[0], color[1], color[2]);
         }
     }
 
