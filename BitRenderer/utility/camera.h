@@ -92,7 +92,7 @@ public:
 
         double viewport_width = viewport_height * aspect_ratio_;
 
-        // 相机坐标系为右手系，z轴指向屏幕外（.obj坐标系与此相同）
+        // 相机坐标系为右手系，z轴指向屏幕外
         // 
         //     | y v_
         //     |
@@ -328,21 +328,10 @@ private:
     {
         Mat<4, 4> view;
 
-        // 相机坐标系为右手系，z轴指向屏幕外（.obj坐标系与此相同）
-        // 
-        //     | y v_
-        //     |
-        //     |
-        //    / —————— x u_
-        //   /
-        //  / z w_
-        // 
-        // 视口左上角为相机坐标系原点，因此对v_取负
-        //
         view = 
-        {{
-            { u_.x(),  u_.y(),  u_.z(), -dot( u_, lookfrom_)},
+        {{            
             {-v_.x(), -v_.y(), -v_.z(), -dot(-v_, lookfrom_)},
+            { u_.x(),  u_.y(),  u_.z(), -dot( u_, lookfrom_)},
             { w_.x(),  w_.y(),  w_.z(), -dot( w_, lookfrom_)},
             {0, 0, 0, 1}
         }};
@@ -399,9 +388,9 @@ private:
             float t = (x_ - x0) / (float)(x1 - x0);
             float y_ = y0 * (1. - t) + y1 * t;
             if (steep)
-                image_->set_pixel(x_, y_, color[0], color[1], color[2]);
-            else 
                 image_->set_pixel(y_, x_, color[0], color[1], color[2]);
+            else 
+                image_->set_pixel(x_, y_, color[0], color[1], color[2]);
         }
     }
 
