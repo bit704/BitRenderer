@@ -302,6 +302,8 @@ private:
 
             t.vertex_homo_divi();
 
+            viewport_transformation(t);
+
             //画线
             draw_line(t.vertex_[0], t.vertex_[1], line_color);
             draw_line(t.vertex_[1], t.vertex_[2], line_color);
@@ -312,7 +314,60 @@ private:
     void rasterize_depth(const std::vector<TriangleRasterize>& triangles)
         const
     {
+        Mat<4, 4> mvp;
+        std::vector<std::vector<float>> depth_buf(image_height_, std::vector<float>(image_width_, std::numeric_limits<float>::infinity()));
 
+        mvp = get_project_matrix() * get_view_matrix();
+
+        for (int i = 0; i < triangles.size(); i++)
+        {
+            //对顶点进行坐标变换
+            TriangleRasterize t = triangles[i];
+
+            t.vertex_[0] = mvp * t.vertex_[0];
+            t.vertex_[1] = mvp * t.vertex_[1];
+            t.vertex_[2] = mvp * t.vertex_[2];
+
+            t.vertex_homo_divi();
+
+            viewport_transformation(t);
+
+            //覆盖像素
+            float maxx = (std::max)((std::max)(t.vertex_[0].x(), t.vertex_[1].x()), t.vertex_[2].x());
+            float minx = (std::min)((std::min)(t.vertex_[0].x(), t.vertex_[1].x()), t.vertex_[2].x());
+            float maxy = (std::max)((std::max)(t.vertex_[0].y(), t.vertex_[1].y()), t.vertex_[2].y());
+            float miny = (std::min)((std::min)(t.vertex_[0].y(), t.vertex_[1].y()), t.vertex_[2].y());
+            //像素检测
+            for (int x = minx; x <= maxx; x++)
+            {
+                for (int y = miny; y <= maxy; y++)
+                {
+                    if (inside_triangle(t, x, y))
+                    {
+                        float z = interpolated_depth(t, x, y);
+                        if (z < depth_buf[y][x])
+                        {
+                            depth_buf[y][x] = z;
+                        }
+                    }
+                }
+            }
+        }
+        //图像绘制
+        for (int i = 0; i < image_height_; i++)
+        {
+            for (int j = 0; j < image_width_; j++)
+            {
+
+                if (depth_buf[i][j] == std::numeric_limits<float>::infinity())
+                    image_->set_pixel(i, j, 255, 255, 255);
+                else
+                {
+                    float color = depth_buf[i][j] * 255;
+                    image_->set_pixel(i, j, color, color, color);
+                }
+            }
+        }
     }
 
     void rasterize_shade(const std::vector<TriangleRasterize>& triangles)
@@ -361,15 +416,10 @@ private:
         const
     {
         // NDC坐标范围为[-1,1]，变换到[0,1]再缩放
-        float x_a = (a[0] + 1) / 2 * (image_width_ - 1);
-        float x_b = (b[0] + 1) / 2 * (image_width_ - 1);
-        float y_a = (a[1] + 1) / 2 * (image_height_ - 1);
-        float y_b = (b[1] + 1) / 2 * (image_height_ - 1);
-
-        x_a = std::clamp(x_a, 0.f, (float)(image_width_ - 1));
-        x_b = std::clamp(x_b, 0.f, (float)(image_width_ - 1));
-        y_a = std::clamp(y_a, 0.f, (float)(image_height_ - 1));
-        y_b = std::clamp(y_b, 0.f, (float)(image_height_ - 1));
+        float x_a = a[0];
+        float x_b = b[0];
+        float y_a = a[1];
+        float y_b = b[1];
 
         bool steep = false;
         if (std::abs(x_a - x_b) < std::abs(y_a - y_b))
@@ -393,6 +443,56 @@ private:
                 // set_pixel输入为row,col，因此未调换时输入y_,x_
                 image_->set_pixel(y_, x_, color[0], color[1], color[2]);
         }
+    }
+
+    void viewport_transformation(TriangleRasterize& triangle)
+        const
+    {
+        for (auto& vec : triangle.vertex_)
+        {
+            vec.x() = (vec.x() + 1.) / 2. * (image_width_ - 1.);
+            vec.y() = (vec.y() + 1.) / 2. * (image_height_ - 1.);
+
+            vec.x() = std::clamp((float)vec.x(), 0.f, (float)(image_width_ - 1));
+            vec.y() = std::clamp((float)vec.y(), 0.f, (float)(image_height_ - 1));
+
+            vec.z() = vec.z() * (100. - 0.1) / 2.0 + (100. + 0.1) / 2.0;
+        }
+    }
+
+    bool inside_triangle(TriangleRasterize triangle, float x, float y)
+        const
+    {
+        Vec3 AB(triangle.vertex_[1].x() - triangle.vertex_[0].x(), triangle.vertex_[1].y() - triangle.vertex_[0].y(), triangle.vertex_[1].z() - triangle.vertex_[0].z());
+        Vec3 CA(triangle.vertex_[0].x() - triangle.vertex_[2].x(), triangle.vertex_[0].y() - triangle.vertex_[2].y(), triangle.vertex_[0].z() - triangle.vertex_[2].z());
+        Vec3 BC(triangle.vertex_[2].x() - triangle.vertex_[1].x(), triangle.vertex_[2].y() - triangle.vertex_[1].y(), triangle.vertex_[2].z() - triangle.vertex_[1].z());
+
+        Vec3 AQ(x - triangle.vertex_[0].x(), y - triangle.vertex_[0].y(), -triangle.vertex_[0].z());
+        Vec3 CQ(x - triangle.vertex_[2].x(), y - triangle.vertex_[2].y(), -triangle.vertex_[2].z());
+        Vec3 BQ(x - triangle.vertex_[1].x(), y - triangle.vertex_[1].y(), -triangle.vertex_[1].z());
+
+        float ABAQ = cross(AB, AQ).z();
+        float CACQ = cross(CA, CQ).z();
+        float BCBQ = cross(BC, BQ).z();
+
+        if (ABAQ >= 0 && CACQ >= 0 && BCBQ >= 0 || ABAQ <= 0 && CACQ <= 0 && BCBQ <= 0) return true;
+        else return false;
+    }
+
+    float interpolated_depth(TriangleRasterize t, float x, float y)
+        const
+    {
+        auto v = t.vertex_;
+
+        float alpha = (x * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * y + v[1].x() * v[2].y() - v[2].x() * v[1].y()) / (v[0].x() * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * v[0].y() + v[1].x() * v[2].y() - v[2].x() * v[1].y());
+        float beta = (x * (v[2].y() - v[0].y()) + (v[0].x() - v[2].x()) * y + v[2].x() * v[0].y() - v[0].x() * v[2].y()) / (v[1].x() * (v[2].y() - v[0].y()) + (v[0].x() - v[2].x()) * v[1].y() + v[2].x() * v[0].y() - v[0].x() * v[2].y());
+        float gamma = (x * (v[0].y() - v[1].y()) + (v[1].x() - v[0].x()) * y + v[0].x() * v[1].y() - v[1].x() * v[0].y()) / (v[2].x() * (v[0].y() - v[1].y()) + (v[1].x() - v[0].x()) * v[2].y() + v[0].x() * v[1].y() - v[1].x() * v[0].y());
+
+        float w_reciprocal = 1.0 / (alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
+        float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
+        z_interpolated *= w_reciprocal;
+
+        return z_interpolated;
     }
 
 /*
