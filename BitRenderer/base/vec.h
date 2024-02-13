@@ -26,7 +26,7 @@ public:
 		}
 	}
 
-	//用于设置imgui编辑的相机外参、颜色（imgui使用float）
+	// 用于设置imgui编辑的相机外参、颜色（imgui使用float）
 	Vec(float t[3])
 	{
 		assert(n == 3);
@@ -52,7 +52,7 @@ public:
 
 	Vec(double t0, double t1, double t2, double t3)
 	{
-		assert(n == 3);
+		assert(n == 4);
 		e_[0] = t0;
 		e_[1] = t1;
 		e_[2] = t2;
@@ -350,6 +350,17 @@ Vec<n1> proj(const Vec<n2>& v)
 	Vec<n1> ret;
 	for (int i = n1; i--; ret[i] = v[i]);
 	return ret;
+}
+
+// 用于比较imgui编辑的相机外参、颜色（imgui使用float）
+template<int n>
+bool operator!=(const Vec<n>& lhs, float rhs[3])
+{
+	assert(n == 3);
+	for (int i = 0; i < n; ++i)
+		if (std::fabs(lhs[i] - rhs[i]) > kEpsilon)
+			return true;
+	return false;
 }
 
 inline Vec3 cross(const Vec3& u, const Vec3& v)

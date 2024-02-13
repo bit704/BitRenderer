@@ -72,11 +72,15 @@ void ImageWrite::write()
 	stbi_write_png(image_path_.c_str(), width_, height_, channel_, image_data_, 0);
 }
 
-void ImageWrite::flush()
+void ImageWrite::flush(Color3 c)
 {
+	int r = int(std::clamp(linear_to_gamma(c.x()), 0., 1.) * 255.999);
+	int g = int(std::clamp(linear_to_gamma(c.y()), 0., 1.) * 255.999);
+	int b = int(std::clamp(linear_to_gamma(c.z()), 0., 1.) * 255.999);
+
 	for (int i = 0; i < height_; ++i)
 		for (int j = 0; j < width_; ++j)
-			set_pixel(i, j, 255, 255, 255);
+			set_pixel(i, j, r, g, b);
 }
 
 ImageWrite::~ImageWrite()
