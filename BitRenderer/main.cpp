@@ -94,21 +94,23 @@ int main()
     int scene_current_idx = 0;
     int image_width = 600;
     const char* aspect_ratios[] = { "1/1", "4/3", "3/2", "16/9", "2/1" };
-    int aspect_ratio_idx = 0;
+    int aspect_ratio_pre_idx = 0;
+    int aspect_ratio_current_idx = 0;
     double aspect_ratio = 1;
-    int samples_per_pixel = 30;
+    int samples_per_pixel = 16;
     int max_depth = 10;
     int vfov = 20;
     float lookfrom[3] = { 0, 0, 1 };
     float lookat[3]   = { 0, 0, 0 };
     float vup[3]      = { 0, 1, 0 };
     float background[3] = { 1, 1, 1 };
-    std::string image_name = "default.png";
+    std::string image_name = "default.png";    
 
     // 渲染数据
     Camera cam;
     unsigned char** image_data_p2p = nullptr; //指向图像数据指针的指针
     std::thread t;
+    bool refresh_rasterizing = true; // 是否需要刷新光栅化结果，第一帧默认为true，每帧判定结束后置为false，当任意影响光栅化的参数被编辑时置为true
      
     // 统计数据
     auto tracing_start = steady_clock::now(); // 记录渲染开始时间
@@ -121,7 +123,7 @@ int main()
     // 组装渲染配置
     auto assemble = [&]()
         {
-            // 图片尺寸发生变化时需要重新生成图片
+            // 仅在图片尺寸发生变化时需要重新生成图片
             bool new_image = (image_width != cam.get_image_width()) ||
                 (aspect_ratio != cam.get_aspect_ratio());
 
@@ -143,7 +145,7 @@ int main()
     // 设置光追统计数据
     auto tracing_statistics = [&]()
         {
-            
+            assemble();
             tracing.store(true);
             hit_count.store(0);
             sample_count.store(0);
@@ -176,9 +178,7 @@ int main()
         int now_window_width = now_window_rect.right - now_window_rect.left;
         int now_window_height = now_window_rect.bottom - now_window_rect.top;
 
-        assemble();
-
-        // 设置
+        // 设置界面
         {
             ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always, ImVec2(0, 0));
             ImGui::SetNextWindowSize(ImVec2(now_window_width * .3, now_window_height), ImGuiCond_Always);
@@ -207,13 +207,14 @@ int main()
                         const bool is_selected = (obj_current_idx == n);
                         if (ImGui::Selectable(objs[n].stem().string().c_str(), is_selected))
                         {
+                            obj_pre_idx = obj_current_idx;
+                            obj_current_idx = n;
                             if (obj_pre_idx != obj_current_idx)
                             {
                                 // 选择新obj时无需再停止光栅化
                                 stop_rastering.store(false);
+                                refresh_rasterizing = true;
                             }
-                            obj_pre_idx = obj_current_idx;
-                            obj_current_idx = n;
                         }                           
 
                         if (is_selected)
@@ -226,7 +227,7 @@ int main()
                         if (obj_current_idx != 0)
                         {
                             image_width = 600;
-                            aspect_ratio_idx = 0;
+                            aspect_ratio_current_idx = 0;
                             samples_per_pixel = 5;
                             max_depth = 5;
                             vfov = 20;
@@ -272,6 +273,8 @@ int main()
                         {
                             // 选择scene时无需再停止光栅化
                             stop_rastering.store(false);
+                            // 此时刷新光栅化只用于显示仅带背景颜色的图片
+                            refresh_rasterizing = true;
                             scene_current_idx = n;
                         }                            
 
@@ -284,17 +287,13 @@ int main()
                         // 各场景推荐参数
                         if (scene_current_idx != 0)
                         {
-                            // 清除图片
-                            if(image_data_p2p != nullptr && *image_data_p2p != nullptr)
-                                cam.clear();
                             image_name = std::string(scenes[scene_current_idx]) + ".png";
-                        }
-                            
+                        }                            
 
                         if (scene_current_idx == 1)
                         {
                             image_width = 600;
-                            aspect_ratio_idx = 3;
+                            aspect_ratio_current_idx = 3;
                             samples_per_pixel = 30;
                             max_depth = 10;
                             vfov = 20;
@@ -310,7 +309,7 @@ int main()
                         else if (scene_current_idx == 2)
                         {
                             image_width = 600;
-                            aspect_ratio_idx = 0;
+                            aspect_ratio_current_idx = 0;
                             samples_per_pixel = 30;
                             max_depth = 10;
                             vfov = 40;
@@ -326,7 +325,7 @@ int main()
                         else if (scene_current_idx == 3)
                         {
                             image_width = 600;
-                            aspect_ratio_idx = 3;
+                            aspect_ratio_current_idx = 3;
                             samples_per_pixel = 30;
                             max_depth = 10;
                             vfov = 20;
@@ -342,7 +341,7 @@ int main()
                         else if (scene_current_idx == 4)
                         {
                             image_width = 600;
-                            aspect_ratio_idx = 0;
+                            aspect_ratio_current_idx = 0;
                             samples_per_pixel = 30;
                             max_depth = 10;
                             vfov = 40;
@@ -373,9 +372,9 @@ int main()
             // 选择光栅化预览模式
             ImGui::Text("Rasterizing Preview");
             ImGui::Text("            ");            
-            ImGui::SameLine(); ImGui::RadioButton("wireframe", &rastering_preview_mode, 0);
-            ImGui::SameLine(); ImGui::RadioButton("depth",     &rastering_preview_mode, 1);
-            ImGui::SameLine(); ImGui::RadioButton("shade",     &rastering_preview_mode, 2);
+            ImGui::SameLine(); refresh_rasterizing |= ImGui::RadioButton("wireframe", &rastering_preview_mode, 0);
+            ImGui::SameLine(); refresh_rasterizing |= ImGui::RadioButton("depth",     &rastering_preview_mode, 1);
+            ImGui::SameLine(); refresh_rasterizing |= ImGui::RadioButton("shade",     &rastering_preview_mode, 2);
             
             ImGui::Text("Ray Tracing");
             ImGui::Text("                    "); 
@@ -478,7 +477,7 @@ int main()
             ImGui::SeparatorText("camera");
 
             // 输入图片宽度
-            ImGui::InputInt("image width", &image_width);
+            refresh_rasterizing |= ImGui::InputInt("image width", &image_width);
             ImGui::SameLine(); 
             HelpMarker("256~1024\n");
             if (image_width < 256)
@@ -487,21 +486,28 @@ int main()
                 image_width = 1024;
 
             // 选择图片宽高比
-            const char* combo_preview_value_ar = aspect_ratios[aspect_ratio_idx];
+            const char* combo_preview_value_ar = aspect_ratios[aspect_ratio_current_idx];
             if (ImGui::BeginCombo("aspect ratio", combo_preview_value_ar, flags))
             {
                 for (int n = 0; n < IM_ARRAYSIZE(aspect_ratios); n++)
                 {
-                    const bool is_selected = (aspect_ratio_idx == n);
+                    const bool is_selected = (aspect_ratio_current_idx == n);
                     if (ImGui::Selectable(aspect_ratios[n], is_selected))
-                        aspect_ratio_idx = n;
-
+                    {
+                        aspect_ratio_pre_idx = aspect_ratio_current_idx;
+                        aspect_ratio_current_idx = n;
+                        if (aspect_ratio_current_idx != aspect_ratio_pre_idx)
+                        {
+                            refresh_rasterizing = true;
+                        }
+                    }
+                        
                     if (is_selected)
                         ImGui::SetItemDefaultFocus();
                 }
                 ImGui::EndCombo();
             }
-            switch (aspect_ratio_idx)
+            switch (aspect_ratio_current_idx)
             {
             case 0: aspect_ratio = 1      ; break;
             case 1: aspect_ratio = 4. / 3.; break;
@@ -511,7 +517,7 @@ int main()
             }
 
             // 设置vfov
-            ImGui::DragInt("vfov", &vfov, 1, 1, 179, "%d°", ImGuiSliderFlags_AlwaysClamp);
+            refresh_rasterizing |= ImGui::DragInt("vfov", &vfov, 1, 1, 179, "%d°", ImGuiSliderFlags_AlwaysClamp);
             ImGui::SameLine();
             HelpMarker(
                 "Drag to edit value.\n"
@@ -519,10 +525,10 @@ int main()
                 "Double-click or CTRL+click to input value.\n");
 
             // 设置背景颜色
-            ImGui::ColorEdit3("background color", background);
+            refresh_rasterizing |= ImGui::ColorEdit3("background color", background);
             ImGui::SameLine();
             HelpMarker(
-                "Only work for Ray Tracing for performance.\n"
+                "No effect on depth for Rasterizing Preview.\n"
                 "Click on the color square to open a color picker.\n"
                 "Click and hold to use drag and drop.\n"
                 "Right-click on the color square to show options.\n"
@@ -547,9 +553,9 @@ int main()
                 max_depth = 400;
 
             // 设置相机外参
-            ImGui::InputFloat3("lookfrom", lookfrom, "%.1f");
-            ImGui::InputFloat3("lookat", lookat, "%.1f");
-            ImGui::InputFloat3("vup", vup, "%.1f");
+            refresh_rasterizing |= ImGui::InputFloat3("lookfrom", lookfrom, "%.1f");
+            refresh_rasterizing |= ImGui::InputFloat3("lookat", lookat, "%.1f");
+            refresh_rasterizing |= ImGui::InputFloat3("vup", vup, "%.1f");
             ImGui::SameLine();
             HelpMarker("Up direction of the camera.\n");
 
@@ -568,8 +574,28 @@ int main()
             ImGui::End();
         }
 
-        // 渲染
+        // 渲染界面
         {
+            assemble();
+
+            // 只有当相机外参改变时刷新光栅化结果
+            if (refresh_rasterizing)
+            {
+                // 只有在同时满足以下情况时才进行光栅化预览
+                // 未开始光线追踪
+                // 没有停止光栅化（完成一个obj的光线追踪离线渲染且没有clear时停止光栅化）
+                // 选择的是不为None的obj
+                if (!tracing.load() && !stop_rastering.load())
+                {
+                    cam.clear();
+                    if (!use_preset && obj_current_idx != 0)
+                    {
+                        scene_obj_rasterize(cam, objs[obj_current_idx], rastering_preview_mode);
+                    }
+                }
+                refresh_rasterizing = false; // 置为false，下一帧重新判定
+            }
+
             ImGui::SetNextWindowPos(ImVec2(now_window_width * .3, 0), ImGuiCond_Always, ImVec2(0, 0));
             ImGui::SetNextWindowSize(ImVec2(now_window_width * .7, now_window_height), ImGuiCond_Always);
 
@@ -589,9 +615,9 @@ int main()
             auto duration_sec = duration_cast<seconds>(duration);
             ImGui::Text("total elapsed time = %d min %d sec", duration_min.count(), duration_sec.count() % 60);
 
+            // 加载纹理以在UI实时显示渲染结果
             if (image_data_p2p != nullptr && *image_data_p2p != nullptr)
             {
-                // 加载纹理
                 bool ret = LoadTextureFromImageData(*image_data_p2p, cam.get_image_width(), cam.get_image_height(), g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture);
                 IM_ASSERT(ret);
                 // 传递SRV GPU句柄，而不是CPU句柄。传递内部指针值, 转换为ImTextureID。
@@ -601,7 +627,7 @@ int main()
             ImGui::End();
         }
 
-        // 状态
+        // 状态界面
         {
             ImGui::Begin("STATUS", nullptr, custom_window_flag);
 
@@ -621,21 +647,6 @@ int main()
             ImGui::End();
         }
 
-        // 光栅化预览
-        {
-            // 只有在同时满足以下情况时才进行光栅化预览
-            // 未开始光线追踪
-            // 没有停止光栅化（完成一个obj的光线追踪离线渲染且没有clear时停止光栅化）
-            // 选择的是不为None的obj
-            if (!tracing.load() && !stop_rastering.load())
-            {
-                cam.clear();
-                if (!use_preset && obj_current_idx != 0)
-                {
-                    scene_obj_rasterize(cam, objs[obj_current_idx], rastering_preview_mode);
-                }
-            }       
-        }
 
         ImGui::Render();
 

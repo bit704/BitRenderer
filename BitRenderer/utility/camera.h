@@ -49,8 +49,7 @@ private:
 public:
     Camera() : 
         aspect_ratio_(1), 
-        vfov_(90), 
-        background_(1, 1, 1), 
+        vfov_(20),         
         image_height_(0), 
         image_width_(0), 
         channel_(4),
@@ -60,6 +59,7 @@ public:
         lookfrom_(0, 0, 1), 
         lookat_(0, 0, 0), 
         vup_(0, 1, 0),
+        background_(1, 1, 1),
         defocus_angle_(0), 
         focus_dist_(10)
     {}
@@ -129,7 +129,7 @@ public:
     void clear()
         const
     {
-        image_->flush();
+        image_->flush(background_);
     }
 
 /*
@@ -549,9 +549,21 @@ public:
         vfov_ = vfov;
     }
 
+    double get_vfov()
+        const
+    {
+        return vfov_;
+    }
+
     void set_lookfrom(const Vec3& lookfrom)
     {
         lookfrom_ = lookfrom;
+    }
+
+    Vec3 get_lookform()
+        const
+    {
+        return lookfrom_;
     }
 
     void set_lookat(const Vec3& lookat)
@@ -559,9 +571,21 @@ public:
         lookat_ = lookat;
     }
 
+    Vec3 get_lookat()
+        const
+    {
+        return lookat_;
+    }
+
     void set_vup(const Vec3& vup)
     {
         vup_ = vup;
+    }
+
+    Vec3 get_vup()
+        const
+    {
+        return vup_;
     }
 
     void set_defocus_angle(const double& defocus_angle)
@@ -577,6 +601,12 @@ public:
     void set_background(const Color3& background)
     {
         background_ = background;
+    }
+
+    Color3 get_background()
+        const
+    {
+        return background_;
     }
 
     void set_image_name(const std::string& image_name)

@@ -43,7 +43,7 @@ public:
 	void set_pixel(const int& row, const int& col, const Color3& c, const int& samples_per_pixel);
 	// 写入指定图片
 	void write();
-	void flush();
+	void flush(Color3 c);
 
 	unsigned char** get_image_data_p2p()
 	{
