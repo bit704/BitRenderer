@@ -1,6 +1,6 @@
 # BitRenderer
 
-出于学习目的开发的C++软件渲染器，基于C++17。
+C++软件渲染器，基于C++17。
 
 支持**光栅化**实时预览和**光线追踪**离线渲染。
 
@@ -10,7 +10,7 @@ UI按3:7纵向划分为**SETUP**界面和**RENDER**界面（自适应窗口大�
 
 > 将鼠标悬停在UI界面的各`(?)`标志处可查看对应帮助信息。
 
-1. SETUP界面
+- SETUP界面
 
    - scene区域
 
@@ -46,31 +46,29 @@ UI按3:7纵向划分为**SETUP**界面和**RENDER**界面（自适应窗口大�
 
      打印程序运行信息。
 
-2. RENDER界面
+- RENDER界面
 
-   **实时显示**当前渲染图像及渲染信息（光栅化或光追）。
+   实时显示当前渲染图像及渲染信息（光栅化或光追）。渲染信息位于渲染结果上方：
 
-   渲染信息位于渲染结果上方：
+   - image size：显示当前图像尺寸。
 
-   image size：显示当前图像尺寸。
+   - hit count：显示光追总击中（弹射）次数。
 
-   hit count：显示光追总击中（弹射）次数。
+   - average depth：显示光追平均击中（弹射）次数。
 
-   average depth：显示光追平均击中（弹射）次数。
+   - total elapsed time：显示光追总耗时（加载obj用时+构建BVH用时+渲染用时）。
 
-   total elapsed time：显示光追总耗时（加载obj用时+构建BVH用时+渲染用时）。
-
-3. STATUS界面
+- STATUS界面
 
    实时显示状态信息：
 
-   UI fps：当前UI帧率。（UI后端为Win32+DirectX 12）
+   - UI fps：当前UI帧率。（UI后端为Win32+DirectX 12）
 
-   UI 1/fps：当前UI帧率的倒数，单位为毫秒。
+   - UI 1/fps：当前UI帧率的倒数，单位为毫秒。
 
-   sys memory load：系统内存负载，单位为百分比。
+   - sys memory load：系统内存负载，单位为百分比。
 
-   sys cpu usage：系统cpu占用率（每300毫秒统计一次），单位为百分比。
+   - sys cpu usage：系统cpu占用率（每300毫秒统计一次），单位为百分比。
 
 ## 三方库
 

@@ -449,6 +449,7 @@ int main()
             {
                 cam.clear();
                 stop_rastering.store(false);
+                refresh_rasterizing = true;
             }
             ImGui::EndDisabled();
 
