@@ -315,7 +315,7 @@ private:
         const
     {
         Mat<4, 4> mvp;
-        std::vector<std::vector<float>> depth_buf(image_height_, std::vector<float>(image_width_, std::numeric_limits<float>::infinity()));
+        std::vector<std::vector<double>> depth_buf(image_height_, std::vector<double>(image_width_, kInfinitDouble));
 
         mvp = get_project_matrix() * get_view_matrix();
 
@@ -333,10 +333,10 @@ private:
             viewport_transformation(t);
 
             //覆盖像素
-            float maxx = (std::max)((std::max)(t.vertex_[0].x(), t.vertex_[1].x()), t.vertex_[2].x());
-            float minx = (std::min)((std::min)(t.vertex_[0].x(), t.vertex_[1].x()), t.vertex_[2].x());
-            float maxy = (std::max)((std::max)(t.vertex_[0].y(), t.vertex_[1].y()), t.vertex_[2].y());
-            float miny = (std::min)((std::min)(t.vertex_[0].y(), t.vertex_[1].y()), t.vertex_[2].y());
+            double maxx = max3(t.vertex_[0].x(), t.vertex_[1].x(), t.vertex_[2].x());
+            double minx = min3(t.vertex_[0].x(), t.vertex_[1].x(), t.vertex_[2].x());
+            double maxy = max3(t.vertex_[0].y(), t.vertex_[1].y(), t.vertex_[2].y());
+            double miny = min3(t.vertex_[0].y(), t.vertex_[1].y(), t.vertex_[2].y());
             //像素检测
             for (int x = minx; x <= maxx; x++)
             {
@@ -344,11 +344,9 @@ private:
                 {
                     if (inside_triangle(t, x, y))
                     {
-                        float z = interpolated_depth(t, x, y);
+                        double z = interpolated_depth(t, x, y);
                         if (z < depth_buf[y][x])
-                        {
                             depth_buf[y][x] = z;
-                        }
                     }
                 }
             }
@@ -359,11 +357,13 @@ private:
             for (int j = 0; j < image_width_; j++)
             {
 
-                if (depth_buf[i][j] == std::numeric_limits<float>::infinity())
+                if (depth_buf[i][j] == kInfinitDouble)
+                {
                     image_->set_pixel(i, j, 255, 255, 255);
+                }
                 else
                 {
-                    float color = depth_buf[i][j] * 255;
+                    double color = depth_buf[i][j] * 255;
                     image_->set_pixel(i, j, color, color, color);
                 }
             }
@@ -398,8 +398,8 @@ private:
     Mat<4, 4> get_project_matrix()
         const
     {
-        float far  = 100.f;
-        float near = .1f;
+        double far  = 100;
+        double near = .1;
         Mat<4, 4> project;
 
         project =
@@ -416,10 +416,10 @@ private:
         const
     {
         // NDC坐标范围为[-1,1]，变换到[0,1]再缩放
-        float x_a = a[0];
-        float x_b = b[0];
-        float y_a = a[1];
-        float y_b = b[1];
+        double x_a = a[0];
+        double x_b = b[0];
+        double y_a = a[1];
+        double y_b = b[1];
 
         bool steep = false;
         if (std::abs(x_a - x_b) < std::abs(y_a - y_b))
@@ -433,10 +433,10 @@ private:
             std::swap(x_a, x_b);
             std::swap(y_a, y_b);
         }
-        for (float x_ = x_a; x_ <= x_b; x_++)
+        for (double x_ = x_a; x_ <= x_b; x_++)
         {
-            float t = (x_ - x_a) / (float)(x_b - x_a);
-            float y_ = y_a * (1. - t) + y_b * t;            
+            double t = (x_ - x_a) / (x_b - x_a);
+            double y_ = y_a * (1. - t) + y_b * t;
             if (steep)
                 image_->set_pixel(x_, y_, color[0], color[1], color[2]);
             else 
@@ -453,14 +453,14 @@ private:
             vec.x() = (vec.x() + 1.) / 2. * (image_width_ - 1.);
             vec.y() = (vec.y() + 1.) / 2. * (image_height_ - 1.);
 
-            vec.x() = std::clamp((float)vec.x(), 0.f, (float)(image_width_ - 1));
-            vec.y() = std::clamp((float)vec.y(), 0.f, (float)(image_height_ - 1));
+            vec.x() = std::clamp(vec.x(), 0., (double)(image_width_ - 1));
+            vec.y() = std::clamp(vec.y(), 0., (double)(image_height_ - 1));
 
             vec.z() = vec.z() * (100. - 0.1) / 2.0 + (100. + 0.1) / 2.0;
         }
     }
 
-    bool inside_triangle(TriangleRasterize triangle, float x, float y)
+    bool inside_triangle(TriangleRasterize triangle, double x, double y)
         const
     {
         Vec3 AB(triangle.vertex_[1].x() - triangle.vertex_[0].x(), triangle.vertex_[1].y() - triangle.vertex_[0].y(), triangle.vertex_[1].z() - triangle.vertex_[0].z());
@@ -471,25 +471,27 @@ private:
         Vec3 CQ(x - triangle.vertex_[2].x(), y - triangle.vertex_[2].y(), -triangle.vertex_[2].z());
         Vec3 BQ(x - triangle.vertex_[1].x(), y - triangle.vertex_[1].y(), -triangle.vertex_[1].z());
 
-        float ABAQ = cross(AB, AQ).z();
-        float CACQ = cross(CA, CQ).z();
-        float BCBQ = cross(BC, BQ).z();
+        double ABAQ = cross(AB, AQ).z();
+        double CACQ = cross(CA, CQ).z();
+        double BCBQ = cross(BC, BQ).z();
 
-        if (ABAQ >= 0 && CACQ >= 0 && BCBQ >= 0 || ABAQ <= 0 && CACQ <= 0 && BCBQ <= 0) return true;
-        else return false;
+        if (ABAQ >= 0 && CACQ >= 0 && BCBQ >= 0 || ABAQ <= 0 && CACQ <= 0 && BCBQ <= 0) 
+            return true;
+        else 
+            return false;
     }
 
-    float interpolated_depth(TriangleRasterize t, float x, float y)
+    double interpolated_depth(TriangleRasterize t, double x, double y)
         const
     {
         auto v = t.vertex_;
 
-        float alpha = (x * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * y + v[1].x() * v[2].y() - v[2].x() * v[1].y()) / (v[0].x() * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * v[0].y() + v[1].x() * v[2].y() - v[2].x() * v[1].y());
-        float beta = (x * (v[2].y() - v[0].y()) + (v[0].x() - v[2].x()) * y + v[2].x() * v[0].y() - v[0].x() * v[2].y()) / (v[1].x() * (v[2].y() - v[0].y()) + (v[0].x() - v[2].x()) * v[1].y() + v[2].x() * v[0].y() - v[0].x() * v[2].y());
-        float gamma = (x * (v[0].y() - v[1].y()) + (v[1].x() - v[0].x()) * y + v[0].x() * v[1].y() - v[1].x() * v[0].y()) / (v[2].x() * (v[0].y() - v[1].y()) + (v[1].x() - v[0].x()) * v[2].y() + v[0].x() * v[1].y() - v[1].x() * v[0].y());
+        double alpha = (x * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * y + v[1].x() * v[2].y() - v[2].x() * v[1].y()) / (v[0].x() * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * v[0].y() + v[1].x() * v[2].y() - v[2].x() * v[1].y());
+        double beta  = (x * (v[2].y() - v[0].y()) + (v[0].x() - v[2].x()) * y + v[2].x() * v[0].y() - v[0].x() * v[2].y()) / (v[1].x() * (v[2].y() - v[0].y()) + (v[0].x() - v[2].x()) * v[1].y() + v[2].x() * v[0].y() - v[0].x() * v[2].y());
+        double gamma = (x * (v[0].y() - v[1].y()) + (v[1].x() - v[0].x()) * y + v[0].x() * v[1].y() - v[1].x() * v[0].y()) / (v[2].x() * (v[0].y() - v[1].y()) + (v[1].x() - v[0].x()) * v[2].y() + v[0].x() * v[1].y() - v[1].x() * v[0].y());
 
-        float w_reciprocal = 1.0 / (alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
-        float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
+        double w_reciprocal = 1.0 / (alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
+        double z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
         z_interpolated *= w_reciprocal;
 
         return z_interpolated;
