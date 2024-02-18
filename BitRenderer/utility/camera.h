@@ -304,10 +304,14 @@ private:
 
             viewport_transformation(t);
 
-            //画线
-            draw_line(t.vertex_[0], t.vertex_[1], line_color);
-            draw_line(t.vertex_[1], t.vertex_[2], line_color);
-            draw_line(t.vertex_[2], t.vertex_[0], line_color);
+            Vec3 barycenter_normal = t.get_barycenter_normal();
+
+            // 背面三角形使用虚线绘制
+            bool back_face = (dot(barycenter_normal, w_) < 0);
+
+            draw_line(t.vertex_[0], t.vertex_[1], line_color, back_face);
+            draw_line(t.vertex_[1], t.vertex_[2], line_color, back_face);
+            draw_line(t.vertex_[2], t.vertex_[0], line_color, back_face);
         }
     }
 
@@ -412,7 +416,7 @@ private:
         return project;
     }
 
-    void draw_line(const Point4& a, const Point4& b, const Color3& color)
+    void draw_line(const Point4& a, const Point4& b, const Color3& color, bool dotted = false)
         const
     {
         // NDC坐标范围为[-1,1]，变换到[0,1]再缩放
@@ -433,7 +437,9 @@ private:
             std::swap(x_a, x_b);
             std::swap(y_a, y_b);
         }
-        for (double x_ = x_a; x_ <= x_b; x_++)
+
+        int interval = dotted ? 2 : 1;
+        for (double x_ = x_a; x_ <= x_b; x_ += interval)
         {
             double t = (x_ - x_a) / (x_b - x_a);
             double y_ = y_a * (1. - t) + y_b * t;

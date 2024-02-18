@@ -48,5 +48,10 @@ public:
         vertex_[1] /= vertex_[1][3];
         vertex_[2] /= vertex_[2][3];
     }
+
+    Vec3 get_barycenter_normal()
+    {
+        return normal_[0] / 3 + normal_[1] / 3 + normal_[2] / 3;
+    }
 };
 #endif // !TRIANGLE_RASTERIZE_H
