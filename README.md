@@ -48,7 +48,16 @@ UI按3:7纵向划分为**SETUP**界面和**RENDER**界面（自适应窗口大�
 
 - RENDER界面
 
-   实时显示当前渲染图像及渲染信息（光栅化或光追）。渲染信息位于渲染结果上方：
+   实时显示当前渲染图像（光追过程中和光追结果未清除时显示光追图像，其它情况下显示光栅化图像）。
+
+   点击图像进行交互，按ESC退出交互：
+
+   - WS/AD/QE：前后/左右/上下移动
+   - 鼠标中键：缩放fov
+   -  鼠标左键：围绕观察点转动视角（第三人称）  
+   -  鼠标右键：自身转动视角（第一人称）
+
+   实时显示渲染信息于渲染结果上方：
 
    - image size：显示当前图像尺寸。
 
@@ -84,7 +93,7 @@ UI按3:7纵向划分为**SETUP**界面和**RENDER**界面（自适应窗口大�
 
 [ssloy/tinyrenderer](https://github.com/ssloy/tinyrenderer)
 
-[GAMES101](https://games-cn.org/intro-graphics/)
+[GAMES101](https://sites.cs.ucsb.edu/~lingqi/teaching/games101.html)
 
 [Ray Tracing in One Weekend Series](https://raytracing.github.io/)
 
