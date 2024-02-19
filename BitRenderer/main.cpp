@@ -112,13 +112,17 @@ int main()
     std::thread t;
     bool refresh_rasterizing = true; // 是否需要刷新光栅化结果，第一帧默认为true，每帧判定结束后置为false，当任意影响光栅化的参数被编辑时置为true
      
-    // 统计数据
+    // 统计数据    
     auto tracing_start = steady_clock::now(); // 记录渲染开始时间
     nanoseconds duration(0); // 记录渲染用时
-    double cpu_usage = 0.;
+    double cpu_usage = 0;
     auto   cpu_start = steady_clock::now(); // 记录CPU占用率计算间隔
     FILETIME cpu_idle_prev, cpu_kernel_prev, cpu_user_prev; // 记录CPU时间
     GetSystemTimes(&cpu_idle_prev, &cpu_kernel_prev, &cpu_user_prev);
+
+    // 键鼠交互
+    auto interaction_point = steady_clock::now(); // 上次处理键鼠交互时间点
+    bool enter_interaction = false; // 点击图像进行交互，按ESC退出交互
 
     // 组装渲染配置
     auto assemble = [&]()
@@ -621,9 +625,100 @@ int main()
             {
                 bool ret = LoadTextureFromImageData(*image_data_p2p, cam.get_image_width(), cam.get_image_height(), g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture);
                 IM_ASSERT(ret);
+                ImVec4 border_col = ImVec4(0, 0, 0, 0);
+                // 处于交互状态时显示高亮边框
+                if (enter_interaction)
+                    border_col = ImVec4(.667, .8, .957, 1);
                 // 传递SRV GPU句柄，而不是CPU句柄。传递内部指针值, 转换为ImTextureID。
-                ImGui::Image((ImTextureID)my_texture_srv_gpu_handle.ptr, ImVec2((float)cam.get_image_width(), (float)cam.get_image_height()));
+                HelpMarker("Click image to interact and press ESC to exit interaction.\n");
+                ImGui::Image(
+                    (ImTextureID)my_texture_srv_gpu_handle.ptr, 
+                    ImVec2((float)cam.get_image_width(), (float)cam.get_image_height()),
+                    ImVec2(0, 0),
+                    ImVec2(1, 1),
+                    ImVec4(1, 1, 1, 1),
+                    border_col
+                );
+                // 图片组件是否被点击
+                if (ImGui::IsItemClicked())
+                    enter_interaction = true;
             }
+
+            // 距上次处理键鼠交互时长
+            double interaction_delta = duration_cast<milliseconds>(steady_clock::now() - interaction_point).count() / 1e3;          
+            // 键鼠交互（未操作UI时）（点击图像进行交互，按ESC退出交互）
+            if (!ImGui::IsAnyItemActive() && enter_interaction)
+            {
+                // 前后移动 WS
+                if (ImGui::IsKeyDown(ImGuiKey_W))
+                {
+                    refresh_rasterizing = true;
+                    cam.move_front_back(interaction_delta);
+                }                    
+                if (ImGui::IsKeyDown(ImGuiKey_S))
+                {
+                    refresh_rasterizing = true;
+                    cam.move_front_back(-interaction_delta);
+                }
+                                           
+                // 左右移动 AD
+                if (ImGui::IsKeyDown(ImGuiKey_A))
+                {
+                    refresh_rasterizing = true;
+                    cam.move_left_right(interaction_delta);
+                }                    
+                if (ImGui::IsKeyDown(ImGuiKey_D))
+                {
+                    refresh_rasterizing = true;
+                    cam.move_left_right(-interaction_delta);
+                }                    
+
+                // 上下移动 QE
+                if (ImGui::IsKeyDown(ImGuiKey_Q))
+                {
+                    refresh_rasterizing = true;
+                    cam.move_up_down(interaction_delta);
+                }
+                if (ImGui::IsKeyDown(ImGuiKey_E))
+                {
+                    refresh_rasterizing = true;
+                    cam.move_up_down(-interaction_delta);
+                }
+
+                // 鼠标中键 缩放fov                  
+                if (double fov_scale = ImGui::GetIO().MouseWheel; fov_scale != 0)
+                {
+                    refresh_rasterizing = true;
+                    cam.zoom_fov(fov_scale);
+                }
+
+                // 鼠标左键 围绕观察点转动视角（第三人称）
+                if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+                {
+                    refresh_rasterizing = true;
+                    cam.view_third_person(io.MouseDelta.x, io.MouseDelta.y);
+                }
+
+                // 鼠标右键 自身转动视角（第一人称）
+                if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
+                {
+                    refresh_rasterizing = true;
+                    cam.view_first_person(io.MouseDelta.x, io.MouseDelta.y);
+                }
+
+                if (ImGui::IsKeyDown(ImGuiKey_Escape))
+                    enter_interaction = false;
+
+                // 更新相机参数的改变到UI上
+                vfov = cam.get_vfov();
+                float lookfrom_t[3] = { cam.get_lookfrom().x(), cam.get_lookfrom().y(), cam.get_lookfrom().z() };
+                memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
+                float lookat_t[3] = { cam.get_lookat().x(), cam.get_lookat().y(), cam.get_lookat().z() };
+                memcpy(lookat, lookat_t, 3 * sizeof(float));
+                float vup_t[3] = { cam.get_vup().x(), cam.get_vup().y(), cam.get_vup().z() };
+                memcpy(vup, vup_t, 3 * sizeof(float));
+            }
+            interaction_point = steady_clock::now();
 
             ImGui::End();
         }

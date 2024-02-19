@@ -30,13 +30,14 @@ using std::chrono::duration_cast;
 using std::chrono::minutes;
 using std::chrono::seconds;
 using std::chrono::milliseconds;
+using std::chrono::microseconds;
 using std::chrono::nanoseconds;
 namespace fs = std::filesystem;
 
-using uint = unsigned int;
-using ulong = unsigned long;
+using uint   = unsigned int;
+using ulong  = unsigned long;
 using ullong = unsigned long long;
-using llong = long long;
+using llong  = long long;
 
 extern const double kInfinitDouble;
 extern const double kPI;
