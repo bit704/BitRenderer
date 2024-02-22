@@ -178,12 +178,14 @@ void Camera::rasterize_wireframe(const std::vector<TriangleRasterize>& triangles
 
     for (int i = 0; i < triangles.size(); i++)
     {
-        //对顶点进行坐标变换
+        // 对顶点进行坐标变换
         TriangleRasterize t = triangles[i];
 
         t.vertex_[0] = mvp * t.vertex_[0];
         t.vertex_[1] = mvp * t.vertex_[1];
         t.vertex_[2] = mvp * t.vertex_[2];
+        // 近平面是1，所以w应该大于1
+        if (t.vertex_[0][3] <= 1 || t.vertex_[1][3] <= 1 || t.vertex_[2][3] <= 1)  continue;
 
         t.vertex_homo_divi();
 
@@ -201,7 +203,7 @@ void Camera::rasterize_wireframe(const std::vector<TriangleRasterize>& triangles
 }
 
 void Camera::rasterize_depth(const std::vector<TriangleRasterize>& triangles)
-const
+    const
 {
     Mat<4, 4> mvp;
     std::vector<std::vector<double>> depth_buf(image_height_, std::vector<double>(image_width_, kInfinitDouble));
@@ -210,29 +212,32 @@ const
 
     for (int i = 0; i < triangles.size(); i++)
     {
-        //对顶点进行坐标变换
+        // 对顶点进行坐标变换
         TriangleRasterize t = triangles[i];
 
         t.vertex_[0] = mvp * t.vertex_[0];
         t.vertex_[1] = mvp * t.vertex_[1];
         t.vertex_[2] = mvp * t.vertex_[2];
 
+        if (t.vertex_[0][3] <= 0 || t.vertex_[1][3] <= 0 || t.vertex_[2][3] <= 0)  continue;
+
         t.vertex_homo_divi();
 
         viewport_transformation(t);
 
-        //覆盖像素
+        // 覆盖像素
         double maxx = max3(t.vertex_[0].x(), t.vertex_[1].x(), t.vertex_[2].x());
         double minx = min3(t.vertex_[0].x(), t.vertex_[1].x(), t.vertex_[2].x());
         double maxy = max3(t.vertex_[0].y(), t.vertex_[1].y(), t.vertex_[2].y());
         double miny = min3(t.vertex_[0].y(), t.vertex_[1].y(), t.vertex_[2].y());
-        //像素检测
+        // 像素检测
         for (int x = minx; x <= maxx; x++)
         {
             for (int y = miny; y <= maxy; y++)
             {
                 if (inside_triangle(t, x, y))
                 {
+                    if (x < 0 || y < 0 || x > image_width_ - 1 || y > image_height_ - 1) continue;
                     double z = interpolated_depth(t, x, y);
                     if (z < depth_buf[y][x])
                         depth_buf[y][x] = z;
@@ -321,15 +326,23 @@ void Camera::draw_line(const Point4& a, const Point4& b, const Color3& color, bo
     }
 
     int interval = dotted ? 2 : 1;
-    for (double x_ = x_a; x_ <= x_b; x_ += interval)
+    for (int x_ = x_a; x_ <= x_b; x_ += interval)
     {
         double t = (x_ - x_a) / (x_b - x_a);
-        double y_ = y_a * (1. - t) + y_b * t;
+        int    y_ = y_a * (1. - t) + y_b * t;
+        if (x_ < 0 || y_ < 0) continue;
         if (steep)
+        {
+            if (x_ > image_width_ - 1 || y_ > image_height_ - 1) continue;
             image_->set_pixel(x_, y_, color[0], color[1], color[2]);
+        }
         else
+        {
             // set_pixel输入为row,col，因此未调换时输入y_,x_
+            if (x_ > image_height_ - 1 || y_ > image_width_ - 1) continue;
             image_->set_pixel(y_, x_, color[0], color[1], color[2]);
+        }
+
     }
 }
 
@@ -340,10 +353,6 @@ void Camera::viewport_transformation(TriangleRasterize& triangle)
     {
         vec.x() = (vec.x() + 1.) / 2. * (image_width_ - 1.);
         vec.y() = (vec.y() + 1.) / 2. * (image_height_ - 1.);
-
-        vec.x() = std::clamp(vec.x(), 0., (double)(image_width_ - 1));
-        vec.y() = std::clamp(vec.y(), 0., (double)(image_height_ - 1));
-
         vec.z() = vec.z() * (100. - 0.1) / 2.0 + (100. + 0.1) / 2.0;
     }
 }
