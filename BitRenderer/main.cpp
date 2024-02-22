@@ -647,7 +647,7 @@ int main()
             // 距上次处理键鼠交互时长
             double interaction_delta = duration_cast<milliseconds>(steady_clock::now() - interaction_point).count() / 1e3;          
             // 键鼠交互（未操作UI时）（点击图像进行交互，按ESC退出交互）
-            if (!ImGui::IsAnyItemActive() && enter_interaction)
+            if (enter_interaction)
             {
                 // 前后移动 WS
                 if (ImGui::IsKeyDown(ImGuiKey_W))

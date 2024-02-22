@@ -280,32 +280,62 @@ public:
 public:
     void move_front_back(double v)
     {
-        lookfrom_ = lookfrom_ - w_ * v;
+        float eff = 2;
+        lookfrom_ = lookfrom_ - w_ * v * eff;
+        lookat_ = lookat_ - w_ * v * eff;
     }
 
     void move_left_right(double v)
     {
-
+        lookfrom_ = lookfrom_ - u_ * v;
+        lookat_ = lookat_ - u_ * v;
     }
 
     void move_up_down(double v)
     {
-
+        lookfrom_ = lookfrom_ - v_ * v;
+        lookat_ = lookat_ - v_ * v;
     }
 
     void zoom_fov(double v)
     {
-
+        vfov_ = std::max(1., std::min(vfov_ - v, 179.));
     }
 
     void view_third_person(double x, double y)
     {
-
+        // 防止移动过快
+        float eff = 0.01;
+        // 先沿y轴在x方向上旋转，此时向上向量不变
+        Point3 lookfrom_new = lookat_ - Rodrigues((lookat_ - lookfrom_), v_, x * eff);
+        // 计算新的右手方向
+        Vec3   u_new = cross(vup_, (lookfrom_new - lookat_));
+        u_new.normalize();
+        // 沿新的u轴旋转
+        lookfrom_ = lookat_ - Rodrigues((lookat_ - lookfrom_new), u_new, y * eff);
+        // 更新向上向量
+        Vec3 w_new = (lookfrom_ - lookat_);
+        w_new.normalize();
+        vup_ = cross(w_new, u_new);
     }
 
     void view_first_person(double x, double y)
     {
-
+        //防止移动过快
+        float eff = 0.0005;
+        // 计算步骤同上，修改lookat_
+        Point3 lookat_new = Rodrigues((lookat_ - lookfrom_), v_, x * eff) + lookfrom_;
+        Vec3   u_new = cross(vup_, (lookfrom_ - lookat_new));
+        u_new.normalize();
+        lookat_ = Rodrigues((lookat_new - lookfrom_), u_new, y * eff) + lookfrom_;
+        Vec3 w_new = (lookfrom_ - lookat_);
+        w_new.normalize();
+        vup_ = cross(w_new, u_new);
+    }
+    Vec3 Rodrigues(Vec3 v, Vec3 n, double theta)
+    {
+        // 沿任意轴旋转theta角度计算公式
+        return cos(theta) * v + (1 - cos(theta)) * (dot(n, v)) * n + sin(theta) * cross(n, v);
     }
 };
 
