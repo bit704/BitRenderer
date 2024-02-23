@@ -321,7 +321,7 @@ public:
 
     void view_first_person(double x, double y)
     {
-        //防止移动过快
+        // 防止移动过快
         float eff = 0.0005;
         // 计算步骤同上，修改lookat_
         Point3 lookat_new = Rodrigues((lookat_ - lookfrom_), v_, x * eff) + lookfrom_;
@@ -335,6 +335,7 @@ public:
     Vec3 Rodrigues(Vec3 v, Vec3 n, double theta)
     {
         // 沿任意轴旋转theta角度计算公式
+        // 罗德里格斯（Rodrigues）旋转公式及其推导:https://blog.csdn.net/qq_36162042/article/details/115488168
         return cos(theta) * v + (1 - cos(theta)) * (dot(n, v)) * n + sin(theta) * cross(n, v);
     }
 };

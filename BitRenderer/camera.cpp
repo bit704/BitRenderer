@@ -185,7 +185,8 @@ void Camera::rasterize_wireframe(const std::vector<TriangleRasterize>& triangles
         t.vertex_[1] = mvp * t.vertex_[1];
         t.vertex_[2] = mvp * t.vertex_[2];
         // 近平面是1，所以w应该大于1
-        if (t.vertex_[0][3] <= 1 || t.vertex_[1][3] <= 1 || t.vertex_[2][3] <= 1)  continue;
+        if (t.vertex_[0][3] <= 1 || t.vertex_[1][3] <= 1 || t.vertex_[2][3] <= 1)  
+            continue;
 
         t.vertex_homo_divi();
 
@@ -219,7 +220,8 @@ void Camera::rasterize_depth(const std::vector<TriangleRasterize>& triangles)
         t.vertex_[1] = mvp * t.vertex_[1];
         t.vertex_[2] = mvp * t.vertex_[2];
 
-        if (t.vertex_[0][3] <= 0 || t.vertex_[1][3] <= 0 || t.vertex_[2][3] <= 0)  continue;
+        if (t.vertex_[0][3] <= 1 || t.vertex_[1][3] <= 1 || t.vertex_[2][3] <= 1)  
+            continue;
 
         t.vertex_homo_divi();
 
@@ -237,7 +239,8 @@ void Camera::rasterize_depth(const std::vector<TriangleRasterize>& triangles)
             {
                 if (inside_triangle(t, x, y))
                 {
-                    if (x < 0 || y < 0 || x > image_width_ - 1 || y > image_height_ - 1) continue;
+                    if (x < 0 || y < 0 || x > image_width_ - 1 || y > image_height_ - 1) 
+                        continue;
                     double z = interpolated_depth(t, x, y);
                     if (z < depth_buf[y][x])
                         depth_buf[y][x] = z;
@@ -330,16 +333,19 @@ void Camera::draw_line(const Point4& a, const Point4& b, const Color3& color, bo
     {
         double t = (x_ - x_a) / (x_b - x_a);
         int    y_ = y_a * (1. - t) + y_b * t;
-        if (x_ < 0 || y_ < 0) continue;
+        if (x_ < 0 || y_ < 0) 
+            continue;
         if (steep)
         {
-            if (x_ > image_width_ - 1 || y_ > image_height_ - 1) continue;
+            if (x_ > image_width_ - 1 || y_ > image_height_ - 1) 
+                continue;
             image_->set_pixel(x_, y_, color[0], color[1], color[2]);
         }
         else
         {
             // set_pixel输入为row,col，因此未调换时输入y_,x_
-            if (x_ > image_height_ - 1 || y_ > image_width_ - 1) continue;
+            if (x_ > image_height_ - 1 || y_ > image_width_ - 1)   
+                continue;
             image_->set_pixel(y_, x_, color[0], color[1], color[2]);
         }
 
