@@ -60,14 +60,12 @@ private:
 class ImageRead
 {
 private:
-	static const std::string kInputPath_;
 	unsigned char* image_data_;
-	std::string image_path_;
 	int width_, height_;
 	int channel_;
 
 public:
-	ImageRead(std::string image_name);
+	ImageRead(const std::string image_path);
 
 	~ImageRead();
 

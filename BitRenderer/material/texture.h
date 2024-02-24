@@ -74,7 +74,7 @@ private:
     ImageRead image_read_;
 
 public:
-    ImageTexture(std::string filename) : image_read_(filename) {}
+    ImageTexture(const std::string image_path) : image_read_(image_path) {}
 
 public:
     Color3 value(double u, double v, const Point3& p)

@@ -94,11 +94,8 @@ ImageWrite::~ImageWrite()
 	stbi_image_free(image_data_);
 }
 
-const std::string ImageRead::kInputPath_ = kLoadPath;
-
-ImageRead::ImageRead(std::string image_name)
+ImageRead::ImageRead(const std::string image_path)
 {
-	std::string image_path = kInputPath_ + image_name;
 	// req_comp为0代表不设置期望通道数，按实际来
 	image_data_ = stbi_load(image_path.c_str(), &width_, &height_, &channel_, 0);
 }
