@@ -113,18 +113,18 @@ Color3 Camera::ray_color(const Ray& r_in, const shared_ptr<Hittable>& world, con
 
     // 只有自发光，无散射
     if (hit_rec.material->no_scatter_)
-        return hit_rec.material->eval_color(hit_rec);
+        return hit_rec.material->eval_color_trace(hit_rec);
 
     // 下一条散射光线
     Ray r_out = hit_rec.material->sample_ray(r_in, hit_rec);
 
     // 不用重要性采样
     if (hit_rec.material->skip_pdf_)
-        return hit_rec.material->eval_color(hit_rec, ray_color(r_out, world, light, depth - 1));
+        return hit_rec.material->eval_color_trace(hit_rec, ray_color(r_out, world, light, depth - 1));
 
     double brdf, pdf;
     // 同时对光源和材质采样
-    pdf = hit_rec.material->eval_pdf(hit_rec, r_out);
+    pdf = hit_rec.material->eval_pdf(hit_rec.normal, r_out.get_direction());
     if (light != nullptr)
     {
         auto light_pdf = std::make_shared<HittablePDF>(*light, hit_rec.p);
@@ -132,12 +132,12 @@ Color3 Camera::ray_color(const Ray& r_in, const shared_ptr<Hittable>& world, con
         if (random_double() < 0.5) // 按0.5的概率对光源采样r_out
             r_out = Ray(hit_rec.p, light_pdf->gen_direction(), r_in.get_time());
 
-        pdf = 0.5 * hit_rec.material->eval_pdf(hit_rec, r_out)
+        pdf = 0.5 * hit_rec.material->eval_pdf(hit_rec.normal, r_out.get_direction())
             + 0.5 * light_pdf->value(r_out.get_direction()); // 按0.5的比例混合pdf值
     }
-    brdf = hit_rec.material->eval_brdf(r_in, hit_rec, r_out);
+    brdf = hit_rec.material->eval_brdf(hit_rec.normal, r_out.get_direction(), r_in.get_direction());
 
-    return hit_rec.material->eval_color(hit_rec, ray_color(r_out, world, light, depth - 1), brdf, pdf);
+    return hit_rec.material->eval_color_trace(hit_rec, ray_color(r_out, world, light, depth - 1), brdf, pdf);
 }
 
 Ray Camera::get_ray(int i, int j, int s_i, int s_j)
@@ -184,19 +184,18 @@ void Camera::rasterize_wireframe(const std::vector<TriangleRasterize>& triangles
         t.vertex_[0] = mvp * t.vertex_[0];
         t.vertex_[1] = mvp * t.vertex_[1];
         t.vertex_[2] = mvp * t.vertex_[2];
-        // 近平面是1，所以w应该大于1
-        if (t.vertex_[0][3] <= 1 || t.vertex_[1][3] <= 1 || t.vertex_[2][3] <= 1)  
+
+        // 裁剪        
+        if (t.vertex_[0].w() < near_ || t.vertex_[1].w() < near_ || t.vertex_[2].w() < near_ 
+            || t.vertex_[0].w() > far_ || t.vertex_[1].w() > far_ || t.vertex_[2].w() > far_)
             continue;
-
-        t.vertex_homo_divi();
-
-        viewport_transformation(t);
-
-        Vec3 barycenter_normal = t.get_barycenter_normal();
+                
+        t.vertex_homo_divi(); // 透视除法 
+        
+        viewport_transformation(t);  // 视口变换
 
         // 背面三角形使用虚线绘制
-        bool back_face = (dot(barycenter_normal, w_) < 0);
-
+        bool back_face = dot(t.get_barycenter_normal(), w_) < 0;
         draw_line(t.vertex_[0], t.vertex_[1], line_color, back_face);
         draw_line(t.vertex_[1], t.vertex_[2], line_color, back_face);
         draw_line(t.vertex_[2], t.vertex_[0], line_color, back_face);
@@ -211,16 +210,23 @@ void Camera::rasterize_depth(const std::vector<TriangleRasterize>& triangles)
 
     mvp = get_project_matrix() * get_view_matrix();
 
+    double max_depth = -kInfinitDouble;
+    double min_depth = kInfinitDouble;
+
     for (int i = 0; i < triangles.size(); i++)
     {
-        // 对顶点进行坐标变换
         TriangleRasterize t = triangles[i];
+
+        // 背面三角形剔除
+        if (dot(t.get_barycenter_normal(), w_) < 0)
+            continue;
 
         t.vertex_[0] = mvp * t.vertex_[0];
         t.vertex_[1] = mvp * t.vertex_[1];
         t.vertex_[2] = mvp * t.vertex_[2];
 
-        if (t.vertex_[0][3] <= 1 || t.vertex_[1][3] <= 1 || t.vertex_[2][3] <= 1)  
+        if (t.vertex_[0].w() < near_ || t.vertex_[1].w() < near_ || t.vertex_[2].w() < near_
+            || t.vertex_[0].w() > far_ || t.vertex_[1].w() > far_ || t.vertex_[2].w() > far_)
             continue;
 
         t.vertex_homo_divi();
@@ -237,17 +243,22 @@ void Camera::rasterize_depth(const std::vector<TriangleRasterize>& triangles)
         {
             for (int y = miny; y <= maxy; y++)
             {
+                if (x < 0 || y < 0 || x >= image_width_ || y >= image_height_)
+                    continue;
                 if (inside_triangle(t, x, y))
                 {
-                    if (x < 0 || y < 0 || x > image_width_ - 1 || y > image_height_ - 1) 
-                        continue;
-                    double z = interpolated_depth(t, x, y);
-                    if (z < depth_buf[y][x])
-                        depth_buf[y][x] = z;
+                    double d = interpolated_depth(t, x, y);                    
+                    if (d < depth_buf[y][x])
+                    {
+                        max_depth = std::max(max_depth, d);
+                        min_depth = std::min(min_depth, d);
+                        depth_buf[y][x] = d;
+                    }                        
                 }
             }
         }
     }
+
     //图像绘制
     for (int i = 0; i < image_height_; i++)
     {
@@ -260,7 +271,7 @@ void Camera::rasterize_depth(const std::vector<TriangleRasterize>& triangles)
             }
             else
             {
-                double color = depth_buf[i][j] * 255;
+                double color = (depth_buf[i][j] - min_depth) / (max_depth - min_depth) * 255;
                 image_->set_pixel(i, j, color, color, color);
             }
         }
@@ -270,7 +281,55 @@ void Camera::rasterize_depth(const std::vector<TriangleRasterize>& triangles)
 void Camera::rasterize_shade(const std::vector<TriangleRasterize>& triangles)
     const
 {
+    Mat<4, 4> mvp;
+    std::vector<std::vector<double>> depth_buf(image_height_, std::vector<double>(image_width_, kInfinitDouble));
 
+    mvp = get_project_matrix() * get_view_matrix();
+
+    for (int i = 0; i < triangles.size(); i++)
+    {
+        TriangleRasterize t = triangles[i];
+
+        // 背面三角形剔除
+        if (dot(t.get_barycenter_normal(), w_) < 0)
+            continue;
+
+        t.vertex_[0] = mvp * t.vertex_[0];
+        t.vertex_[1] = mvp * t.vertex_[1];
+        t.vertex_[2] = mvp * t.vertex_[2];
+
+        if (t.vertex_[0].w() < near_ || t.vertex_[1].w() < near_ || t.vertex_[2].w() < near_
+            || t.vertex_[0].w() > far_ || t.vertex_[1].w() > far_ || t.vertex_[2].w() > far_)
+            continue;
+
+        t.vertex_homo_divi();
+
+        viewport_transformation(t);
+
+        double maxx = max3(t.vertex_[0].x(), t.vertex_[1].x(), t.vertex_[2].x());
+        double minx = min3(t.vertex_[0].x(), t.vertex_[1].x(), t.vertex_[2].x());
+        double maxy = max3(t.vertex_[0].y(), t.vertex_[1].y(), t.vertex_[2].y());
+        double miny = min3(t.vertex_[0].y(), t.vertex_[1].y(), t.vertex_[2].y());
+
+        for (int x = minx; x <= maxx; x++)
+        {
+            for (int y = miny; y <= maxy; y++)
+            {
+                if (x < 0 || y < 0 || x >= image_width_ || y >= image_height_)
+                    continue;
+                if (inside_triangle(t, x, y))
+                {
+                    double d = interpolated_depth(t, x, y);
+                    // 深度测试
+                    if (d < depth_buf[y][x])
+                    {
+                        image_->set_pixel(y, x, interpolated_material(t, x, y, d));
+                        depth_buf[y][x] = d;
+                    }                    
+                }
+            }
+        }
+    }
 }
 
 Mat<4, 4> Camera::get_view_matrix()
@@ -292,15 +351,13 @@ Mat<4, 4> Camera::get_view_matrix()
 Mat<4, 4> Camera::get_project_matrix()
     const
 {
-    double far = 100;
-    double near = .1;
     Mat<4, 4> project;
 
     project =
     { {
         {1 / (tan(degrees_to_radians(vfov_) / 2) * aspect_ratio_), 0, 0, 0},
         {0, 1 / tan(degrees_to_radians(vfov_) / 2), 0, 0},
-        {0, 0, -(far + near) / (far - near), 2 * near * far / (near - far)},
+        {0, 0, (near_ + far_) / (near_ - far_), 2 * near_ * far_ / (near_ - far_)},
         {0, 0, -1, 0}
     } };
     return project;
@@ -309,7 +366,6 @@ Mat<4, 4> Camera::get_project_matrix()
 void Camera::draw_line(const Point4& a, const Point4& b, const Color3& color, bool dotted)
     const
 {
-    // NDC坐标范围为[-1,1]，变换到[0,1]再缩放
     double x_a = a[0];
     double x_b = b[0];
     double y_a = a[1];
@@ -357,45 +413,81 @@ void Camera::viewport_transformation(TriangleRasterize& triangle)
 {
     for (auto& vec : triangle.vertex_)
     {
+        // NDC坐标范围为[-1,1]，变换到[0,1]再缩放
         vec.x() = (vec.x() + 1.) / 2. * (image_width_ - 1.);
         vec.y() = (vec.y() + 1.) / 2. * (image_height_ - 1.);
-        vec.z() = vec.z() * (100. - 0.1) / 2.0 + (100. + 0.1) / 2.0;
+        // 视口变换不需要改变z
     }
 }
 
-bool Camera::inside_triangle(TriangleRasterize triangle, double x, double y)
+bool Camera::inside_triangle(const TriangleRasterize& triangle, const double& x, const double& y)
     const
 {
-    Vec3 AB(triangle.vertex_[1].x() - triangle.vertex_[0].x(), triangle.vertex_[1].y() - triangle.vertex_[0].y(), triangle.vertex_[1].z() - triangle.vertex_[0].z());
-    Vec3 CA(triangle.vertex_[0].x() - triangle.vertex_[2].x(), triangle.vertex_[0].y() - triangle.vertex_[2].y(), triangle.vertex_[0].z() - triangle.vertex_[2].z());
-    Vec3 BC(triangle.vertex_[2].x() - triangle.vertex_[1].x(), triangle.vertex_[2].y() - triangle.vertex_[1].y(), triangle.vertex_[2].z() - triangle.vertex_[1].z());
+    Vec3 AB(triangle.vertex_[1] - triangle.vertex_[0]);
+    Vec3 CA(triangle.vertex_[0] - triangle.vertex_[2]);
+    Vec3 BC(triangle.vertex_[2] - triangle.vertex_[1]);
 
-    Vec3 AQ(x - triangle.vertex_[0].x(), y - triangle.vertex_[0].y(), -triangle.vertex_[0].z());
-    Vec3 CQ(x - triangle.vertex_[2].x(), y - triangle.vertex_[2].y(), -triangle.vertex_[2].z());
-    Vec3 BQ(x - triangle.vertex_[1].x(), y - triangle.vertex_[1].y(), -triangle.vertex_[1].z());
+    Point3 Q = Point3(x, y, 0);
+    Vec3 AQ(Q - Point3(triangle.vertex_[0]));
+    Vec3 CQ(Q - Point3(triangle.vertex_[2]));
+    Vec3 BQ(Q - Point3(triangle.vertex_[1]));
 
     double ABAQ = cross(AB, AQ).z();
     double CACQ = cross(CA, CQ).z();
     double BCBQ = cross(BC, BQ).z();
 
-    if (ABAQ >= 0 && CACQ >= 0 && BCBQ >= 0 || ABAQ <= 0 && CACQ <= 0 && BCBQ <= 0)
+    if ((ABAQ >= 0 && CACQ >= 0 && BCBQ >= 0) || (ABAQ <= 0 && CACQ <= 0 && BCBQ <= 0))
         return true;
     else
         return false;
 }
 
-double Camera::interpolated_depth(TriangleRasterize t, double x, double y)
+// 插值算法参考：https://zhuanlan.zhihu.com/p/448575965
+double Camera::interpolated_depth(const TriangleRasterize& triangle, const double& x, const double& y)
     const
 {
-    auto v = t.vertex_;
+    auto [alpha, beta, gamma] = barycentric_coordinate(triangle, x, y);
 
-    double alpha = (x * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * y + v[1].x() * v[2].y() - v[2].x() * v[1].y()) / (v[0].x() * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * v[0].y() + v[1].x() * v[2].y() - v[2].x() * v[1].y());
-    double beta  = (x * (v[2].y() - v[0].y()) + (v[0].x() - v[2].x()) * y + v[2].x() * v[0].y() - v[0].x() * v[2].y()) / (v[1].x() * (v[2].y() - v[0].y()) + (v[0].x() - v[2].x()) * v[1].y() + v[2].x() * v[0].y() - v[0].x() * v[2].y());
-    double gamma = (x * (v[0].y() - v[1].y()) + (v[1].x() - v[0].x()) * y + v[0].x() * v[1].y() - v[1].x() * v[0].y()) / (v[2].x() * (v[0].y() - v[1].y()) + (v[1].x() - v[0].x()) * v[2].y() + v[0].x() * v[1].y() - v[1].x() * v[0].y());
+    // 由于透视变换，屏幕空间下插值为相机空间下的倒数的插值
+    double depth = 1. / 
+        (alpha / triangle.vertex_[0].z() 
+            + beta / triangle.vertex_[1].z() 
+            + gamma / triangle.vertex_[2].z());
+    return depth;
+}
 
-    double w_reciprocal = 1.0 / (alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
-    double z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
-    z_interpolated *= w_reciprocal;
+Color3 Camera::interpolated_material(const TriangleRasterize& triangle, const double& x, const double& y, const double& depth)
+    const
+{
+    auto [alpha, beta, gamma] = barycentric_coordinate(triangle, x, y);
 
-    return z_interpolated;
+    // 不和深度一样直接对倒数插值，而是借助深度间接插值，避免除0产生inf影响结果
+    Texcoord2 uv = depth * 
+        (alpha / triangle.vertex_[0].z() * triangle.texcoord_[0]
+            + beta / triangle.vertex_[1].z()  * triangle.texcoord_[1]
+            + gamma / triangle.vertex_[2].z() * triangle.texcoord_[2]);
+
+    Vec3 normal = depth *
+        (alpha / triangle.vertex_[0].z() * triangle.normal_[0]
+            + beta / triangle.vertex_[1].z() * triangle.normal_[1]
+            + gamma / triangle.vertex_[2].z() * triangle.normal_[2]);
+
+    // HACK 恒定方向光
+    return triangle.material_->eval_color_rasterize(uv, normal, Color3(15, 15, 15), background_ * .1, Vec3(0, 1, 0));
+}
+
+std::tuple<double, double, double> Camera::barycentric_coordinate(const TriangleRasterize& triangle, const double& x, const double& y)
+    const
+{
+    auto v = triangle.vertex_;
+
+    double alpha =
+        (x * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * y + v[1].x() * v[2].y() - v[2].x() * v[1].y())
+        / (v[0].x() * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * v[0].y() + v[1].x() * v[2].y() - v[2].x() * v[1].y());
+    double beta =
+        (x * (v[2].y() - v[0].y()) + (v[0].x() - v[2].x()) * y + v[2].x() * v[0].y() - v[0].x() * v[2].y())
+        / (v[1].x() * (v[2].y() - v[0].y()) + (v[0].x() - v[2].x()) * v[1].y() + v[2].x() * v[0].y() - v[0].x() * v[2].y());
+    double gamma = 1 - alpha - beta;
+
+    return { alpha, beta, gamma };
 }

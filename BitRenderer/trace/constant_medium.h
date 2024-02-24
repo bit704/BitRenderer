@@ -1,5 +1,5 @@
 /*
- * 面片雾
+ * 恒定介质
  */
 #ifndef CONSTANT_MEDIUM_H
 #define CONSTANT_MEDIUM_H

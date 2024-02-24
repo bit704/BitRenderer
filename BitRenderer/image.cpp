@@ -21,7 +21,7 @@ ImageWrite::ImageWrite(std::string imageName, int image_width, int image_height,
 }
 
 // 伽马校正
-inline double linear_to_gamma(double linear_component)
+double ImageWrite::linear_to_gamma(double linear_component)
 {
 	// 采用通用伽马值2.2，即放大暗部
 	return pow(linear_component, 1 / 2.2);
@@ -81,6 +81,11 @@ void ImageWrite::flush(Color3 c)
 	for (int i = 0; i < height_; ++i)
 		for (int j = 0; j < width_; ++j)
 			set_pixel(i, j, r, g, b);
+}
+
+void ImageWrite::set_image_name(std::string image_name)
+{
+	image_path_ = kOutputPath_ + image_name;
 }
 
 ImageWrite::~ImageWrite()

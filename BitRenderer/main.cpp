@@ -235,7 +235,7 @@ int main()
                             samples_per_pixel = 5;
                             max_depth = 5;
                             vfov = 20;
-                            float lookfrom_t[3] = { 5, 3, 5 };
+                            float lookfrom_t[3] = { 0, -1, -12 };
                             memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
                             float lookat_t[3] = { 0, 0, 0 };
                             memcpy(lookat, lookat_t, 3 * sizeof(float));
@@ -533,8 +533,12 @@ int main()
             refresh_rasterizing |= ImGui::ColorEdit3("background color", background);
             ImGui::SameLine();
             HelpMarker(
-                "No effect on depth for Rasterizing Preview.\n"
-                "Click on the color square to open a color picker.\n"
+                "Just background for feature \"Rasterizing Preview - wireframe\"\n"
+                "No effect on feature \"Rasterizing Preview - depth\".\n"
+                "Both background and ambient for feature \"Rasterizing Preview - shade\".\n"
+                "Background color when ray miss scene for \"Ray Tracing\"."
+                "\n"
+                "Click on the color square to open a color picker.\n"                
                 "Click and hold to use drag and drop.\n"
                 "Right-click on the color square to show options.\n"
                 "CTRL+click on individual component to input value.\n");
@@ -646,7 +650,7 @@ int main()
 
             // 距上次处理键鼠交互时长
             double interaction_delta = duration_cast<milliseconds>(steady_clock::now() - interaction_point).count() / 1e3;          
-            // 键鼠交互（未操作UI时）（点击图像进行交互，按ESC退出交互）
+            // 键鼠交互（点击图像进行交互，按ESC退出交互）
             if (enter_interaction)
             {
                 // 前后移动 WS

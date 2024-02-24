@@ -41,6 +41,8 @@ private:
     Vec3   v_; // 指向相机上方
     Vec3   w_; // 与相机视点方向相反 
 
+    double near_, far_; // 光栅化近平面和远平面
+
     double defocus_angle_;  // 光线经过每个像素的变化
     double focus_dist_;    // 相机原点到完美聚焦平面的距离，这里与焦距相同
     Vec3   defocus_disk_u_;  // 散焦横向半径
@@ -61,7 +63,9 @@ public:
         vup_(0, 1, 0),
         background_(1, 1, 1),
         defocus_angle_(0), 
-        focus_dist_(10)
+        focus_dist_(10),
+        near_(.1),
+        far_(100)
     {}
 
     Camera(const Camera&) = delete;
@@ -149,12 +153,18 @@ private:
     void viewport_transformation(TriangleRasterize& triangle)
         const;
 
-    bool inside_triangle(TriangleRasterize triangle, double x, double y)
+    bool inside_triangle(const TriangleRasterize& triangle, const double& x, const double& y)
         const;
 
-    double interpolated_depth(TriangleRasterize t, double x, double y)
+    double interpolated_depth(const TriangleRasterize& triangle, const double& x, const double& y)
         const;
 
+    Color3 interpolated_material(const TriangleRasterize& triangle, const double& x, const double& y, const double& depth)
+        const;
+
+    // 求重心坐标
+    std::tuple<double, double, double>  barycentric_coordinate(const TriangleRasterize& triangle, const double& x, const double& y)
+        const;
 /*
  * getter/setter
  */
@@ -272,6 +282,8 @@ public:
     void set_image_name(const std::string& image_name)
     {
         image_name_ = image_name;
+        if(image_)
+            image_->set_image_name(image_name);
     }
 
 /*
@@ -282,7 +294,7 @@ public:
     {
         float eff = 2;
         lookfrom_ = lookfrom_ - w_ * v * eff;
-        lookat_ = lookat_ - w_ * v * eff;
+        // 前后移动时lookat_不变
     }
 
     void move_left_right(double v)
@@ -307,12 +319,12 @@ public:
         // 防止移动过快
         float eff = 0.01;
         // 先沿y轴在x方向上旋转，此时向上向量不变
-        Point3 lookfrom_new = lookat_ - Rodrigues((lookat_ - lookfrom_), v_, x * eff);
+        Point3 lookfrom_new = lookat_ - Rodrigues((lookat_ - lookfrom_), v_, -x * eff);
         // 计算新的右手方向
         Vec3   u_new = cross(vup_, (lookfrom_new - lookat_));
         u_new.normalize();
         // 沿新的u轴旋转
-        lookfrom_ = lookat_ - Rodrigues((lookat_ - lookfrom_new), u_new, y * eff);
+        lookfrom_ = lookat_ - Rodrigues((lookat_ - lookfrom_new), u_new, -y * eff);
         // 更新向上向量
         Vec3 w_new = (lookfrom_ - lookat_);
         w_new.normalize();
@@ -332,6 +344,8 @@ public:
         w_new.normalize();
         vup_ = cross(w_new, u_new);
     }
+
+private:
     Vec3 Rodrigues(Vec3 v, Vec3 n, double theta)
     {
         // 沿任意轴旋转theta角度计算公式

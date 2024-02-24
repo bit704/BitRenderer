@@ -18,12 +18,20 @@ public:
 
 	Vec() : e_{0} {}
 
-	Vec(std::initializer_list<double> list)
+	Vec(std::initializer_list<double> list) : e_{0}
 	{
 		for (auto it = list.begin(); it != list.end(); ++it)
 		{
 			e_[it - list.begin()] = *it;
 		}
+	}
+
+	template<int m>
+    Vec(Vec<m> other) : e_{0}
+	{
+        int l = std::min(n, m);
+		for (int i = 0; i < l; ++i)
+			e_[i] = other[i];
 	}
 
 	// 用于设置imgui编辑的相机外参、颜色（imgui使用float）
@@ -68,6 +76,15 @@ public:
 	{
 		std::copy(std::begin(v.e_), std::end(v.e_), std::begin(e_));
 		return *this;
+	}
+
+	Vec& operator+(const double& d)
+		const
+	{
+		Vec<n> v = *this;
+		for (int i = 0; i < n; ++i)
+			v.e_[i] += d;
+		return v;
 	}
 
 	Vec operator-()
@@ -115,7 +132,7 @@ public:
 	// 归一化
 	void normalize()
 	{
-		float l = this->norm();
+		float l = norm();
 		for (int i = 0; i < n; ++i)
 			e_[i] /= l;;
 		return;
@@ -336,6 +353,14 @@ Vec<n> operator/(const Vec<n>& lhs, const double& rhs)
 	return ret;
 }
 
+template<int n>
+Vec<n> operator/(const double& lhs, const Vec<n>& rhs)
+{
+	Vec<n> ret = rhs;
+	for (int i = n; i--; ret[i] = lhs / ret[i]);
+	return ret;
+}
+
 template<int n1, int n2>
 Vec<n1> embed(const Vec<n2>& v, double fill = 1)
 {
@@ -350,6 +375,15 @@ Vec<n1> proj(const Vec<n2>& v)
 	Vec<n1> ret;
 	for (int i = n1; i--; ret[i] = v[i]);
 	return ret;
+}
+
+template<int n>
+bool operator==(const Vec<n>& lhs, const Vec<n>& rhs)
+{
+	for (int i = 0; i < n; ++i)
+		if (std::fabs(lhs[i] - rhs[i]) > kEpsilon)
+			return false;
+	return true;
 }
 
 // 用于比较imgui编辑的相机外参、颜色（imgui使用float）

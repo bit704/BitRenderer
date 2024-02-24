@@ -17,9 +17,17 @@ public:
     bool skip_pdf_   = false; // 无需重要性采样，直接反射/折射
     bool no_scatter_ = false; // 光线击中后不发生散射，如光源
 
-    // 计算当前颜色
-    virtual Color3 eval_color(const HitRecord& rec, const Color3& next_color = { 0., 0., 0. }, double brdf = 0., double pdf = 1.)
+    // 光追计算颜色
+    // 因为计算颜色时不止对材质进行重要性采样，还会对光源等其它物体进行重要新采样，brdf和pdf值会改变，因此作为参数输入而不是直接内部计算
+    virtual Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color = Color3(), double brdf = 0., double pdf = 1.)
         const = 0;
+
+    // 光栅化计算颜色
+    virtual Color3 eval_color_rasterize(const Texcoord2& uv, const Vec3& normal, const Color3& light, const Color3& ambient, const Vec3& out, const Vec3& in = Vec3())
+        const
+    {
+        return { 0, 0, 0 };
+    }
 
     // 计算新的出射光线方向
     // 若传入光源则同时对光源和材质进行重要新采样
@@ -30,7 +38,10 @@ public:
     }
 
     // 对于已知的入射和出射光线求解BRDF
-    virtual double eval_brdf(const Ray& r_in, const HitRecord& rec, const Ray& scattered)
+    // 对于光追，in为入射光线方向，out为下一次弹射的出射光线方向
+    // 对于光栅化，in为着色点到相机方向，out为着色点到光源方向
+    // 本质上是对应的
+    virtual double eval_brdf(const Vec3& normal, const Vec3& out, const Vec3& in = Vec3())
         const
     {
         return 0;
@@ -38,7 +49,7 @@ public:
 
     // 计算PDF值
     // 若传入光源则同时对光源和材质进行重要新采样
-    virtual double eval_pdf(const HitRecord& rec, const Ray& scattered)
+    virtual double eval_pdf(const Vec3& normal, const Vec3& out)
         const
     {
         return 0;
@@ -68,10 +79,16 @@ public:
     }
 
 public:
-    Color3 eval_color(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
+    Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
          const override
     {
         return albedo_->value(rec.u, rec.v, rec.p) * next_color * brdf / pdf;
+    }
+
+    Color3 eval_color_rasterize(const Texcoord2& uv, const Vec3& normal, const Color3& light, const Color3& ambient, const Vec3& out, const Vec3& in)
+        const override
+    {
+        return albedo_->value(uv.u(), uv.v()) * light * eval_brdf(normal, out) + ambient;
     }
 
     Ray sample_ray(const Ray& r_in, const HitRecord& rec)
@@ -81,18 +98,21 @@ public:
         return Ray(rec.p, pdf.gen_direction(), r_in.get_time());
     }
 
-    double eval_brdf(const Ray& r_in, const HitRecord& rec, const Ray& scattered)
+    // Lambertian模型不需要in
+    // 默认参数是静态绑定，无法在子类重写的虚函数中改变父类的虚函数指定的默认参数，不必重复写上
+    // 这里加上默认参数是便于其它同类成员函数调用
+    double eval_brdf(const Vec3& normal, const Vec3& out, const Vec3& in = Vec3())
         const override
     {
-        auto cosine = dot(rec.normal, unit_vector(scattered.get_direction()));
+        auto cosine = dot(normal, unit_vector(out));
         return cosine < 0 ? 0 : cosine / kPI;
     }
 
-    double eval_pdf(const HitRecord& rec, const Ray& scattered)
+    double eval_pdf(const Vec3& normal, const Vec3& out)
         const override
     {
-        CosinePDF pdf(rec.normal);
-        return pdf.value(scattered.get_direction());
+        CosinePDF pdf(normal);
+        return pdf.value(out);
     }
 };
 
@@ -118,7 +138,7 @@ public:
     }
 
 public:
-    Color3 eval_color(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
+    Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
         const override
     {
         return albedo_->value(rec.u, rec.v, rec.p) * next_color * brdf / pdf;
@@ -131,17 +151,17 @@ public:
         return Ray(rec.p, pdf.gen_direction(), r_in.get_time());
     }
 
-    double eval_brdf(const Ray& r_in, const HitRecord& rec, const Ray& scattered)
+    double eval_brdf(const Vec3& normal, const Vec3& out, const Vec3& in)
         const override
     {
         return 1 / (4 * kPI);
     }
 
-    double eval_pdf(const HitRecord& rec, const Ray& scattered)
+    double eval_pdf(const Vec3& normal, const Vec3& out)
         const override
     {
         SpherePDF pdf;
-        return pdf.value(scattered.get_direction());
+        return pdf.value(out);
     }
 };
 
@@ -158,7 +178,7 @@ public:
     }
 
 public:
-    Color3 eval_color(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
+    Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
         const override
     {
         return albedo_ * next_color;
@@ -184,7 +204,7 @@ public:
     }
 
 public:
-    Color3 eval_color(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
+    Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
         const override
     {
         return Color3({ 1., 1., 1. }) * next_color;
@@ -249,7 +269,7 @@ public:
     }
 
 public:
-    Color3 eval_color(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
+    Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
         const override
     {
         Color3 this_color;

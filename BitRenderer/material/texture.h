@@ -11,7 +11,7 @@ class Texture
 {
 public:
     virtual ~Texture() = default;
-    virtual Color3 value(double u, double v, const Point3& p) const = 0;
+    virtual Color3 value(double u, double v, const Point3& p = Point3()) const = 0;
 };
 
 // 坐标无关恒定颜色纹理
