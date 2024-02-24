@@ -46,7 +46,34 @@ void scene_obj_trace(const Camera& cam, const fs::path& obj_path)
     auto end = steady_clock::now();
     add_info("BVH elapsed time: "_str + STR(duration_cast<milliseconds>(end - start).count()) + "ms");
 
-    cam.trace(world);
+    // 包围盒
+    auto red = make_shared<Lambertian>(Color3(.65, .05, .05));
+    auto white = make_shared<Lambertian>(Color3(.73, .73, .73));
+    auto green = make_shared<Lambertian>(Color3(.12, .45, .15));
+    world->add(make_shared<Quad>(Point3(2, -2, 0), Vec3(0, 4, 0), Vec3(0, 0, 4), green));
+    world->add(make_shared<Quad>(Point3(-2, -2, 0), Vec3(0, 4, 0), Vec3(0, 0, 4), red));
+    world->add(make_shared<Quad>(Point3(-2, -2, 0), Vec3(4, 0, 0), Vec3(0, 0, 4), white));
+    world->add(make_shared<Quad>(Point3(2, 2, 4), Vec3(-4, 0, 0), Vec3(0, 0, -4), white));
+    world->add(make_shared<Quad>(Point3(-2, -2, 4), Vec3(4, 0, 0), Vec3(0, 4, 0), white));
+
+    // 金属球
+    auto metal_sphere = make_shared<Sphere>(Point3(-1, -1, 2), .5, make_shared<Metal>(Color3(1, .84, 0), 0.));
+    // 玻璃球
+    auto glass_sphere = make_shared<Sphere>(Point3(1, 1, 2), .5, make_shared<Dielectric>(1.5));
+    world->add(glass_sphere);
+    world->add(metal_sphere);
+
+    // 光源
+    auto lighting = make_shared<DiffuseLight>(Color3(15, 15, 15));
+    auto quad = make_shared<Quad>(Point3(-.5, 1.9, 2.5), Vec3(0, 0, -1), Vec3(1, 0, 0), lighting);
+    world->add(quad);
+    // 对光源几何体采样
+    shared_ptr<HittableList> light(new HittableList());
+    light->add(quad);
+    // 对玻璃球采样
+    light->add(glass_sphere);
+
+    cam.trace(world, light);
     return;
 }
 
@@ -212,6 +239,8 @@ bool prepare_rasterize_data(const char* filename, const char* basepath, bool tri
         return false;
     }
 
+    auto test = make_shared<Lambertian>(make_shared<ImageTexture>("earthmap.jpg"));
+
     std::vector<TriangleRasterize> tris = std::vector<TriangleRasterize>(tot_fnum);
     ullong tri_index = 0;
 
@@ -249,6 +278,7 @@ bool prepare_rasterize_data(const char* filename, const char* basepath, bool tri
             tri.set_vertex(vertices[a], vertices[b], vertices[c]);
             tri.set_normal(normals[an], normals[bn], normals[cn]);
             tri.set_texcoord(texcoords[at], texcoords[bt], texcoords[ct]);
+            tri.set_material(test);
 
             tris[tri_index + f] = tri;
 
@@ -280,13 +310,13 @@ void scene_cornell_box(const Camera& cam)
     shared_ptr<HittableList> world = make_shared<HittableList>();
 
     // 材质
-    auto red = make_shared<Lambertian>(Color3(.65, .05, .05));
+    auto red   = make_shared<Lambertian>(Color3(.65, .05, .05));
     auto white = make_shared<Lambertian>(Color3(.73, .73, .73));
     auto green = make_shared<Lambertian>(Color3(.12, .45, .15));
     auto lighting = make_shared<DiffuseLight>(Color3(15, 15, 15));
     auto aluminum = make_shared<Metal>(Color3(.8, .85, .88), 0.);
 
-    // 包围盒体
+    // 包围盒
     world->add(make_shared<Quad>(Point3(555, 0, 0), Vec3(0, 555, 0), Vec3(0, 0, 555), green));
     world->add(make_shared<Quad>(Point3(0, 0, 0), Vec3(0, 555, 0), Vec3(0, 0, 555), red));
     world->add(make_shared<Quad>(Point3(0, 0, 0), Vec3(555, 0, 0), Vec3(0, 0, 555), white));
@@ -300,18 +330,18 @@ void scene_cornell_box(const Camera& cam)
     world->add(box1);
 
     // 玻璃球
-    auto glass = make_shared<Dielectric>(1.5);
-    world->add(make_shared<Sphere>(Point3(180, 160, 190), 90, glass));
+    auto glass_sphere = make_shared<Sphere>(Point3(180, 160, 190), 90, make_shared<Dielectric>(1.5));
+    world->add(glass_sphere);
 
     // 光源
-    world->add(make_shared<Quad>(Point3(343, 554, 332), Vec3(-130, 0, 0), Vec3(0, 0, -105), lighting));
+    auto quad = make_shared<Quad>(Point3(343, 554, 332), Vec3(-130, 0, 0), Vec3(0, 0, -105), lighting);
+    world->add(quad);
 
     // 对光源几何体采样
     shared_ptr<HittableList> light(new HittableList());
-    auto m = shared_ptr<Material>();
-    light->add(make_shared<Quad>(Point3(343, 554, 332), Vec3(-130, 0, 0), Vec3(0, 0, -105), m));
+    light->add(quad);
     // 对玻璃球采样
-    light->add(make_shared<Sphere>(Point3(190, 90, 190), 90, m));
+    light->add(glass_sphere);
 
     cam.trace(world, light);
     return;

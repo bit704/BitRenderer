@@ -44,6 +44,7 @@ public:
 	// 写入指定图片
 	void write();
 	void flush(Color3 c);
+	void set_image_name(std::string image_name);
 
 	unsigned char** get_image_data_p2p()
 	{
@@ -51,6 +52,9 @@ public:
 			return nullptr;
 		return &image_data_;
 	}
+
+private:
+	double linear_to_gamma(double linear_component);
 };
 
 class ImageRead

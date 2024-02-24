@@ -12,13 +12,19 @@ public:
     Point4    vertex_[3];
     Vec3      normal_[3];
     Texcoord2 texcoord_[3];
+    shared_ptr<Material> material_;
 
     TriangleRasterize()
     {
         // 点的w坐标为1
-        vertex_[0][3] = 1;
-        vertex_[1][3] = 1;
-        vertex_[2][3] = 1;
+        vertex_[0].w() = 1;
+        vertex_[1].w() = 1;
+        vertex_[2].w() = 1;
+    }
+
+    void set_material(shared_ptr<Material> material)
+    {
+        material_ = material;
     }
 
     void set_vertex(Point3 a, Point3 b, Point3 c)
@@ -44,9 +50,16 @@ public:
 
     void vertex_homo_divi()
     {
-        vertex_[0] /= vertex_[0][3];
-        vertex_[1] /= vertex_[1][3];
-        vertex_[2] /= vertex_[2][3];
+        // 保留w不变
+        vertex_[0].x() /= vertex_[0].w();
+        vertex_[0].y() /= vertex_[0].w();
+        vertex_[0].z() /= vertex_[0].w();
+        vertex_[1].x() /= vertex_[1].w();
+        vertex_[1].y() /= vertex_[1].w();
+        vertex_[1].z() /= vertex_[1].w();
+        vertex_[2].x() /= vertex_[2].w();
+        vertex_[2].y() /= vertex_[2].w();
+        vertex_[2].z() /= vertex_[2].w();
     }
 
     Vec3 get_barycenter_normal()
