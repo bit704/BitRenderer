@@ -9,18 +9,32 @@ std::vector<Point3>    vertices;
 std::vector<Vec3>      normals;
 std::vector<Texcoord2> texcoords;
 
-void scene_obj_rasterize(const Camera& cam, const fs::path& obj_path, const int& mode)
+void scene_obj_rasterize(const Camera& cam, const fs::path& obj_path, const fs::path& diffuse_map_path, const int& mode)
 {
     static std::vector<TriangleRasterize> triangles;
     static fs::path prev_obj_path;
+    static fs::path prev_diffuse_map_path;
 
-    // 避免每帧重复加载模型
+    bool reload = false;
+
+    // 避免每帧重复加载
     if (prev_obj_path != obj_path)
     {
         prev_obj_path = obj_path;
-        if (!prepare_rasterize_data(obj_path.string().c_str(), obj_path.parent_path().string().c_str(), true, triangles))
+        reload = true;
+    }
+
+    if (prev_diffuse_map_path != diffuse_map_path)
+    {
+        prev_diffuse_map_path = diffuse_map_path;
+        reload = true;
+    }
+
+    if (reload)
+    {
+        if (!prepare_rasterize_data(obj_path.string().c_str(), obj_path.parent_path().string().c_str(), true, triangles, diffuse_map_path.string()))
         {
-            add_info(obj_path.string() + "  failed to load for rastering.");
+            add_info(obj_path.string() + " failed to load for rastering.");
             return;
         }
     }
@@ -29,14 +43,14 @@ void scene_obj_rasterize(const Camera& cam, const fs::path& obj_path, const int&
     return;
 }
 
-void scene_obj_trace(const Camera& cam, const fs::path& obj_path)
+void scene_obj_trace(const Camera& cam, const fs::path& obj_path, const fs::path& diffuse_map_path)
 {
     shared_ptr<HittableList> world = make_shared<HittableList>();
     HittableList triangles;
 
-    if (!prepare_trace_data(obj_path.string().c_str(), obj_path.parent_path().string().c_str(), true, triangles))
+    if (!prepare_trace_data(triangles, diffuse_map_path.string()))
     {
-        add_info(obj_path.string() + "  failed to load for ray tracing.");
+        add_info(obj_path.string() + " failed to load for ray tracing.");
         return;
     }
 
@@ -85,7 +99,7 @@ void scene_test_triangle(const Camera& cam)
     vertices = { {0, 0, 1}, {1, 0, 0}, {0, 1, 0} };
     normals = { {0, 0, 1}, {0, 0, 1}, {0, 0, 1} };
     texcoords = { {0, 0}, {1, 0}, {0, 1} };
-    auto earthmap = make_shared<ImageTexture>("earthmap.jpg");
+    auto earthmap = make_shared<ImageTexture>(kLoadPath + "earthmap.jpg"_str);
     world->add(make_shared<Triangle>(0, 0, 0, 1, 1, 1, 2, 2, 2, make_shared<Lambertian>(earthmap)));
 
     cam.trace(world);
@@ -174,11 +188,11 @@ bool load_obj_internal(const char* filename, const char* basepath, bool triangul
 }
 
 // 为光线追踪准备数据
-bool prepare_trace_data(const char* filename, const char* basepath, bool triangulate, HittableList& triangles)
+bool prepare_trace_data(HittableList& triangles, const std::string diffuse_map_path)
 {
-    // 光栅化已加载obj，不必再次加载
+    // 光栅化预览已加载obj，不必再次加载
 
-    auto test = make_shared<Lambertian>(make_shared<ImageTexture>("earthmap.jpg"));
+    auto test = make_shared<Lambertian>(make_shared<ImageTexture>(diffuse_map_path));
 
     std::vector<shared_ptr<Hittable>> tris = std::vector<shared_ptr<Hittable>>(tot_fnum);
     ullong tri_index = 0;
@@ -232,14 +246,14 @@ bool prepare_trace_data(const char* filename, const char* basepath, bool triangu
 }
 
 // 为光栅化准备数据
-bool prepare_rasterize_data(const char* filename, const char* basepath, bool triangulate, std::vector<TriangleRasterize>& triangles)
+bool prepare_rasterize_data(const char* filename, const char* basepath, bool triangulate, std::vector<TriangleRasterize>& triangles, const std::string diffuse_map_path)
 {
     if (!load_obj_internal(filename, basepath, triangulate))
     {
         return false;
     }
 
-    auto test = make_shared<Lambertian>(make_shared<ImageTexture>("earthmap.jpg"));
+    auto test = make_shared<Lambertian>(make_shared<ImageTexture>(diffuse_map_path));
 
     std::vector<TriangleRasterize> tris = std::vector<TriangleRasterize>(tot_fnum);
     ullong tri_index = 0;
@@ -453,7 +467,7 @@ void scene_composite2(const Camera& cam)
     world->add(make_shared<ConstantMedium>(boundary, .0001, Color3(1, 1, 1)));
 
     // 地球
-    auto earthmap = make_shared<Lambertian>(make_shared<ImageTexture>("earthmap.jpg"));
+    auto earthmap = make_shared<Lambertian>(make_shared<ImageTexture>(kLoadPath + "earthmap.jpg"_str));
     world->add(make_shared<Sphere>(Point3(400, 200, 400), 100, earthmap));
 
     // 柏林噪声球

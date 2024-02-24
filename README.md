@@ -2,7 +2,7 @@
 
 C++软件渲染器，基于C++17。
 
-支持**光栅化**实时预览和**光线追踪**离线渲染。
+支持**光栅化**实时漫游和**光线追踪**离线渲染。
 
 ## 使用说明
 
@@ -16,13 +16,15 @@ UI按3:7纵向划分为**SETUP**界面和**RENDER**界面（自适应窗口大�
 
      load obj下拉框：下载obj文件并置于`./BitRenderer/load/`文件夹（或其任意子文件夹）下，软件会在此处自动列出以供选择。
 
+     load diffuse map下拉框：下载贴图（JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC）并置于`./BitRenderer/load/`文件夹（或其任意子文件夹）下，软件会在此处自动列出以供选择。
+
      use preset复选框：勾选后使load obj下拉框无效，使preset下拉框生效。取消勾选则效果反之。
 
-     preset下拉框：选择预置场景。（预置场景的几何表示为数学形式，无光栅化预览）
+     preset下拉框：选择预置场景。（预置场景的几何表示为数学形式，无光栅化）
 
    - command区域
 
-     Rasterizing Preview单选按钮：可选择wireframe、depth、shade其一。
+     Rasterizing Roam单选按钮：可选择wireframe、depth、shade其一。
 
      Ray Tracing按钮组：Start按钮开始光追，Abort按钮中止光追，Clear按钮清除光追结果并重新开始光栅化，Save按钮保存当前渲染结果（光栅化或光追）至`./BitRenderer/output/`文件夹。
 
@@ -48,9 +50,9 @@ UI按3:7纵向划分为**SETUP**界面和**RENDER**界面（自适应窗口大�
 
 - RENDER界面
 
-   实时显示当前渲染图像（光追过程中和光追结果未清除时显示光追图像，其它情况下显示光栅化图像）。
+   实时显示当前渲染结果（光追过程中和光追结果未清除时显示光追图像，其它情况下显示光栅化图像）。
 
-   点击图像进行**交互**，按ESC退出交互：
+   点击图像进行交互，按ESC退出交互（光追时禁止）：
 
    - WS/AD/QE：前后/左右/上下移动
    - 鼠标中键：缩放fov
@@ -101,3 +103,12 @@ UI按3:7纵向划分为**SETUP**界面和**RENDER**界面（自适应窗口大�
 
 [Morgan McGuire's Computer Graphics Archive](https://casual-effects.com/data/)
 
+## 运行截图
+
+![光追过程](./screenshot/1.jpg)
+
+![线框模式](./screenshot/2.jpg)
+
+![深度模式](./screenshot/3.jpg)
+
+![着色模式](./screenshot/4.jpg)

@@ -17,14 +17,14 @@ extern std::vector<Texcoord2> texcoords;
 
 void scene_test_triangle(const Camera& cam);
 
-bool prepare_trace_data(const char* filename, const char* basepath, bool triangulate, HittableList& triangles);
-bool prepare_rasterize_data(const char* filename, const char* basepath, bool triangulate, std::vector<TriangleRasterize>& triangles);
+bool prepare_trace_data(HittableList& triangles, const std::string diffuse_map_path);
+bool prepare_rasterize_data(const char* filename, const char* basepath, bool triangulate, std::vector<TriangleRasterize>& triangles, const std::string diffuse_map_path);
 
 // 光线追踪离线渲染场景
-void scene_obj_trace(const Camera& cam, const fs::path& obj_path);
+void scene_obj_trace(const Camera& cam, const fs::path& obj_path, const fs::path& diffuse_map_path);
 
 // 光栅化实时渲染场景 
-void scene_obj_rasterize(const Camera& cam, const fs::path& obj_path,const int& rst_mode);
+void scene_obj_rasterize(const Camera& cam, const fs::path& obj_path, const fs::path& diffuse_map_path, const int& rst_mode);
 
 // 3D棋盘格纹理，两个球
 void scene_checker(const Camera& cam);
