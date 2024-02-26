@@ -332,6 +332,23 @@ void Camera::rasterize_shade(const std::vector<TriangleRasterize>& triangles)
     }
 }
 
+void Camera::rasterize_origin()
+    const
+{
+    std::vector<Point4> oxyz{ {0,0,0,1}, {1,0,0,1}, {0,1,0,1}, {0,0,1,1} };
+    for (Point4& t : oxyz)
+    {
+        t = get_project_matrix() * get_view_matrix() * t;
+        t /= t.w();
+        t.x() = (t.x() + 1.) / 2. * (image_width_  - 1.);
+        t.y() = (t.y() + 1.) / 2. * (image_height_ - 1.);
+    }
+
+    draw_line(oxyz[0], oxyz[1], { 1, 0, 0 }, false); // x-axis
+    draw_line(oxyz[0], oxyz[2], { 0, 1, 0 }, false); // y-axis
+    draw_line(oxyz[0], oxyz[3], { 0, 0, 1 }, false); // z-axis
+}
+
 Mat<4, 4> Camera::get_view_matrix()
     const
 {
@@ -387,35 +404,34 @@ void Camera::draw_line(const Point4& a, const Point4& b, const Color3& color, bo
     int interval = dotted ? 2 : 1;
     for (int x_ = x_a; x_ <= x_b; x_ += interval)
     {
-        double t = (x_ - x_a) / (x_b - x_a);
+        double t  = (x_ - x_a) / (x_b - x_a);
         int    y_ = y_a * (1. - t) + y_b * t;
         if (x_ < 0 || y_ < 0) 
             continue;
         if (steep)
         {
-            if (x_ > image_width_ - 1 || y_ > image_height_ - 1) 
+            if (x_ > image_height_ - 1 || y_ > image_width_ - 1)
                 continue;
-            image_->set_pixel(x_, y_, color[0], color[1], color[2]);
+            image_->set_pixel(x_, y_, color);
         }
         else
         {
             // set_pixel输入为row,col，因此未调换时输入y_,x_
-            if (x_ > image_height_ - 1 || y_ > image_width_ - 1)   
+            if (y_ > image_height_ - 1 || x_ > image_width_ - 1)   
                 continue;
-            image_->set_pixel(y_, x_, color[0], color[1], color[2]);
+            image_->set_pixel(y_, x_, color);
         }
-
     }
 }
 
 void Camera::viewport_transformation(TriangleRasterize& triangle)
     const
 {
-    for (auto& vec : triangle.vertex_)
+    for (auto& v : triangle.vertex_)
     {
         // NDC坐标范围为[-1,1]，变换到[0,1]再缩放
-        vec.x() = (vec.x() + 1.) / 2. * (image_width_ - 1.);
-        vec.y() = (vec.y() + 1.) / 2. * (image_height_ - 1.);
+        v.x() = (v.x() + 1.) / 2. * (image_width_  - 1.);
+        v.y() = (v.y() + 1.) / 2. * (image_height_ - 1.);
         // 视口变换不需要改变z
     }
 }
