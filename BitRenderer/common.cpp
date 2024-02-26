@@ -1,10 +1,10 @@
 #include "common.h"
 
 const double kInfinitDouble = std::numeric_limits<double>::infinity();
-const double kPI = 3.1415926535897932385;
-const double kEpsilon = 1e-8;
-const char* kLoadPath   = ".\\load\\";
-const char* kOutputPath = ".\\output\\";
+const double kPI            = 3.1415926535897932385;
+const double kEpsilon       = 1e-6;
+const char*  kLoadPath      = ".\\load\\";
+const char*  kOutputPath    = ".\\output\\";
 
 std::atomic_ullong hit_count(0);
 std::atomic_ullong sample_count(0);

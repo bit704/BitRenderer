@@ -126,6 +126,8 @@ public:
             rasterize_depth(triangles);
         else if (mode == 2)
             rasterize_shade(triangles);
+
+        //rasterize_origin();
         return;       
     }
 
@@ -137,6 +139,9 @@ private:
         const;
 
     void rasterize_shade(const std::vector<TriangleRasterize>& triangles)
+        const;
+
+    void rasterize_origin()
         const;
 
     //返回视图矩阵
@@ -290,51 +295,51 @@ public:
  * 键鼠交互
  */
 public:
-    void move_front_back(double v)
+    void move_front_back(const double& v)
     {
-        float eff = 2;
-        lookfrom_ = lookfrom_ - w_ * v * eff;
-        // 前后移动时lookat_不变
+        double eff = 2;
+        lookfrom_ -= w_ * v * eff;
+        lookat_   -= w_ * v * eff;
     }
 
-    void move_left_right(double v)
+    void move_left_right(const double& v)
     {
-        lookfrom_ = lookfrom_ - u_ * v;
-        lookat_ = lookat_ - u_ * v;
+        lookfrom_ -= u_ * v;
+        lookat_   -= u_ * v;
     }
 
-    void move_up_down(double v)
+    void move_up_down(const double& v)
     {
-        lookfrom_ = lookfrom_ - v_ * v;
-        lookat_ = lookat_ - v_ * v;
+        lookfrom_ -= v_ * v;
+        lookat_   -= v_ * v;
     }
 
-    void zoom_fov(double v)
+    void zoom_fov(const double& v)
     {
         vfov_ = std::max(1., std::min(vfov_ - v, 179.));
     }
 
-    void view_third_person(double x, double y)
+    void view_third_person(const double& x, const double& y)
     {
         // 防止移动过快
-        float eff = 0.01;
+        double eff = 1e-2;
         // 先沿y轴在x方向上旋转，此时向上向量不变
-        Point3 lookfrom_new = lookat_ - Rodrigues((lookat_ - lookfrom_), v_, -x * eff);
+        Point3 lookfrom_new = lookat_ - Rodrigues(lookat_ - lookfrom_, v_, -x * eff);
         // 计算新的右手方向
-        Vec3   u_new = cross(vup_, (lookfrom_new - lookat_));
+        Vec3   u_new = cross(vup_, lookfrom_new - lookat_);
         u_new.normalize();
         // 沿新的u轴旋转
-        lookfrom_ = lookat_ - Rodrigues((lookat_ - lookfrom_new), u_new, -y * eff);
+        lookfrom_ = lookat_ - Rodrigues(lookat_ - lookfrom_new, u_new, -y * eff);
         // 更新向上向量
         Vec3 w_new = (lookfrom_ - lookat_);
         w_new.normalize();
         vup_ = cross(w_new, u_new);
     }
 
-    void view_first_person(double x, double y)
+    void view_first_person(const double& x, const double& y)
     {
         // 防止移动过快
-        float eff = 0.0005;
+        double eff = 5e-4;
         // 计算步骤同上，修改lookat_
         Point3 lookat_new = Rodrigues((lookat_ - lookfrom_), v_, x * eff) + lookfrom_;
         Vec3   u_new = cross(vup_, (lookfrom_ - lookat_new));
@@ -346,7 +351,7 @@ public:
     }
 
 private:
-    Vec3 Rodrigues(Vec3 v, Vec3 n, double theta)
+    Vec3 Rodrigues(const Vec3& v, const Vec3& n, const double& theta)
     {
         // 沿任意轴旋转theta角度计算公式
         // 罗德里格斯（Rodrigues）旋转公式及其推导:https://blog.csdn.net/qq_36162042/article/details/115488168

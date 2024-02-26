@@ -517,7 +517,7 @@ int main()
 
             // 输入图片宽度
             refresh_rasterizing |= ImGui::InputInt("image width", &image_width);
-            ImGui::SameLine(); 
+            ImGui::SameLine();
             HelpMarker("256~1024\n");
             if (image_width < 256)
                 image_width = 256;
@@ -540,7 +540,7 @@ int main()
                             refresh_rasterizing = true;
                         }
                     }
-                        
+
                     if (is_selected)
                         ImGui::SetItemDefaultFocus();
                 }
@@ -548,11 +548,11 @@ int main()
             }
             switch (aspect_ratio_current_idx)
             {
-            case 0: aspect_ratio = 1      ; break;
+            case 0: aspect_ratio = 1; break;
             case 1: aspect_ratio = 4. / 3.; break;
             case 2: aspect_ratio = 3. / 2.; break;
-            case 3: aspect_ratio = 16./ 9.; break;
-            case 4: aspect_ratio = 2      ; break;
+            case 3: aspect_ratio = 16. / 9.; break;
+            case 4: aspect_ratio = 2; break;
             }
 
             // 设置vfov
@@ -572,7 +572,7 @@ int main()
                 "Both background and ambient for feature \"Rasterizing Roam - shade\".\n"
                 "Background color when ray miss scene for \"Ray Tracing\".\n"
                 "\n"
-                "Click on the color square to open a color picker.\n"                
+                "Click on the color square to open a color picker.\n"
                 "Click and hold to use drag and drop.\n"
                 "Right-click on the color square to show options.\n"
                 "CTRL+click on individual component to input value.\n");
@@ -604,10 +604,10 @@ int main()
 
             ImGui::SeparatorText("info");
 
-            ImGui::BeginChild("info", ImVec2(0.0f, 0.0f), 
+            ImGui::BeginChild("info", ImVec2(0.0f, 0.0f),
                 ImGuiChildFlags_FrameStyle, ImGuiWindowFlags_HorizontalScrollbar);
 
-            for(ulong i = 0; i < get_info_size(); ++i)
+            for (ulong i = 0; i < get_info_size(); ++i)
                 ImGui::Text(get_info(i));
 
             if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
@@ -615,6 +615,86 @@ int main()
             ImGui::EndChild();
 
             ImGui::End();
+        }
+
+        // 键鼠交互
+        {
+            // 距上次处理键鼠交互时长
+            double interaction_delta = duration_cast<milliseconds>(steady_clock::now() - interaction_point).count() / 1e3;
+            // 键鼠交互（点击图像进行交互，按ESC退出交互）
+            // 光追时禁止
+            if (enter_interaction && !tracing.load())
+            {
+                // 前后移动 WS
+                if (ImGui::IsKeyDown(ImGuiKey_W))
+                {
+                    refresh_rasterizing = true;
+                    cam.move_front_back(interaction_delta);
+                }
+                if (ImGui::IsKeyDown(ImGuiKey_S))
+                {
+                    refresh_rasterizing = true;
+                    cam.move_front_back(-interaction_delta);
+                }
+
+                // 左右移动 AD
+                if (ImGui::IsKeyDown(ImGuiKey_A))
+                {
+                    refresh_rasterizing = true;
+                    cam.move_left_right(interaction_delta);
+                }
+                if (ImGui::IsKeyDown(ImGuiKey_D))
+                {
+                    refresh_rasterizing = true;
+                    cam.move_left_right(-interaction_delta);
+                }
+
+                // 上下移动 QE
+                if (ImGui::IsKeyDown(ImGuiKey_Q))
+                {
+                    refresh_rasterizing = true;
+                    cam.move_up_down(interaction_delta);
+                }
+                if (ImGui::IsKeyDown(ImGuiKey_E))
+                {
+                    refresh_rasterizing = true;
+                    cam.move_up_down(-interaction_delta);
+                }
+
+                // 鼠标中键 缩放fov                  
+                if (double fov_scale = ImGui::GetIO().MouseWheel; fov_scale != 0)
+                {
+                    refresh_rasterizing = true;
+                    cam.zoom_fov(fov_scale);
+                }
+
+                // 鼠标左键 围绕观察点转动视角（第三人称）
+                if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+                {
+                    refresh_rasterizing = true;
+                    cam.view_third_person(io.MouseDelta.x, io.MouseDelta.y);
+                }
+
+                // 鼠标右键 自身转动视角（第一人称）
+                if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
+                {
+                    refresh_rasterizing = true;
+                    cam.view_first_person(io.MouseDelta.x, io.MouseDelta.y);
+                }
+
+                if (ImGui::IsKeyDown(ImGuiKey_Escape))
+                    enter_interaction = false;
+
+                // 更新相机参数的改变到UI上
+                vfov = cam.get_vfov();
+                float lookfrom_t[3] = { cam.get_lookfrom().x(), cam.get_lookfrom().y(), cam.get_lookfrom().z() };
+                memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
+                float lookat_t[3] = { cam.get_lookat().x(), cam.get_lookat().y(), cam.get_lookat().z() };
+                memcpy(lookat, lookat_t, 3 * sizeof(float));
+                float vup_t[3] = { cam.get_vup().x(), cam.get_vup().y(), cam.get_vup().z() };
+                memcpy(vup, vup_t, 3 * sizeof(float));
+            }
+            interaction_point = steady_clock::now();
         }
 
         // 渲染界面
@@ -681,83 +761,6 @@ int main()
                 if (ImGui::IsItemClicked())
                     enter_interaction = true;
             }
-
-            // 距上次处理键鼠交互时长
-            double interaction_delta = duration_cast<milliseconds>(steady_clock::now() - interaction_point).count() / 1e3;          
-            // 键鼠交互（点击图像进行交互，按ESC退出交互）
-            // 光追时禁止
-            if (enter_interaction && !tracing.load())
-            {
-                // 前后移动 WS
-                if (ImGui::IsKeyDown(ImGuiKey_W))
-                {
-                    refresh_rasterizing = true;
-                    cam.move_front_back(interaction_delta);
-                }                    
-                if (ImGui::IsKeyDown(ImGuiKey_S))
-                {
-                    refresh_rasterizing = true;
-                    cam.move_front_back(-interaction_delta);
-                }
-                                           
-                // 左右移动 AD
-                if (ImGui::IsKeyDown(ImGuiKey_A))
-                {
-                    refresh_rasterizing = true;
-                    cam.move_left_right(interaction_delta);
-                }                    
-                if (ImGui::IsKeyDown(ImGuiKey_D))
-                {
-                    refresh_rasterizing = true;
-                    cam.move_left_right(-interaction_delta);
-                }                    
-
-                // 上下移动 QE
-                if (ImGui::IsKeyDown(ImGuiKey_Q))
-                {
-                    refresh_rasterizing = true;
-                    cam.move_up_down(interaction_delta);
-                }
-                if (ImGui::IsKeyDown(ImGuiKey_E))
-                {
-                    refresh_rasterizing = true;
-                    cam.move_up_down(-interaction_delta);
-                }
-
-                // 鼠标中键 缩放fov                  
-                if (double fov_scale = ImGui::GetIO().MouseWheel; fov_scale != 0)
-                {
-                    refresh_rasterizing = true;
-                    cam.zoom_fov(fov_scale);
-                }
-
-                // 鼠标左键 围绕观察点转动视角（第三人称）
-                if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-                {
-                    refresh_rasterizing = true;
-                    cam.view_third_person(io.MouseDelta.x, io.MouseDelta.y);
-                }
-
-                // 鼠标右键 自身转动视角（第一人称）
-                if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
-                {
-                    refresh_rasterizing = true;
-                    cam.view_first_person(io.MouseDelta.x, io.MouseDelta.y);
-                }
-
-                if (ImGui::IsKeyDown(ImGuiKey_Escape))
-                    enter_interaction = false;
-
-                // 更新相机参数的改变到UI上
-                vfov = cam.get_vfov();
-                float lookfrom_t[3] = { cam.get_lookfrom().x(), cam.get_lookfrom().y(), cam.get_lookfrom().z() };
-                memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
-                float lookat_t[3] = { cam.get_lookat().x(), cam.get_lookat().y(), cam.get_lookat().z() };
-                memcpy(lookat, lookat_t, 3 * sizeof(float));
-                float vup_t[3] = { cam.get_vup().x(), cam.get_vup().y(), cam.get_vup().z() };
-                memcpy(vup, vup_t, 3 * sizeof(float));
-            }
-            interaction_point = steady_clock::now();
 
             ImGui::End();
         }

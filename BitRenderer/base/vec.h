@@ -78,7 +78,7 @@ public:
 		return *this;
 	}
 
-	Vec& operator+(const double& d)
+	Vec operator+(const double& d)
 		const
 	{
 		Vec<n> v = *this;
@@ -100,6 +100,13 @@ public:
 	{
 		for (int i = 0; i < n; ++i)
 			e_[i] += v.e_[i];
+		return *this;
+	}
+
+	Vec& operator-=(const Vec& v)
+	{
+		for (int i = 0; i < n; ++i)
+			e_[i] -= v.e_[i];
 		return *this;
 	}
 
@@ -292,7 +299,8 @@ using Texcoord2 = Vec<2>;
 template<int n>
 std::ostream& operator<<(std::ostream& out, const Vec<n>& v)
 {
-	for (int i = 0; i < n; i++) out << v[i] << " ";
+	for (int i = 0; i < n; ++i) 
+		out << v[i] << " ";
 	return out;
 }
 
@@ -300,7 +308,8 @@ template<int n>
 Vec<n> operator+(const Vec<n>& lhs, const Vec<n>& rhs)
 {
 	Vec<n> ret = lhs;
-	for (int i = n; i--; ret[i] += rhs[i]);
+	for (int i = 0; i < n; ++i)
+		ret[i] += rhs[i];
 	return ret;
 }
 
@@ -308,7 +317,8 @@ template<int n>
 Vec<n> operator-(const Vec<n>& lhs, const Vec<n>& rhs)
 {
 	Vec<n> ret = lhs;
-	for (int i = n; i--; ret[i] -= rhs[i]);
+	for (int i = 0; i < n; ++i)
+		ret[i] -= rhs[i];
 	return ret;
 }
 
@@ -317,7 +327,8 @@ template<int n>
 Vec<n> operator*(const Vec<n>& lhs, const Vec<n>& rhs)
 {
 	Vec<n> ret;
-	for (int i = n; i--; ret[i] = lhs[i] * rhs[i]);
+	for (int i = 0; i < n; ++i)
+		ret[i] = lhs[i] * rhs[i];
 	return ret;
 }
 
@@ -325,7 +336,8 @@ template<int n>
 double dot(const Vec<n>& lhs, const Vec<n>& rhs)
 {
 	double ret = 0;
-	for (int i = n; i--; ret += lhs[i] * rhs[i]);
+	for (int i = 0; i < n; ++i)
+		ret += lhs[i] * rhs[i];
 	return ret;
 }
 
@@ -333,7 +345,8 @@ template<int n>
 Vec<n> operator*(const double& rhs, const Vec<n>& lhs)
 {
 	Vec<n> ret = lhs;
-	for (int i = n; i--; ret[i] *= rhs);
+	for (int i = 0; i < n; ++i)
+		ret[i] *= rhs;
 	return ret;
 }
 
@@ -341,7 +354,8 @@ template<int n>
 Vec<n> operator*(const Vec<n>& lhs, const double& rhs)
 {
 	Vec<n> ret = lhs;
-	for (int i = n; i--; ret[i] *= rhs);
+	for (int i = 0; i < n; ++i)
+		ret[i] *= rhs;
 	return ret;
 }
 
@@ -349,7 +363,8 @@ template<int n>
 Vec<n> operator/(const Vec<n>& lhs, const double& rhs)
 {
 	Vec<n> ret = lhs;
-	for (int i = n; i--; ret[i] /= rhs);
+	for (int i = 0; i < n; ++i)
+		ret[i] /= rhs;
 	return ret;
 }
 
@@ -357,23 +372,8 @@ template<int n>
 Vec<n> operator/(const double& lhs, const Vec<n>& rhs)
 {
 	Vec<n> ret = rhs;
-	for (int i = n; i--; ret[i] = lhs / ret[i]);
-	return ret;
-}
-
-template<int n1, int n2>
-Vec<n1> embed(const Vec<n2>& v, double fill = 1)
-{
-	Vec<n1> ret;
-	for (int i = n1; i--; ret[i] = (i < n2 ? v[i] : fill));
-	return ret;
-}
-
-template<int n1, int n2>
-Vec<n1> proj(const Vec<n2>& v)
-{
-	Vec<n1> ret;
-	for (int i = n1; i--; ret[i] = v[i]);
+	for (int i = 0; i < n; ++i)
+		ret[i] = lhs / ret[i];
 	return ret;
 }
 
@@ -386,15 +386,27 @@ bool operator==(const Vec<n>& lhs, const Vec<n>& rhs)
 	return true;
 }
 
+template<int n>
+bool operator!=(const Vec<n>& lhs, const Vec<n>& rhs)
+{
+	return !(lhs == rhs);
+}
+
 // 用于比较imgui编辑的相机外参、颜色（imgui使用float）
 template<int n>
-bool operator!=(const Vec<n>& lhs, float rhs[3])
+bool operator==(const Vec<n>& lhs, float rhs[3])
 {
 	assert(n == 3);
 	for (int i = 0; i < n; ++i)
 		if (std::fabs(lhs[i] - rhs[i]) > kEpsilon)
-			return true;
-	return false;
+			return false;
+	return true;
+}
+
+template<int n>
+bool operator!=(const Vec<n>& lhs, float rhs[3])
+{
+	return !(lhs == rhs);
 }
 
 inline Vec3 cross(const Vec3& u, const Vec3& v)
