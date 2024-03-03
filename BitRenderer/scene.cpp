@@ -24,19 +24,23 @@ void scene_obj_rasterize(const Camera& cam, const fs::path& obj_path, const fs::
         reload = true;
     }
 
-    if (prev_diffuse_map_path != diffuse_map_path)
-    {
-        prev_diffuse_map_path = diffuse_map_path;
-        reload = true;
-    }
-
     if (reload)
     {
-        if (!prepare_rasterize_data(obj_path.string().c_str(), obj_path.parent_path().string().c_str(), true, triangles, diffuse_map_path.string()))
+        if (!prepare_rasterize_data(obj_path.string().c_str(), obj_path.parent_path().string().c_str(), true, triangles))
         {
             add_info(obj_path.string() + " failed to load for rastering.");
             return;
         }
+    }
+
+    // 加载材质
+    if (prev_diffuse_map_path != diffuse_map_path)
+    {
+        prev_diffuse_map_path = diffuse_map_path;
+
+        auto test = make_shared<Lambertian>(make_shared<ImageTexture>(diffuse_map_path.string()));
+        for(TriangleRasterize& tri : triangles)
+            tri.set_material(test);
     }
 
     cam.rasterize(triangles, mode);
@@ -250,14 +254,12 @@ bool prepare_trace_data(HittableList& triangles, const std::string diffuse_map_p
 }
 
 // 为光栅化准备数据
-bool prepare_rasterize_data(const char* filename, const char* basepath, bool triangulate, std::vector<TriangleRasterize>& triangles, const std::string diffuse_map_path)
+bool prepare_rasterize_data(const char* filename, const char* basepath, bool triangulate, std::vector<TriangleRasterize>& triangles)
 {
     if (!load_obj_internal(filename, basepath, triangulate))
     {
         return false;
     }
-
-    auto test = make_shared<Lambertian>(make_shared<ImageTexture>(diffuse_map_path));
 
     std::vector<TriangleRasterize> tris = std::vector<TriangleRasterize>(tot_fnum);
     ullong tri_index = 0;
@@ -296,7 +298,6 @@ bool prepare_rasterize_data(const char* filename, const char* basepath, bool tri
             tri.set_vertex(vertices[a], vertices[b], vertices[c]);
             tri.set_normal(normals[an], normals[bn], normals[cn]);
             tri.set_texcoord(texcoords[at], texcoords[bt], texcoords[ct]);
-            tri.set_material(test);
 
             tris[tri_index + f] = tri;
 

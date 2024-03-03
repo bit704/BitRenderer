@@ -288,7 +288,8 @@ int main()
                 ImGui::SameLine();
                 HelpMarker(
                     "Please put map in .\\load\\ folder.(JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC)\n"
-                    "Available map will automatically show in this Checkbox.\n");
+                    "Available map will automatically show in this Checkbox.\n"
+                    "All red if fail to load.\n");
 
                 ImGui::Checkbox("tracing with cornell box", &tracing_with_cornell_box);
                 ImGui::SameLine();
