@@ -21,7 +21,7 @@ bool prepare_trace_data(HittableList& triangles, const std::string diffuse_map_p
 bool prepare_rasterize_data(const char* filename, const char* basepath, bool triangulate, std::vector<TriangleRasterize>& triangles, const std::string diffuse_map_path);
 
 // 光线追踪离线渲染场景
-void scene_obj_trace(const Camera& cam, const fs::path& obj_path, const fs::path& diffuse_map_path);
+void scene_obj_trace(const Camera& cam, const fs::path& obj_path, const fs::path& diffuse_map_path, const bool& tracing_with_cornell_box);
 
 // 光栅化实时渲染场景 
 void scene_obj_rasterize(const Camera& cam, const fs::path& obj_path, const fs::path& diffuse_map_path, const int& rst_mode);

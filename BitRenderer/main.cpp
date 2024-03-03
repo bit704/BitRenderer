@@ -83,8 +83,10 @@ int main()
     ImGuiWindowFlags_ custom_window_flag = ImGuiWindowFlags_None;
     ImGuiInputTextFlags info_flag = ImGuiInputTextFlags_ReadOnly;
     ImVec4 clear_color = ImVec4(1.f, 1.f, 1.f, 1.f); // 窗口背景颜色
-    bool use_preset = false;
+    bool use_preset = false; // 是否使用预置场景
+    bool tracing_with_cornell_box = false; // 渲染obj时是否加上cornell box
     int rastering_mode = 0; // 0:wireframe 1:depth 2:shade 
+    double proportion = .32; // SETUP界面和RENDER界面比例
 
     // 渲染参数
     std::vector<fs::path> objs = { "None" };
@@ -188,14 +190,13 @@ int main()
         // 设置界面
         {
             ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always, ImVec2(0, 0));
-            ImGui::SetNextWindowSize(ImVec2(now_window_width * .3, now_window_height), ImGuiCond_Always);
-
-            ImGui::Begin("SETUP", nullptr, custom_window_flag 
+            ImGui::SetNextWindowSize(ImVec2(now_window_width * proportion, now_window_height), ImGuiCond_Always);
+        
+            ImGui::Begin("SETUP", nullptr, custom_window_flag
                 | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize
                 | ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
 
-            ImGui::SeparatorText("scene");
-
+            if (ImGui::CollapsingHeader("Scene", ImGuiTreeNodeFlags_DefaultOpen))
             {
                 ImGui::BeginDisabled(use_preset);
 
@@ -222,10 +223,10 @@ int main()
                                 stop_rastering.store(false);
                                 refresh_rasterizing = true;
                             }
-                        }                           
+                        }
 
                         if (is_selected)
-                            ImGui::SetItemDefaultFocus();                       
+                            ImGui::SetItemDefaultFocus();
 
                         // obj推荐参数，None选项不指定
                         if (obj_current_idx != 0)
@@ -253,7 +254,7 @@ int main()
                 HelpMarker(
                     "Please put .obj in .\\load\\ folder.\n"
                     "Available .obj will automatically show in this Checkbox.\n");
-            
+
                 // 根据kLoadPath文件夹下文件刷新maps数组
                 auto maps_new = traverse_path(kLoadPath, std::regex(".*\\.(jpg|png|tga|bmp|psd|gif|hdr|pic)$", std::regex_constants::icase));
                 if (maps != maps_new)
@@ -280,7 +281,7 @@ int main()
                         }
 
                         if (is_selected)
-                            ImGui::SetItemDefaultFocus();                       
+                            ImGui::SetItemDefaultFocus();
                     }
                     ImGui::EndCombo();
                 }
@@ -289,14 +290,16 @@ int main()
                     "Please put map in .\\load\\ folder.(JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC)\n"
                     "Available map will automatically show in this Checkbox.\n");
 
-                ImGui::EndDisabled();
-            }
+                ImGui::Checkbox("tracing with cornell box", &tracing_with_cornell_box);
+                ImGui::SameLine();
+                HelpMarker("Whether add cornell box to surround obj when tracing.");
 
-            // 是否使用预置场景
-            ImGui::Checkbox("use preset", &use_preset);
+                ImGui::EndDisabled(); // ImGui::BeginDisabled(use_preset);
 
-            {
-                ImGui::BeginDisabled(!use_preset);                
+                // 是否使用预置场景
+                ImGui::Checkbox("use preset", &use_preset);
+
+                ImGui::BeginDisabled(!use_preset);
 
                 //ImGui::SetNextItemWidth(200);
 
@@ -314,7 +317,7 @@ int main()
                             // 此时刷新光栅化只用于显示仅带背景颜色的图片
                             refresh_rasterizing = true;
                             scene_current_idx = n;
-                        }                            
+                        }
 
                         if (is_selected)
                             ImGui::SetItemDefaultFocus();
@@ -326,7 +329,7 @@ int main()
                         if (scene_current_idx != 0)
                         {
                             image_name = std::string(scenes[scene_current_idx]) + ".png";
-                        }                            
+                        }
 
                         if (scene_current_idx == 1)
                         {
@@ -398,225 +401,228 @@ int main()
                 ImGui::SameLine();
                 HelpMarker("Choose preset scene.\n");
 
+                ImGui::EndDisabled(); //  ImGui::BeginDisabled(!use_preset);
+            }
+
+            if (ImGui::CollapsingHeader("command", ImGuiTreeNodeFlags_DefaultOpen))
+            {
+                ImVec2 window_pos = ImGui::GetWindowPos();
+                ImVec2 window_size = ImGui::GetWindowSize();
+                ImVec2 window_center = ImVec2(window_pos.x + window_size.x * .5f, window_pos.y + window_size.y * .5f);
+
+                // 选择光栅化模式
+                ImGui::Text("Rasterizing Roam");
+                ImGui::Text("            ");
+                ImGui::SameLine(); refresh_rasterizing |= ImGui::RadioButton("wireframe", &rastering_mode, 0);
+                ImGui::SameLine(); refresh_rasterizing |= ImGui::RadioButton("depth", &rastering_mode, 1);
+                ImGui::SameLine(); refresh_rasterizing |= ImGui::RadioButton("shade", &rastering_mode, 2);
+
+                ImGui::Text("Ray Tracing");
+                ImGui::Text("                    ");
+
+                // 开始光线追踪
+                ImGui::BeginDisabled(tracing.load());
+                ImGui::SameLine();
+                if (ImGui::Button("Start") && !tracing.load())
+                {
+                    if (!use_preset)
+                    {
+                        if (obj_current_idx == 0)
+                        {
+                            add_info("No .obj sccene");
+                        }
+                        else
+                        {
+                            add_info("----------------");
+                            add_info("Rendering " + objs[obj_current_idx].stem().string() + "...");
+
+                            tracing_statistics();
+
+                            t = std::thread(scene_obj_trace, std::cref(cam), std::cref(objs[obj_current_idx]), std::cref(maps[diffuse_map_current_idx]), std::cref(tracing_with_cornell_box));
+                            //t = std::thread(scene_test_triangle, std::cref(cam));
+
+                            if (t.joinable())
+                                t.detach();
+                        }
+                    }
+                    else
+                    {
+                        if (scene_current_idx == 0)
+                        {
+                            add_info("No preset scene.");
+                        }
+                        else
+                        {
+                            add_info("----------------");
+                            add_info("Rendering "_str + scenes[scene_current_idx] + "...");
+
+                            tracing_statistics();
+
+                            switch (scene_current_idx)
+                            {
+                            case 1: t = std::thread(scene_checker, std::cref(cam)); break;
+                            case 2: t = std::thread(scene_cornell_box, std::cref(cam)); break;
+                            case 3: t = std::thread(scene_composite1, std::cref(cam)); break;
+                            case 4: t = std::thread(scene_composite2, std::cref(cam)); break;
+                            }
+
+                            if (t.joinable())
+                                t.detach();
+                        }
+                    }
+                }
                 ImGui::EndDisabled();
-            }
 
-            ImGui::SeparatorText("command");
-
-            ImVec2 window_pos = ImGui::GetWindowPos();
-            ImVec2 window_size = ImGui::GetWindowSize();
-            ImVec2 window_center = ImVec2(window_pos.x + window_size.x * .5f, window_pos.y + window_size.y * .5f);
-            
-            // 选择光栅化模式
-            ImGui::Text("Rasterizing Roam");
-            ImGui::Text("            ");            
-            ImGui::SameLine(); refresh_rasterizing |= ImGui::RadioButton("wireframe", &rastering_mode, 0);
-            ImGui::SameLine(); refresh_rasterizing |= ImGui::RadioButton("depth",     &rastering_mode, 1);
-            ImGui::SameLine(); refresh_rasterizing |= ImGui::RadioButton("shade",     &rastering_mode, 2);
-            
-            ImGui::Text("Ray Tracing");
-            ImGui::Text("                    "); 
-
-            // 开始光线追踪
-            ImGui::BeginDisabled(tracing.load());
-            ImGui::SameLine();
-            if (ImGui::Button("Start") && !tracing.load())
-            {
-                if (!use_preset)
+                ImGui::BeginDisabled(!tracing.load());
+                ImGui::SameLine();
+                // 结束光追
+                if (ImGui::Button("Abort") && tracing.load())
                 {
-                    if (obj_current_idx == 0)
+                    add_info("Aborting...");
+                    tracing.store(false);
+                    stop_rastering.store(true);
+                }
+                ImGui::EndDisabled();
+
+                ImGui::BeginDisabled(image_data_p2p == nullptr || *image_data_p2p == nullptr || tracing.load());
+                ImGui::SameLine();
+                if (ImGui::Button("Clear") && image_data_p2p != nullptr && *image_data_p2p != nullptr && !tracing.load())
+                {
+                    cam.clear();
+                    stop_rastering.store(false);
+                    refresh_rasterizing = true;
+                }
+                ImGui::EndDisabled();
+
+                ImGui::SameLine();
+                if (ImGui::Button("Save"))
+                {
+                    if (image_data_p2p == nullptr || *image_data_p2p == nullptr)
                     {
-                        add_info("No .obj sccene");
+                        add_info("No Image.");
+                    }
+                    else if (tracing.load())
+                    {
+                        add_info("Still tracing!");
                     }
                     else
                     {
-                        add_info("----------------");
-                        add_info("Rendering " + objs[obj_current_idx].stem().string() + "...");
-
-                        tracing_statistics();
-
-                        t = std::thread(scene_obj_trace, std::cref(cam), std::cref(objs[obj_current_idx]), std::cref(maps[diffuse_map_current_idx]));
-                        //t = std::thread(scene_test_triangle, std::cref(cam));
-
-                        if (t.joinable())
-                            t.detach();
+                        add_info("Saving...");
+                        cam.save_image();
+                        add_info(image_name + " has been saved to ./output/ folder.");
                     }
                 }
-                else
+
+                ImGui::SameLine();
+                HelpMarker("Clear will discard Ray Tracing result and restart Rasterizing.\n");
+            }
+
+            if (ImGui::CollapsingHeader("camera", ImGuiTreeNodeFlags_DefaultOpen))
+            {
+                // 输入图片宽度
+                refresh_rasterizing |= ImGui::InputInt("image width", &image_width);
+                ImGui::SameLine();
+                HelpMarker("256~1024\n");
+                if (image_width < 256)
+                    image_width = 256;
+                if (image_width > 1024)
+                    image_width = 1024;
+
+                // 选择图片宽高比
+                const char* combo_aspect_ratio = aspect_ratios[aspect_ratio_current_idx];
+                if (ImGui::BeginCombo("aspect ratio", combo_aspect_ratio, flags))
                 {
-                    if (scene_current_idx == 0)
+                    for (int n = 0; n < IM_ARRAYSIZE(aspect_ratios); n++)
                     {
-                        add_info("No preset scene.");
-                    }
-                    else
-                    {
-                        add_info("----------------");
-                        add_info("Rendering "_str + scenes[scene_current_idx] + "...");
-
-                        tracing_statistics();
-
-                        switch (scene_current_idx)
+                        const bool is_selected = (aspect_ratio_current_idx == n);
+                        if (ImGui::Selectable(aspect_ratios[n], is_selected))
                         {
-                        case 1: t = std::thread(scene_checker, std::cref(cam)); break;
-                        case 2: t = std::thread(scene_cornell_box, std::cref(cam)); break;
-                        case 3: t = std::thread(scene_composite1, std::cref(cam)); break;
-                        case 4: t = std::thread(scene_composite2, std::cref(cam)); break;
+                            aspect_ratio_pre_idx = aspect_ratio_current_idx;
+                            aspect_ratio_current_idx = n;
+                            if (aspect_ratio_current_idx != aspect_ratio_pre_idx)
+                            {
+                                refresh_rasterizing = true;
+                            }
                         }
 
-                        if (t.joinable())
-                            t.detach();
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
                     }
+                    ImGui::EndCombo();
                 }
-            }
-            ImGui::EndDisabled();
-        
-            ImGui::BeginDisabled(!tracing.load());
-            ImGui::SameLine();
-            // 结束光追
-            if (ImGui::Button("Abort") && tracing.load())
-            {
-                add_info("Aborting...");
-                tracing.store(false);
-                stop_rastering.store(true);                
-            }
-            ImGui::EndDisabled();
-
-            ImGui::BeginDisabled(image_data_p2p == nullptr || *image_data_p2p == nullptr || tracing.load());
-            ImGui::SameLine();
-            if (ImGui::Button("Clear") && image_data_p2p != nullptr && *image_data_p2p != nullptr && !tracing.load())
-            {
-                cam.clear();
-                stop_rastering.store(false);
-                refresh_rasterizing = true;
-            }
-            ImGui::EndDisabled();
-
-            ImGui::SameLine();
-            if (ImGui::Button("Save"))
-            {
-                if (image_data_p2p == nullptr || *image_data_p2p == nullptr)
+                switch (aspect_ratio_current_idx)
                 {
-                    add_info("No Image.");
+                case 0: aspect_ratio = 1; break;
+                case 1: aspect_ratio = 4. / 3.; break;
+                case 2: aspect_ratio = 3. / 2.; break;
+                case 3: aspect_ratio = 16. / 9.; break;
+                case 4: aspect_ratio = 2; break;
                 }
-                else if (tracing.load())
-                {
-                    add_info("Still tracing!");
-                }
-                else
-                {
-                    add_info("Saving...");
-                    cam.save_image();
-                    add_info(image_name + " has been saved to ./output/ folder.");
-                }
+
+                // 设置vfov
+                refresh_rasterizing |= ImGui::DragInt("vfov", &vfov, 1, 1, 179, "%d°", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::SameLine();
+                HelpMarker(
+                    "Drag to edit value.\n"
+                    "Hold SHIFT/ALT for faster/slower edit.\n"
+                    "Double-click or CTRL+click to input value.\n");
+
+                // 设置背景颜色
+                refresh_rasterizing |= ImGui::ColorEdit3("background color", background);
+                ImGui::SameLine();
+                HelpMarker(
+                    "Just background for feature \"Rasterizing Roam - wireframe\"\n"
+                    "No effect on feature \"Rasterizing Roam - depth\".\n"
+                    "Both background and ambient for feature \"Rasterizing Roam - shade\".\n"
+                    "Background color when ray miss scene for \"Ray Tracing\".\n"
+                    "\n"
+                    "Click on the color square to open a color picker.\n"
+                    "Click and hold to use drag and drop.\n"
+                    "Right-click on the color square to show options.\n"
+                    "CTRL+click on individual component to input value.\n");
+
+                // 输入spp
+                ImGui::InputInt("samples per pixel", &samples_per_pixel);
+                ImGui::SameLine();
+                HelpMarker("1~10000\n");
+                if (samples_per_pixel < 1)
+                    samples_per_pixel = 1;
+                if (samples_per_pixel > 10000)
+                    samples_per_pixel = 10000;
+
+                // 输入最大深度
+                ImGui::InputInt("max depth", &max_depth);
+                ImGui::SameLine();
+                HelpMarker("1~400");
+                if (max_depth < 1)
+                    max_depth = 1;
+                if (max_depth > 400)
+                    max_depth = 400;
+
+                // 设置相机外参
+                refresh_rasterizing |= ImGui::InputFloat3("lookfrom", lookfrom, "%.1f");
+                refresh_rasterizing |= ImGui::InputFloat3("lookat", lookat, "%.1f");
+                refresh_rasterizing |= ImGui::InputFloat3("vup", vup, "%.1f");
+                ImGui::SameLine();
+                HelpMarker("Up direction of the camera.\n");
             }
 
-            ImGui::SameLine();
-            HelpMarker("Clear will discard Ray Tracing result and restart Rasterizing.\n");
-
-            ImGui::SeparatorText("camera");
-
-            // 输入图片宽度
-            refresh_rasterizing |= ImGui::InputInt("image width", &image_width);
-            ImGui::SameLine();
-            HelpMarker("256~1024\n");
-            if (image_width < 256)
-                image_width = 256;
-            if (image_width > 1024)
-                image_width = 1024;
-
-            // 选择图片宽高比
-            const char* combo_aspect_ratio = aspect_ratios[aspect_ratio_current_idx];
-            if (ImGui::BeginCombo("aspect ratio", combo_aspect_ratio, flags))
+            if (ImGui::CollapsingHeader("info", ImGuiTreeNodeFlags_DefaultOpen))
             {
-                for (int n = 0; n < IM_ARRAYSIZE(aspect_ratios); n++)
-                {
-                    const bool is_selected = (aspect_ratio_current_idx == n);
-                    if (ImGui::Selectable(aspect_ratios[n], is_selected))
-                    {
-                        aspect_ratio_pre_idx = aspect_ratio_current_idx;
-                        aspect_ratio_current_idx = n;
-                        if (aspect_ratio_current_idx != aspect_ratio_pre_idx)
-                        {
-                            refresh_rasterizing = true;
-                        }
-                    }
+                ImGui::BeginChild("info", ImVec2(0, 300),
+                    ImGuiChildFlags_FrameStyle, ImGuiWindowFlags_HorizontalScrollbar);
 
-                    if (is_selected)
-                        ImGui::SetItemDefaultFocus();
-                }
-                ImGui::EndCombo();
+                for (ulong i = 0; i < get_info_size(); ++i)
+                    ImGui::Text(get_info(i));
+
+                if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+                    ImGui::SetScrollHereY(1.0f);
+                ImGui::EndChild();
             }
-            switch (aspect_ratio_current_idx)
-            {
-            case 0: aspect_ratio = 1; break;
-            case 1: aspect_ratio = 4. / 3.; break;
-            case 2: aspect_ratio = 3. / 2.; break;
-            case 3: aspect_ratio = 16. / 9.; break;
-            case 4: aspect_ratio = 2; break;
-            }
-
-            // 设置vfov
-            refresh_rasterizing |= ImGui::DragInt("vfov", &vfov, 1, 1, 179, "%d°", ImGuiSliderFlags_AlwaysClamp);
-            ImGui::SameLine();
-            HelpMarker(
-                "Drag to edit value.\n"
-                "Hold SHIFT/ALT for faster/slower edit.\n"
-                "Double-click or CTRL+click to input value.\n");
-
-            // 设置背景颜色
-            refresh_rasterizing |= ImGui::ColorEdit3("background color", background);
-            ImGui::SameLine();
-            HelpMarker(
-                "Just background for feature \"Rasterizing Roam - wireframe\"\n"
-                "No effect on feature \"Rasterizing Roam - depth\".\n"
-                "Both background and ambient for feature \"Rasterizing Roam - shade\".\n"
-                "Background color when ray miss scene for \"Ray Tracing\".\n"
-                "\n"
-                "Click on the color square to open a color picker.\n"
-                "Click and hold to use drag and drop.\n"
-                "Right-click on the color square to show options.\n"
-                "CTRL+click on individual component to input value.\n");
-
-            // 输入spp
-            ImGui::InputInt("samples per pixel", &samples_per_pixel);
-            ImGui::SameLine();
-            HelpMarker("1~10000\n");
-            if (samples_per_pixel < 1)
-                samples_per_pixel = 1;
-            if (samples_per_pixel > 10000)
-                samples_per_pixel = 10000;
-
-            // 输入最大深度
-            ImGui::InputInt("max depth", &max_depth);
-            ImGui::SameLine();
-            HelpMarker("1~400");
-            if (max_depth < 1)
-                max_depth = 1;
-            if (max_depth > 400)
-                max_depth = 400;
-
-            // 设置相机外参
-            refresh_rasterizing |= ImGui::InputFloat3("lookfrom", lookfrom, "%.1f");
-            refresh_rasterizing |= ImGui::InputFloat3("lookat", lookat, "%.1f");
-            refresh_rasterizing |= ImGui::InputFloat3("vup", vup, "%.1f");
-            ImGui::SameLine();
-            HelpMarker("Up direction of the camera.\n");
-
-            ImGui::SeparatorText("info");
-
-            ImGui::BeginChild("info", ImVec2(0.0f, 0.0f),
-                ImGuiChildFlags_FrameStyle, ImGuiWindowFlags_HorizontalScrollbar);
-
-            for (ulong i = 0; i < get_info_size(); ++i)
-                ImGui::Text(get_info(i));
-
-            if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
-                ImGui::SetScrollHereY(1.0f);
-            ImGui::EndChild();
 
             ImGui::End();
         }
-
+           
         // 键鼠交互
         {
             // 距上次处理键鼠交互时长
@@ -719,8 +725,8 @@ int main()
                 refresh_rasterizing = false; // 置为false，下一帧重新判定
             }
 
-            ImGui::SetNextWindowPos(ImVec2(now_window_width * .3, 0), ImGuiCond_Always, ImVec2(0, 0));
-            ImGui::SetNextWindowSize(ImVec2(now_window_width * .7, now_window_height), ImGuiCond_Always);
+            ImGui::SetNextWindowPos(ImVec2(now_window_width * proportion, 0), ImGuiCond_Always, ImVec2(0, 0));
+            ImGui::SetNextWindowSize(ImVec2(now_window_width * (1 - proportion), now_window_height), ImGuiCond_Always);
 
             ImGui::Begin("RENDER", nullptr, custom_window_flag
                 | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize
@@ -729,7 +735,7 @@ int main()
             ImGui::Text("image size = %d x %d", cam.get_image_width(), cam.get_image_height());
             ImGui::Text(("hit count = " + format_num(hit_count.load())).c_str());
             ImGui::Text("average depth = %.2f", (double)hit_count.load() / (sample_count.load() + 1));
-            
+
             if (tracing.load())
             {
                 duration = steady_clock::now() - tracing_start;
@@ -750,7 +756,7 @@ int main()
                 // 传递SRV GPU句柄，而不是CPU句柄。传递内部指针值, 转换为ImTextureID。
                 HelpMarker("Click image to interact and press ESC to exit interaction.\n");
                 ImGui::Image(
-                    (ImTextureID)my_texture_srv_gpu_handle.ptr, 
+                    (ImTextureID)my_texture_srv_gpu_handle.ptr,
                     ImVec2((float)cam.get_image_width(), (float)cam.get_image_height()),
                     ImVec2(0, 0),
                     ImVec2(1, 1),
@@ -784,7 +790,6 @@ int main()
             ImGui::Text("sys cpu usage = %.2f%%", cpu_usage);
             ImGui::End();
         }
-
 
         ImGui::Render();
 
@@ -822,7 +827,6 @@ int main()
         g_pd3dCommandQueue->Signal(g_fence, fenceValue);
         g_fenceLastSignaledValue = fenceValue;
         frameCtx->FenceValue = fenceValue;
-
     }
 
     WaitForLastSubmittedFrame();
