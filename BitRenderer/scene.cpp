@@ -43,7 +43,7 @@ void scene_obj_rasterize(const Camera& cam, const fs::path& obj_path, const fs::
     return;
 }
 
-void scene_obj_trace(const Camera& cam, const fs::path& obj_path, const fs::path& diffuse_map_path)
+void scene_obj_trace(const Camera& cam, const fs::path& obj_path, const fs::path& diffuse_map_path, const bool& tracing_with_cornell_box)
 {
     shared_ptr<HittableList> world = make_shared<HittableList>();
     HittableList triangles;
@@ -60,23 +60,6 @@ void scene_obj_trace(const Camera& cam, const fs::path& obj_path, const fs::path
     auto end = steady_clock::now();
     add_info("BVH elapsed time: "_str + STR(duration_cast<milliseconds>(end - start).count()) + "ms");
 
-    // 包围盒
-    auto red = make_shared<Lambertian>(Color3(.65, .05, .05));
-    auto white = make_shared<Lambertian>(Color3(.73, .73, .73));
-    auto green = make_shared<Lambertian>(Color3(.12, .45, .15));
-    world->add(make_shared<Quad>(Point3(2, -2, 0), Vec3(0, 4, 0), Vec3(0, 0, 4), green));
-    world->add(make_shared<Quad>(Point3(-2, -2, 0), Vec3(0, 4, 0), Vec3(0, 0, 4), red));
-    world->add(make_shared<Quad>(Point3(-2, -2, 0), Vec3(4, 0, 0), Vec3(0, 0, 4), white));
-    world->add(make_shared<Quad>(Point3(2, 2, 4), Vec3(-4, 0, 0), Vec3(0, 0, -4), white));
-    world->add(make_shared<Quad>(Point3(-2, -2, 4), Vec3(4, 0, 0), Vec3(0, 4, 0), white));
-
-    // 金属球
-    auto metal_sphere = make_shared<Sphere>(Point3(-1, -1, 2), .5, make_shared<Metal>(Color3(1, .84, 0), 0.));
-    // 玻璃球
-    auto glass_sphere = make_shared<Sphere>(Point3(1, 1, 2), .5, make_shared<Dielectric>(1.5));
-    world->add(glass_sphere);
-    world->add(metal_sphere);
-
     // 光源
     auto lighting = make_shared<DiffuseLight>(Color3(15, 15, 15));
     auto quad = make_shared<Quad>(Point3(-.5, 1.9, 2.5), Vec3(0, 0, -1), Vec3(1, 0, 0), lighting);
@@ -84,8 +67,29 @@ void scene_obj_trace(const Camera& cam, const fs::path& obj_path, const fs::path
     // 对光源几何体采样
     shared_ptr<HittableList> light(new HittableList());
     light->add(quad);
-    // 对玻璃球采样
-    light->add(glass_sphere);
+
+    if (tracing_with_cornell_box)
+    {
+        // 包围盒
+        auto red = make_shared<Lambertian>(Color3(.65, .05, .05));
+        auto white = make_shared<Lambertian>(Color3(.73, .73, .73));
+        auto green = make_shared<Lambertian>(Color3(.12, .45, .15));
+        world->add(make_shared<Quad>(Point3(2, -2, 0), Vec3(0, 4, 0), Vec3(0, 0, 4), green));
+        world->add(make_shared<Quad>(Point3(-2, -2, 0), Vec3(0, 4, 0), Vec3(0, 0, 4), red));
+        world->add(make_shared<Quad>(Point3(-2, -2, 0), Vec3(4, 0, 0), Vec3(0, 0, 4), white));
+        world->add(make_shared<Quad>(Point3(2, 2, 4), Vec3(-4, 0, 0), Vec3(0, 0, -4), white));
+        world->add(make_shared<Quad>(Point3(-2, -2, 4), Vec3(4, 0, 0), Vec3(0, 4, 0), white));
+
+        // 金属球
+        auto metal_sphere = make_shared<Sphere>(Point3(-1, -1, 2), .5, make_shared<Metal>(Color3(1, .84, 0), 0.));
+        // 玻璃球
+        auto glass_sphere = make_shared<Sphere>(Point3(1, 1, 2), .5, make_shared<Dielectric>(1.5));
+        world->add(glass_sphere);
+        world->add(metal_sphere);
+
+        // 对玻璃球采样
+        light->add(glass_sphere);
+    }
 
     cam.trace(world, light);
     return;
