@@ -4,9 +4,9 @@
 
 支持**光栅化**实时漫游和**光线追踪**离线渲染。
 
-可加载obj模型和贴图，在光栅化模式下进行漫游，有线框、深度、着色三种模式可选。
+选择obj模型和贴图，在光栅化模式下进行漫游，有线框、深度、着色三种模式可选。
 
-漫游确定合适相机位置后，可开启光线追踪离线渲染当前场景。光追采用蒙特卡洛路径追踪及BVH加速。
+漫游确定合适相机位置后，可开启光线追踪离线渲染当前场景，渲染过程实时显示。光追采用蒙特卡洛路径追踪及BVH加速。
 
 ## 使用说明
 
@@ -58,11 +58,14 @@ UI按3:7纵向划分为**SETUP**界面和**RENDER**界面（自适应窗口大�
 
    实时显示当前渲染结果（光追过程中和光追结果未清除时显示光追图像，其它情况下显示光栅化图像）。
 
-   点击图像进行交互，按ESC退出交互（光追时无法交互）：
+   **点击图像进行交互，按ESC退出交互**（光追时无法交互）：
 
    - WS/AD/QE：前后/左右/上下移动相机
+
    - 鼠标中键：缩放fov
-   -  鼠标左键：围绕当前观察点（随相机移动变化）转动视角（第三人称）  
+
+   -  鼠标左键：围绕当前观察点（随相机移动变化）转动视角（第三人称）
+
    -  鼠标右键：自身转动视角（第一人称）
 
    实时显示渲染信息于渲染结果上方：
@@ -89,11 +92,11 @@ UI按3:7纵向划分为**SETUP**界面和**RENDER**界面（自适应窗口大�
 
 ## 三方库
 
-[nothings/stb](https://github.com/nothings/stb)：读写图片。
+[nothings/stb](https://github.com/nothings/stb)：图片读写。
 
 [ocornut/imgui](https://github.com/ocornut/imgui)：UI，后端使用Win32+DirectX 12。
 
-[tinyobjloader/tinyobjloader](https://github.com/tinyobjloader/tinyobjloader)：加载obj文件
+[tinyobjloader/tinyobjloader](https://github.com/tinyobjloader/tinyobjloader)：obj加载。
 
 ## 参考资料
 
