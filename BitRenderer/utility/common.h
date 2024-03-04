@@ -53,6 +53,15 @@ extern std::atomic_bool   stop_rastering; // 标志是否需要停止光栅化
 // 返回dir目录下（含递归目录）所有文件名满足rule的文件的路径
 std::vector<fs::path> traverse_path(std::string dir, std::regex rule);
 
+enum RasteringModeFlags // 光栅化模式
+{
+    RasteringModeFlags_None = 0,
+    RasteringModeFlags_Coordinate_System = 1 << 0,
+    RasteringModeFlags_Wireframe = 1 << 1,
+    RasteringModeFlags_Depth = 1 << 2,
+    RasteringModeFlags_Shade = 1 << 3,
+};
+
 double degrees_to_radians(double degrees);
 
 double random_double();

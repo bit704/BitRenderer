@@ -83,12 +83,15 @@ int main()
     ImGuiWindowFlags_ custom_window_flag = ImGuiWindowFlags_None;
     ImGuiInputTextFlags info_flag = ImGuiInputTextFlags_ReadOnly;
     ImVec4 clear_color = ImVec4(1.f, 1.f, 1.f, 1.f); // 窗口背景颜色
-    bool use_preset = false; // 是否使用预置场景
-    bool tracing_with_cornell_box = false; // 渲染obj时是否加上cornell box
-    int rastering_mode = 0; // 0:wireframe 1:depth 2:shade 
     double proportion = .32; // SETUP界面和RENDER界面比例
 
     // 渲染参数
+    bool use_preset = false; // 是否使用预置场景
+    bool tracing_with_cornell_box = false; // 渲染obj时是否加上cornell box   
+    int rastering_mode = RasteringModeFlags_None;
+    int rastering_major_mode = RasteringModeFlags_Wireframe;
+    bool use_coordinate_system = false;
+
     std::vector<fs::path> objs = { "None" };
     int obj_pre_idx = 0;
     int obj_current_idx = 0;
@@ -413,17 +416,23 @@ int main()
 
                 // 选择光栅化模式
                 ImGui::Text("Rasterizing Roam");
-                ImGui::Text("            ");
-                ImGui::SameLine(); refresh_rasterizing |= ImGui::RadioButton("wireframe", &rastering_mode, 0);
-                ImGui::SameLine(); refresh_rasterizing |= ImGui::RadioButton("depth", &rastering_mode, 1);
-                ImGui::SameLine(); refresh_rasterizing |= ImGui::RadioButton("shade", &rastering_mode, 2);
 
+                refresh_rasterizing |= ImGui::RadioButton("wireframe", &rastering_major_mode, RasteringModeFlags_Wireframe); ImGui::SameLine();
+                refresh_rasterizing |= ImGui::RadioButton("depth", &rastering_major_mode, RasteringModeFlags_Depth); ImGui::SameLine();
+                refresh_rasterizing |= ImGui::RadioButton("shade", &rastering_major_mode, RasteringModeFlags_Shade); ImGui::SameLine();
+                rastering_mode = rastering_major_mode;
+
+                refresh_rasterizing |= ImGui::Checkbox("coordinate system", &use_coordinate_system);
+                if (use_coordinate_system)
+                    rastering_mode |= RasteringModeFlags_Coordinate_System;
+                else
+                    rastering_mode &= ~RasteringModeFlags_Coordinate_System;
+
+                // 光线追踪选项
                 ImGui::Text("Ray Tracing");
-                ImGui::Text("                    ");
 
                 // 开始光线追踪
-                ImGui::BeginDisabled(tracing.load());
-                ImGui::SameLine();
+                ImGui::BeginDisabled(tracing.load());                
                 if (ImGui::Button("Start") && !tracing.load())
                 {
                     if (!use_preset)
