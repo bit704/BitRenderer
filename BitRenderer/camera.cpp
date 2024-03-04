@@ -332,7 +332,7 @@ void Camera::rasterize_shade(const std::vector<TriangleRasterize>& triangles)
     }
 }
 
-void Camera::rasterize_origin()
+void Camera::rasterize_coordinate_system()
     const
 {
     std::vector<Point4> oxyz{ {0,0,0,1}, {1,0,0,1}, {0,1,0,1}, {0,0,1,1} };

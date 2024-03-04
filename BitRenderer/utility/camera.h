@@ -120,14 +120,15 @@ public:
     void rasterize(const std::vector<TriangleRasterize>& triangles, const int& mode)
         const
     {
-        if (mode == 0)
+        if (mode & RasteringModeFlags_Wireframe)
             rasterize_wireframe(triangles);
-        else if (mode == 1)
+        else if (mode & RasteringModeFlags_Depth)
             rasterize_depth(triangles);
-        else if (mode == 2)
+        else if (mode & RasteringModeFlags_Shade)
             rasterize_shade(triangles);
 
-        //rasterize_origin();
+        if(mode & RasteringModeFlags_Coordinate_System)
+            rasterize_coordinate_system();
         return;       
     }
 
@@ -141,7 +142,7 @@ private:
     void rasterize_shade(const std::vector<TriangleRasterize>& triangles)
         const;
 
-    void rasterize_origin()
+    void rasterize_coordinate_system()
         const;
 
     //返回视图矩阵
