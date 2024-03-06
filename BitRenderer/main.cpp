@@ -647,74 +647,81 @@ int main()
             // 光追时禁止
             if (enter_interaction && !tracing.load())
             {
+                bool interacted = false;
+
                 // 前后移动 WS
                 if (ImGui::IsKeyDown(ImGuiKey_W))
                 {
-                    refresh_rasterizing = true;
+                    interacted = true;
                     cam.move_front_back(interaction_delta);
                 }
                 if (ImGui::IsKeyDown(ImGuiKey_S))
                 {
-                    refresh_rasterizing = true;
+                    interacted = true;
                     cam.move_front_back(-interaction_delta);
                 }
 
                 // 左右移动 AD
                 if (ImGui::IsKeyDown(ImGuiKey_A))
                 {
-                    refresh_rasterizing = true;
+                    interacted = true;
                     cam.move_left_right(interaction_delta);
                 }
                 if (ImGui::IsKeyDown(ImGuiKey_D))
                 {
-                    refresh_rasterizing = true;
+                    interacted = true;
                     cam.move_left_right(-interaction_delta);
                 }
 
                 // 上下移动 QE
                 if (ImGui::IsKeyDown(ImGuiKey_Q))
                 {
-                    refresh_rasterizing = true;
+                    interacted = true;
                     cam.move_up_down(interaction_delta);
                 }
                 if (ImGui::IsKeyDown(ImGuiKey_E))
                 {
-                    refresh_rasterizing = true;
+                    interacted = true;
                     cam.move_up_down(-interaction_delta);
                 }
 
                 // 鼠标中键 缩放fov                  
                 if (double fov_scale = ImGui::GetIO().MouseWheel; fov_scale != 0)
                 {
-                    refresh_rasterizing = true;
+                    interacted = true;
                     cam.zoom_fov(fov_scale);
                 }
 
                 // 鼠标左键 围绕观察点转动视角（第三人称）
                 if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
                 {
-                    refresh_rasterizing = true;
+                    interacted = true;
                     cam.view_third_person(io.MouseDelta.x, io.MouseDelta.y);
                 }
 
                 // 鼠标右键 自身转动视角（第一人称）
                 if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
                 {
-                    refresh_rasterizing = true;
+                    interacted = true;
                     cam.view_first_person(io.MouseDelta.x, io.MouseDelta.y);
+                }
+
+                if (interacted == true)
+                {
+                    // 更新相机参数的改变到UI上
+                    vfov = cam.get_vfov();
+                    float lookfrom_t[3] = { cam.get_lookfrom().x(), cam.get_lookfrom().y(), cam.get_lookfrom().z() };
+                    memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
+                    float lookat_t[3] = { cam.get_lookat().x(), cam.get_lookat().y(), cam.get_lookat().z() };
+                    memcpy(lookat, lookat_t, 3 * sizeof(float));
+                    float vup_t[3] = { cam.get_vup().x(), cam.get_vup().y(), cam.get_vup().z() };
+                    memcpy(vup, vup_t, 3 * sizeof(float));
+
+                    refresh_rasterizing = true;
                 }
 
                 if (ImGui::IsKeyDown(ImGuiKey_Escape))
                     enter_interaction = false;
-
-                // 更新相机参数的改变到UI上
-                vfov = cam.get_vfov();
-                float lookfrom_t[3] = { cam.get_lookfrom().x(), cam.get_lookfrom().y(), cam.get_lookfrom().z() };
-                memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
-                float lookat_t[3] = { cam.get_lookat().x(), cam.get_lookat().y(), cam.get_lookat().z() };
-                memcpy(lookat, lookat_t, 3 * sizeof(float));
-                float vup_t[3] = { cam.get_vup().x(), cam.get_vup().y(), cam.get_vup().z() };
-                memcpy(vup, vup_t, 3 * sizeof(float));
             }
             interaction_point = steady_clock::now();
         }
