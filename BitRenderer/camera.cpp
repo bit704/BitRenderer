@@ -1,5 +1,6 @@
 #include "camera.h"
 
+// 初始化相机，返回图像内存指针
 unsigned char** Camera::initialize(bool new_image)
 {
     image_height_ = static_cast<int>(image_width_ / aspect_ratio_);

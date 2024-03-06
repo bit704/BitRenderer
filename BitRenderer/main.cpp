@@ -1,13 +1,13 @@
 #include "image.h"
 #include "logger.h"
-#include "scene.h"
-#include "ui_helper.h"
 #include "resource.h"
+#include "scene.h"
 #include "status.h"
+#include "ui_helper.h"
 
 int main()
 {
-    // 创建应用程序窗口
+    // 创建Win32应用程序窗口
     WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, 
         GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"ImGui", nullptr };
 
@@ -25,7 +25,7 @@ int main()
         max_window_rect.left, max_window_rect.top, max_window_width, max_window_height, 
         nullptr, nullptr, wc.hInstance, nullptr);
 
-    // 初始化Direct3D
+    // 初始化Direct3D用于绘制UI
     if (!CreateDeviceD3D(hwnd))
     {
         CleanupDeviceD3D();
@@ -62,7 +62,6 @@ int main()
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // 手柄
 
     // 设置IMGUI的样式
-    //ImGui::StyleColorsDark();
     ImGui::StyleColorsLight();
     ImGuiStyle& style = ImGui::GetStyle();
     style.TabRounding    = 3.f;
@@ -85,34 +84,43 @@ int main()
     ImVec4 clear_color = ImVec4(1.f, 1.f, 1.f, 1.f); // 窗口背景颜色
     double proportion = .32; // SETUP界面和RENDER界面比例
 
-    // 渲染参数
+    /*
+     * 渲染参数 
+     */
     bool use_preset = false; // 是否使用预置场景
-    bool tracing_with_cornell_box = false; // 渲染obj时是否加上cornell box   
-    int rastering_mode = RasteringModeFlags_None;
-    int rastering_major_mode = RasteringModeFlags_Wireframe;
-    bool use_coordinate_system = false;
-
+    bool tracing_with_cornell_box = false; // 光追obj时是否加上cornell box   
+    int  rastering_mode       = RasteringModeFlags_None; // 光栅化模式
+    int  rastering_major_mode = RasteringModeFlags_Wireframe; // 主光栅化模式（互斥）
+    bool show_coordinate_system = false; // 是否显示坐标系
+    // obj路径
     std::vector<fs::path> objs = { "None" };
     int obj_pre_idx = 0;
     int obj_current_idx = 0;
+    // 贴图路径
     std::vector<fs::path> maps = { "None" };
     int diffuse_map_pre_idx = 0;
     int diffuse_map_current_idx = 0;
+    // 预置场景
     const char* scenes[] = { "None", "scene_checker", "scene_cornell_box", "scene_composite1", "scene_composite2" };
     int scene_current_idx = 0;
+    // 图片宽度
     int image_width = 600;
+    // 图片宽高比
     const char* aspect_ratios[] = { "1/1", "4/3", "3/2", "16/9", "2/1" };
     int aspect_ratio_pre_idx = 0;
     int aspect_ratio_current_idx = 0;
     double aspect_ratio = 1;
-    int samples_per_pixel = 16;
-    int max_depth = 10;
-    int vfov = 20;
-    float lookfrom[3] = { 0, 0, 1 };
-    float lookat[3]   = { 0, 0, 0 };
-    float vup[3]      = { 0, 1, 0 };
+
+    int samples_per_pixel = 16; // 每像素采样数
+    int max_depth = 10; // 最大深度
+    
+    int   vfov = 20; // 垂直视场角
+    // 相机位置
+    float lookfrom[3]   = { 0, 0, 1 };
+    float lookat[3]     = { 0, 0, 0 };
+    float vup[3]        = { 0, 1, 0 };
     float background[3] = { 1, 1, 1 };
-    std::string image_name = "default.png";    
+    std::string image_name = "default.png";  // 默认输出图片名 
 
     // 渲染数据
     Camera cam;
@@ -135,7 +143,7 @@ int main()
     // 组装渲染配置
     auto assemble = [&]()
         {
-            // 仅在图片尺寸发生变化时需要重新生成图片
+            // 仅在图片尺寸发生变化时需要重新生成图片内存
             bool new_image = (image_width != cam.get_image_width()) ||
                 (aspect_ratio != cam.get_aspect_ratio());
 
@@ -231,7 +239,7 @@ int main()
                         if (is_selected)
                             ImGui::SetItemDefaultFocus();
 
-                        // obj推荐参数，None选项不指定
+                        // obj默认参数，None选项不指定
                         if (obj_current_idx != 0)
                         {
                             image_width = 600;
@@ -292,7 +300,7 @@ int main()
                 HelpMarker(
                     "Please put map in .\\load\\ folder.(JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC)\n"
                     "Available map will automatically show in this Checkbox.\n"
-                    "All red if fail to load.\n");
+                    "All red if no map or fail to load.\n");
 
                 ImGui::Checkbox("tracing with cornell box", &tracing_with_cornell_box);
                 ImGui::SameLine();
@@ -304,8 +312,6 @@ int main()
                 ImGui::Checkbox("use preset", &use_preset);
 
                 ImGui::BeginDisabled(!use_preset);
-
-                //ImGui::SetNextItemWidth(200);
 
                 // 选择预置场景
                 const char* combo_scene = scenes[scene_current_idx];
@@ -422,8 +428,8 @@ int main()
                 refresh_rasterizing |= ImGui::RadioButton("shade", &rastering_major_mode, RasteringModeFlags_Shade); ImGui::SameLine();
                 rastering_mode = rastering_major_mode;
 
-                refresh_rasterizing |= ImGui::Checkbox("coordinate system", &use_coordinate_system);
-                if (use_coordinate_system)
+                refresh_rasterizing |= ImGui::Checkbox("coordinate system", &show_coordinate_system);
+                if (show_coordinate_system)
                     rastering_mode |= RasteringModeFlags_Coordinate_System;
                 else
                     rastering_mode &= ~RasteringModeFlags_Coordinate_System;

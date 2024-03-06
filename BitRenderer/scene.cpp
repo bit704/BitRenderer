@@ -1,8 +1,8 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
-#include "scene.h"
 #include "logger.h"
+#include "scene.h"
 #include "triangle_rasterize.h"
 
 std::vector<Point3>    vertices;
@@ -108,8 +108,8 @@ void scene_test_triangle(const Camera& cam)
 {
     shared_ptr<HittableList> world = make_shared<HittableList>();
 
-    vertices = { {0, 0, 1}, {1, 0, 0}, {0, 1, 0} };
-    normals = { {0, 0, 1}, {0, 0, 1}, {0, 0, 1} };
+    vertices  = { {0, 0, 1}, {1, 0, 0}, {0, 1, 0} };
+    normals   = { {0, 0, 1}, {0, 0, 1}, {0, 0, 1} };
     texcoords = { {0, 0}, {1, 0}, {0, 1} };
     auto earthmap = make_shared<ImageTexture>(kLoadPath + "earthmap.jpg"_str);
     world->add(make_shared<Triangle>(0, 0, 0, 1, 1, 1, 2, 2, 2, make_shared<Lambertian>(earthmap)));
@@ -118,6 +118,7 @@ void scene_test_triangle(const Camera& cam)
     return;
 }
 
+// 使用tinyobj加载直接获得的数据
 static tinyobj::attrib_t attrib;
 static std::vector<tinyobj::shape_t> shapes;
 static std::vector<tinyobj::material_t> materials;
@@ -212,8 +213,8 @@ bool prepare_trace_data(HittableList& triangles, const std::string diffuse_map_p
     for (ullong i = 0; i < snum; i++)
     {
         add_info("shape name: "_str + shapes[i].name);
-        add_info("  mesh indices num: "_str + STR(shapes[i].mesh.indices.size()));
-        add_info("  lines indices num: "_str + STR(shapes[i].lines.indices.size()));
+        add_info("  mesh indices num: "_str   + STR(shapes[i].mesh.indices.size()));
+        add_info("  lines indices num: "_str  + STR(shapes[i].lines.indices.size()));
         add_info("  points indices num: "_str + STR(shapes[i].points.indices.size()));
         
         ullong fnum = shapes[i].mesh.num_face_vertices.size();
@@ -315,6 +316,7 @@ bool prepare_rasterize_data(const char* filename, const char* basepath, bool tri
     return true;
 }
 
+// 预置场景：棋盘格球
 void scene_checker(const Camera& cam)
 {
     shared_ptr<HittableList> world = make_shared<HittableList>();
@@ -328,6 +330,7 @@ void scene_checker(const Camera& cam)
     return;
 }
 
+// 预置场景：康奈尔盒
 void scene_cornell_box(const Camera& cam)
 {
     shared_ptr<HittableList> world = make_shared<HittableList>();
@@ -370,6 +373,7 @@ void scene_cornell_box(const Camera& cam)
     return;
 }
 
+// 预置场景：多球组合
 void scene_composite1(const Camera& cam)
 {
     shared_ptr<HittableList> world = make_shared<HittableList>();
@@ -423,13 +427,13 @@ void scene_composite1(const Camera& cam)
     auto material3 = make_shared<Metal>(Color3(0.7, 0.6, 0.5), 0.0);
     list.add(make_shared<Sphere>(Point3(4, 1, 0), 1.0, material3));
 
-    // BVH加速结构
     world->add(make_shared<BVHNode>(list));
 
     cam.trace(world);
     return;
 }
 
+// 预置场景：多物体组合
 void scene_composite2(const Camera& cam)
 {
     shared_ptr<HittableList> world = make_shared<HittableList>();

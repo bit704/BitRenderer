@@ -8,6 +8,10 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+/*
+ * ImageWrite
+ */
+
 // static关键字只能用于类定义体内部的声明中，定义时不能标示为static
 const std::string ImageWrite::kOutputPath_ = kOutputPath;
 
@@ -61,7 +65,6 @@ void ImageWrite::set_pixel(const int& row, const int& col, const Color3& c, cons
 	set_pixel(row, col, c * scale);
 }
 
-
 void ImageWrite::write()
 {
 	if (image_data_ == nullptr)
@@ -93,6 +96,10 @@ ImageWrite::~ImageWrite()
 	LOG("free the image for write");
 	stbi_image_free(image_data_);
 }
+
+/*
+ * ImageRead
+ */
 
 ImageRead::ImageRead(const std::string image_path)
 {

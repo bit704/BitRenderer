@@ -63,8 +63,8 @@ std::string operator ""_str(const char* c_str, size_t)
     return std::string(c_str);
 }
 
-std::deque<std::string> info; // 输出信息
-std::mutex mtx;
+static std::deque<std::string> info; // 输出信息
+static std::mutex mtx;
 
 void add_info(std::string new_info)
 {

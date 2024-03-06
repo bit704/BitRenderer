@@ -23,7 +23,7 @@ private:
     double vfov_;  // 垂直fov
     int    image_width_;
     int    image_height_;
-    Color3  background_;
+    Color3 background_;
     int    channel_;
     Point3 camera_center_;
     Point3 pixel00_loc_; // (0,0)处像素的位置
@@ -44,7 +44,7 @@ private:
     double near_, far_; // 光栅化近平面和远平面
 
     double defocus_angle_;  // 光线经过每个像素的变化
-    double focus_dist_;    // 相机原点到完美聚焦平面的距离，这里与焦距相同
+    double focus_dist_;     // 相机原点到完美聚焦平面的距离，这里与焦距相同
     Vec3   defocus_disk_u_;  // 散焦横向半径
     Vec3   defocus_disk_v_;  // 散焦纵向半径
 

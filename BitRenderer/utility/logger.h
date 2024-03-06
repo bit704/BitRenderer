@@ -5,6 +5,9 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
+// 避免宏展开处缺头文件
+#include <iostream>
+
 #include "singleton.h"
 
 #define PRINT_LOCATION std::cout << __FILE__ << "第" << __LINE__ << "行（" << __FUNCTION__ << "）：";
