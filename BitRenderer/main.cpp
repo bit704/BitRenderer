@@ -304,7 +304,9 @@ int main()
 
                 ImGui::Checkbox("tracing with cornell box", &tracing_with_cornell_box);
                 ImGui::SameLine();
-                HelpMarker("Whether add cornell box to surround obj when tracing.");
+                HelpMarker(
+                    "Whether add cornell box to surround obj when tracing.\n"
+                    "If true, camera will be set to suitable vfov and pose.\n");
 
                 ImGui::EndDisabled(); // ImGui::BeginDisabled(use_preset);
 
@@ -453,6 +455,20 @@ int main()
                             add_info("Rendering " + objs[obj_current_idx].stem().string() + "...");
 
                             tracing_statistics();
+
+                            // 强制重置相机vfov和位姿
+                            if (tracing_with_cornell_box)
+                            {
+                                vfov = 20;
+                                float lookfrom_t[3] = { 0, -1, -12 };
+                                memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
+                                float lookat_t[3] = { 0, 0, 0 };
+                                memcpy(lookat, lookat_t, 3 * sizeof(float));
+                                float vup_t[3] = { 0, 1, 0 };
+                                memcpy(vup, vup_t, 3 * sizeof(float));
+                                float background_t[3] = { 1, 1, 1 };
+                                memcpy(background, background_t, 3 * sizeof(float));
+                            }
 
                             t = std::thread(scene_obj_trace, std::cref(cam), std::cref(objs[obj_current_idx]), std::cref(maps[diffuse_map_current_idx]), std::cref(tracing_with_cornell_box));
                             //t = std::thread(scene_test_triangle, std::cref(cam));
