@@ -15,16 +15,23 @@ void scene_obj_rasterize(const Camera& cam, const fs::path& obj_path, const fs::
     static fs::path prev_obj_path;
     static fs::path prev_diffuse_map_path;
 
-    bool reload = false;
-
     // 避免每帧重复加载
+    bool reload_obj = false;
+    bool reload_diffuse_map = false;
+
     if (prev_obj_path != obj_path)
     {
         prev_obj_path = obj_path;
-        reload = true;
+        reload_obj = true;
     }
 
-    if (reload)
+    if (prev_diffuse_map_path != diffuse_map_path)
+    {
+        prev_diffuse_map_path = diffuse_map_path;
+        reload_diffuse_map = true;
+    }
+
+    if (reload_obj)
     {
         if (!prepare_rasterize_data(obj_path.string().c_str(), obj_path.parent_path().string().c_str(), true, triangles))
         {
@@ -33,11 +40,8 @@ void scene_obj_rasterize(const Camera& cam, const fs::path& obj_path, const fs::
         }
     }
 
-    // 加载材质
-    if (prev_diffuse_map_path != diffuse_map_path)
+    if (reload_obj || reload_diffuse_map)
     {
-        prev_diffuse_map_path = diffuse_map_path;
-
         auto test = make_shared<Lambertian>(make_shared<ImageTexture>(diffuse_map_path.string()));
         for(TriangleRasterize& tri : triangles)
             tri.set_material(test);
