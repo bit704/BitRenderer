@@ -96,10 +96,20 @@ int main()
     std::vector<fs::path> objs = { "None" };
     int obj_pre_idx = 0;
     int obj_current_idx = 0;
-    // 贴图路径
+    // 材质
+    shared_ptr<Lambertian> material_lambert = make_shared<Lambertian>();
+    shared_ptr<Microfacet> material_microfacet = make_shared<Microfacet>();
+    int material_type = 1;
+    // 贴图
     std::vector<fs::path> maps = { "None" };
-    int diffuse_map_pre_idx = 0;
-    int diffuse_map_current_idx = 0;
+    int base_color_map_pre_idx     = 0;
+    int base_color_map_current_idx = 0;
+    int metallic_map_pre_idx       = 0;
+    int metallic_map_current_idx   = 0;
+    int roughness_map_pre_idx      = 0;
+    int roughness_map_current_idx  = 0;
+    int normal_map_pre_idx         = 0;
+    int normal_map_current_idx     = 0;
     // 预置场景
     const char* scenes[] = { "None", "scene_checker", "scene_cornell_box", "scene_composite1", "scene_composite2" };
     int scene_current_idx = 0;
@@ -195,8 +205,11 @@ int main()
         // 获取当前窗口大小（除开标题栏、菜单栏）
         RECT now_window_rect;
         GetClientRect(hwnd, &now_window_rect);
-        int now_window_width = now_window_rect.right - now_window_rect.left;
+        int now_window_width  = now_window_rect.right  - now_window_rect.left;
         int now_window_height = now_window_rect.bottom - now_window_rect.top;
+        // 初始最大1920*1080
+        now_window_width  = (std::min)(now_window_width, 1920);
+        now_window_height = (std::max)(now_window_height, 1080);
 
         // 设置界面
         {
@@ -209,240 +222,350 @@ int main()
 
             if (ImGui::CollapsingHeader("Scene", ImGuiTreeNodeFlags_DefaultOpen))
             {
-                ImGui::BeginDisabled(use_preset);
-
-                // 根据kLoadPath文件夹下文件刷新objs数组
-                auto objs_new = traverse_path(kLoadPath, std::regex(".*\\.obj$"));
-                if (objs != objs_new)
-                    objs = std::move(objs_new);
-
-                // 选择obj
-                auto combo_obj_str = objs[obj_current_idx].stem().string();
-                const char* combo_obj = combo_obj_str.c_str(); // 必须分两步，否则combo_obj指向已经销毁的实例
-                if (ImGui::BeginCombo("load obj", combo_obj, flags))
-                {
-                    for (int n = 0; n < objs.size(); n++)
-                    {
-                        const bool is_selected = (obj_current_idx == n);
-                        if (ImGui::Selectable(objs[n].string().c_str(), is_selected))
-                        {
-                            obj_pre_idx = obj_current_idx;
-                            obj_current_idx = n;
-                            if (obj_pre_idx != obj_current_idx)
-                            {
-                                // 选择新obj时无需再停止光栅化
-                                stop_rastering.store(false);
-                                refresh_rasterizing = true;
-                            }
-                        }
-
-                        if (is_selected)
-                            ImGui::SetItemDefaultFocus();
-
-                        // obj默认参数，None选项不指定
-                        if (obj_current_idx != 0)
-                        {
-                            image_width = 600;
-                            aspect_ratio_current_idx = 0;
-                            samples_per_pixel = 5;
-                            max_depth = 5;
-                            vfov = 20;
-                            float lookfrom_t[3] = { 0, -1, -12 };
-                            memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
-                            float lookat_t[3] = { 0, 0, 0 };
-                            memcpy(lookat, lookat_t, 3 * sizeof(float));
-                            float vup_t[3] = { 0, 1, 0 };
-                            memcpy(vup, vup_t, 3 * sizeof(float));
-                            float background_t[3] = { 1, 1, 1 };
-                            memcpy(background, background_t, 3 * sizeof(float));
-
-                            image_name = objs[obj_current_idx].stem().string() + ".png"; // 去掉末尾的".obj"再加上".png"
-                        }
-                    }
-                    ImGui::EndCombo();
-                }
-                ImGui::SameLine();
-                HelpMarker(
-                    "Please put .obj in .\\load\\ folder.\n"
-                    "Available .obj will automatically show in this Checkbox.\n");
-
-                // 根据kLoadPath文件夹下文件刷新maps数组
-                auto maps_new = traverse_path(kLoadPath, std::regex(".*\\.(jpg|png|tga|bmp|psd|gif|hdr|pic)$", std::regex_constants::icase));
-                if (maps != maps_new)
-                    maps = std::move(maps_new);
-
-                // 选择diffuse map
-                auto diffuse_map_str = maps[diffuse_map_current_idx].filename().string();
-                const char* combo_diffuse_map = diffuse_map_str.c_str();
-                if (ImGui::BeginCombo("load diffuse map", combo_diffuse_map, flags))
-                {
-                    for (int n = 0; n < maps.size(); n++)
-                    {
-                        const bool is_selected = (diffuse_map_current_idx == n);
-                        if (ImGui::Selectable(maps[n].string().c_str(), is_selected))
-                        {
-                            diffuse_map_pre_idx = diffuse_map_current_idx;
-                            diffuse_map_current_idx = n;
-                            if (diffuse_map_pre_idx != diffuse_map_current_idx)
-                            {
-                                // 选择新map时无需再停止光栅化
-                                stop_rastering.store(false);
-                                refresh_rasterizing = true;
-                            }
-                        }
-
-                        if (is_selected)
-                            ImGui::SetItemDefaultFocus();
-                    }
-                    ImGui::EndCombo();
-                }
-                ImGui::SameLine();
-                HelpMarker(
-                    "Please put map in .\\load\\ folder.(JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC)\n"
-                    "Available map will automatically show in this Checkbox.\n"
-                    "All red if no map or fail to load.\n");
-
-                ImGui::Checkbox("tracing with cornell box", &tracing_with_cornell_box);
-                ImGui::SameLine();
-                HelpMarker(
-                    "Whether add cornell box to surround obj when tracing.\n"
-                    "If true, camera will be set to suitable vfov and pose.\n");
-
-                ImGui::EndDisabled(); // ImGui::BeginDisabled(use_preset);
-
                 // 是否使用预置场景
                 ImGui::Checkbox("use preset", &use_preset);
+                ImGui::SameLine();
+                HelpMarker(
+                    "Check \"use preset\" to activate \"load preset\" and deactivate \"load obj\".\n"
+                    "And vice versa.\n");
 
-                ImGui::BeginDisabled(!use_preset);
-
-                // 选择预置场景
-                const char* combo_scene = scenes[scene_current_idx];
-                if (ImGui::BeginCombo("preset", combo_scene, flags))
+                if(!use_preset)
                 {
-                    for (int n = 0; n < IM_ARRAYSIZE(scenes); n++)
+                    // 根据kLoadPath文件夹下文件刷新objs数组
+                    auto objs_new = traverse_path(kLoadPath, std::regex(".*\\.obj$"));
+                    if (objs != objs_new)
+                        objs = std::move(objs_new);
+
+                    // 选择obj
+                    auto combo_obj_str = objs[obj_current_idx].stem().string();
+                    const char* combo_obj = combo_obj_str.c_str(); // 必须分两步，否则combo_obj指向已经销毁的实例
+                    if (ImGui::BeginCombo("load obj", combo_obj, flags))
                     {
-                        const bool is_selected = (scene_current_idx == n);
-                        if (ImGui::Selectable(scenes[n], is_selected))
+                        for (int n = 0; n < objs.size(); n++)
                         {
-                            // 选择scene时无需再停止光栅化
-                            stop_rastering.store(false);
-                            // 此时刷新光栅化只用于显示仅带背景颜色的图片
+                            const bool is_selected = (obj_current_idx == n);
+                            if (ImGui::Selectable(objs[n].string().c_str(), is_selected))
+                            {
+                                obj_pre_idx = obj_current_idx;
+                                obj_current_idx = n;
+                                if (obj_pre_idx != obj_current_idx)
+                                {
+                                    // 选择新obj时无需再停止光栅化
+                                    stop_rastering.store(false);
+                                    refresh_rasterizing = true;
+                                }
+                            }
+
+                            if (is_selected)
+                                ImGui::SetItemDefaultFocus();
+
+                            // obj默认参数，None选项不指定
+                            if (obj_current_idx != 0)
+                            {
+                                image_width = 600;
+                                aspect_ratio_current_idx = 0;
+                                samples_per_pixel = 5;
+                                max_depth = 5;
+                                vfov = 20;
+                                ARRAY3_ASSIGN(lookfrom, 0, -1, -12);
+                                ARRAY3_ASSIGN(lookat, 0, 0, 0);
+                                ARRAY3_ASSIGN(vup, 0, 1, 0);
+                                ARRAY3_ASSIGN(background, 1, 1, 1);
+
+                                image_name = objs[obj_current_idx].stem().string() + ".png"; // 去掉末尾的".obj"再加上".png"
+                            }
+                        }
+                        ImGui::EndCombo();
+                    }
+                    ImGui::SameLine();
+                    HelpMarker(
+                        "Please place .obj anywhere in .\\load\\ folder.\n"
+                        "Available .obj will automatically show in this Checkbox.\n");
+
+                    // 选择材质类型
+                    {
+                        bool material_type_changed = false;
+                        material_type_changed |= ImGui::RadioButton("Lambert", &material_type, MaterialTypeFlags_Lambert); ImGui::SameLine();
+                        material_type_changed |= ImGui::RadioButton("Microfacet (GGX+Lambert)", &material_type, MaterialTypeFlags_Microfacet);
+                        if (material_type_changed)
+                        {
                             refresh_rasterizing = true;
-                            scene_current_idx = n;
-                        }
-
-                        if (is_selected)
-                            ImGui::SetItemDefaultFocus();
-
-                        // 选择scene时自动将obj置为None
-                        obj_current_idx = 0;
-
-                        // 各场景推荐参数
-                        if (scene_current_idx != 0)
-                        {
-                            image_name = std::string(scenes[scene_current_idx]) + ".png";
-                        }
-
-                        if (scene_current_idx == 1)
-                        {
-                            image_width = 600;
-                            aspect_ratio_current_idx = 3;
-                            samples_per_pixel = 30;
-                            max_depth = 10;
-                            vfov = 20;
-                            float lookfrom_t[3] = { 10, 3, 10 };
-                            memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
-                            float lookat_t[3] = { 0, 0, 0 };
-                            memcpy(lookat, lookat_t, 3 * sizeof(float));
-                            float vup_t[3] = { 0, 1, 0 };
-                            memcpy(vup, vup_t, 3 * sizeof(float));
-                            float background_t[3] = { .7f, .8f, 1 };
-                            memcpy(background, background_t, 3 * sizeof(float));
-                        }
-                        else if (scene_current_idx == 2)
-                        {
-                            image_width = 600;
-                            aspect_ratio_current_idx = 0;
-                            samples_per_pixel = 30;
-                            max_depth = 10;
-                            vfov = 40;
-                            float lookfrom_t[3] = { 278, 278, -800 };
-                            memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
-                            float lookat_t[3] = { 278, 278, 0 };
-                            memcpy(lookat, lookat_t, 3 * sizeof(float));
-                            float vup_t[3] = { 0, 1, 0 };
-                            memcpy(vup, vup_t, 3 * sizeof(float));
-                            float background_t[3] = { 0, 0, 0 };
-                            memcpy(background, background_t, 3 * sizeof(float));
-                        }
-                        else if (scene_current_idx == 3)
-                        {
-                            image_width = 600;
-                            aspect_ratio_current_idx = 3;
-                            samples_per_pixel = 30;
-                            max_depth = 10;
-                            vfov = 20;
-                            float lookfrom_t[3] = { 13, 2, 3 };
-                            memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
-                            float lookat_t[3] = { 0, 0, 0 };
-                            memcpy(lookat, lookat_t, 3 * sizeof(float));
-                            float vup_t[3] = { 0, 1, 0 };
-                            memcpy(vup, vup_t, 3 * sizeof(float));
-                            float background_t[3] = { .7f, .8f, 1 };
-                            memcpy(background, background_t, 3 * sizeof(float));
-                        }
-                        else if (scene_current_idx == 4)
-                        {
-                            image_width = 600;
-                            aspect_ratio_current_idx = 0;
-                            samples_per_pixel = 30;
-                            max_depth = 10;
-                            vfov = 40;
-                            float lookfrom_t[3] = { 478, 278, -600 };
-                            memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
-                            float lookat_t[3] = { 278, 278, 0 };
-                            memcpy(lookat, lookat_t, 3 * sizeof(float));
-                            float vup_t[3] = { 0, 1, 0 };
-                            memcpy(vup, vup_t, 3 * sizeof(float));
-                            float background_t[3] = { 0, 0, 0 };
-                            memcpy(background, background_t, 3 * sizeof(float));
+                            if (material_type & MaterialTypeFlags_Lambert)
+                            {
+                                material_lambert = make_shared<Lambertian>();
+                                base_color_map_current_idx = 0;
+                            }                                
+                            else if (material_type & MaterialTypeFlags_Microfacet)
+                            {
+                                material_microfacet = make_shared<Microfacet>();
+                                base_color_map_current_idx = 0;
+                                metallic_map_current_idx   = 0;
+                                roughness_map_current_idx  = 0;
+                                normal_map_current_idx     = 0;
+                            }
                         }
                     }
-                    ImGui::EndCombo();
-                }
-                ImGui::SameLine();
-                HelpMarker("Choose preset scene.\n");
 
-                ImGui::EndDisabled(); //  ImGui::BeginDisabled(!use_preset);
+                    // 根据kLoadPath文件夹下文件刷新maps数组
+                    auto maps_new = traverse_path(kLoadPath, std::regex(".*\\.(jpg|png|tga|bmp|psd|gif|hdr|pic)$", std::regex_constants::icase));
+                    if (maps != maps_new)
+                        maps = std::move(maps_new);
+
+                    // 选择base color map
+                    auto base_color_map_str = maps[base_color_map_current_idx].filename().string();
+                    const char* combo_base_color_map = base_color_map_str.c_str();
+                    if (ImGui::BeginCombo("load base color map", combo_base_color_map, flags))
+                    {
+                        for (int n = 0; n < maps.size(); n++)
+                        {
+                            const bool is_selected = (base_color_map_current_idx == n);
+                            if (ImGui::Selectable(maps[n].string().c_str(), is_selected))
+                            {
+                                base_color_map_pre_idx = base_color_map_current_idx;
+                                base_color_map_current_idx = n;
+                                if (base_color_map_pre_idx != base_color_map_current_idx)
+                                {
+                                    // 选择新map时取消光栅化停止状态
+                                    stop_rastering.store(false);
+                                    refresh_rasterizing = true;
+                                    // 更新material
+                                    if (material_type & MaterialTypeFlags_Lambert)
+                                        material_lambert = make_shared<Lambertian>(make_shared<ImageTexture>(maps[base_color_map_current_idx].string()));
+                                    else if (material_type & MaterialTypeFlags_Microfacet)
+                                        material_microfacet->set_base_color(make_shared<ImageTexture>(maps[base_color_map_current_idx].string()));
+                                }
+                            }
+
+                            if (is_selected)
+                                ImGui::SetItemDefaultFocus();
+                        }
+                        ImGui::EndCombo();
+                    }
+                    ImGui::SameLine();
+                    HelpMarker(
+                        "Please place map anywhere in .\\load\\ folder.(JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC)\n"
+                        "Available map will automatically show in this Checkbox.\n"
+                        "\n"
+                        "For base color map, each pixel is (0,255,0) if choose None.\n"
+                        "For metallic map, each pixel is (0,0,0) if choose None.\n"
+                        "For roughness map, each pixel is (128,128,128) if choose None.\n"
+                        "For normal map, each pixel is (0,0,255) if choose None.\n"
+                        "For any map that fail to load, each pixel is (255,0,0).\n");
+
+                    if(material_type & MaterialTypeFlags_Microfacet)
+                    {
+                        // 选择metallic map
+                        auto metallic_map_str = maps[metallic_map_current_idx].filename().string();
+                        const char* combo_metallic_map = metallic_map_str.c_str();
+                        if (ImGui::BeginCombo("load metallic map", combo_metallic_map, flags))
+                        {
+                            for (int n = 0; n < maps.size(); n++)
+                            {
+                                const bool is_selected = (metallic_map_current_idx == n);
+                                if (ImGui::Selectable(maps[n].string().c_str(), is_selected))
+                                {
+                                    metallic_map_pre_idx = metallic_map_current_idx;
+                                    metallic_map_current_idx = n;
+                                    if (metallic_map_pre_idx != roughness_map_current_idx)
+                                    {
+                                        // 选择新map时取消光栅化停止状态
+                                        stop_rastering.store(false);
+                                        refresh_rasterizing = true;
+                                        // 更新material
+                                        material_microfacet->set_metallic(make_shared<ImageTexture>(maps[metallic_map_current_idx].string()));
+                                    }
+                                }
+
+                                if (is_selected)
+                                    ImGui::SetItemDefaultFocus();
+                            }
+                            ImGui::EndCombo();
+                        }
+
+                        // 选择roughness map
+                        auto roughness_map_str = maps[roughness_map_current_idx].filename().string();
+                        const char* combo_roughness_map = roughness_map_str.c_str();
+                        if (ImGui::BeginCombo("load roughness map", combo_roughness_map, flags))
+                        {
+                            for (int n = 0; n < maps.size(); n++)
+                            {
+                                const bool is_selected = (roughness_map_current_idx == n);
+                                if (ImGui::Selectable(maps[n].string().c_str(), is_selected))
+                                {
+                                    roughness_map_pre_idx = roughness_map_current_idx;
+                                    roughness_map_current_idx = n;
+                                    if (roughness_map_pre_idx != roughness_map_current_idx)
+                                    {
+                                        // 选择新map时取消光栅化停止状态
+                                        stop_rastering.store(false);
+                                        refresh_rasterizing = true;
+                                        // 更新material
+                                        material_microfacet->set_roughness(make_shared<ImageTexture>(maps[roughness_map_current_idx].string()));
+                                    }
+                                }
+
+                                if (is_selected)
+                                    ImGui::SetItemDefaultFocus();
+                            }
+                            ImGui::EndCombo();
+                        }
+
+                        // 选择normal map
+                        auto normal_map_str = maps[normal_map_current_idx].filename().string();
+                        const char* combo_normal_map = normal_map_str.c_str();
+                        if (ImGui::BeginCombo("load normal map", combo_normal_map, flags))
+                        {
+                            for (int n = 0; n < maps.size(); n++)
+                            {
+                                const bool is_selected = (normal_map_current_idx == n);
+                                if (ImGui::Selectable(maps[n].string().c_str(), is_selected))
+                                {
+                                    normal_map_pre_idx = normal_map_current_idx;
+                                    normal_map_current_idx = n;
+                                    if (normal_map_pre_idx != normal_map_current_idx)
+                                    {
+                                        // 选择新map时取消光栅化停止状态
+                                        stop_rastering.store(false);
+                                        refresh_rasterizing = true;
+                                        // 更新material
+                                        material_microfacet->set_normal(make_shared<ImageTexture>(maps[normal_map_current_idx].string()));
+                                    }
+                                }
+
+                                if (is_selected)
+                                    ImGui::SetItemDefaultFocus();
+                            }
+                            ImGui::EndCombo();
+                        }
+                    }
+
+                    ImGui::Checkbox("tracing with cornell box", &tracing_with_cornell_box);
+                    ImGui::SameLine();
+                    HelpMarker(
+                        "Whether add cornell box (implicit shape, no rasterizing) to surround obj when tracing.\n"
+                        "If true, camera will be set to suitable vfov and pose.\n");
+                }
+
+                if(use_preset)
+                {
+                    // 选择预置场景
+                    const char* combo_scene = scenes[scene_current_idx];
+                    if (ImGui::BeginCombo("load preset", combo_scene, flags))
+                    {
+                        for (int n = 0; n < IM_ARRAYSIZE(scenes); n++)
+                        {
+                            const bool is_selected = (scene_current_idx == n);
+                            if (ImGui::Selectable(scenes[n], is_selected))
+                            {
+                                // 选择scene时无需再停止光栅化
+                                stop_rastering.store(false);
+                                // 此时刷新光栅化只用于显示仅带背景颜色的图片
+                                refresh_rasterizing = true;
+                                scene_current_idx = n;
+                            }
+
+                            if (is_selected)
+                                ImGui::SetItemDefaultFocus();
+
+                            // 选择scene时自动将obj置为None
+                            obj_current_idx = 0;
+
+                            // 各场景推荐参数
+                            if (scene_current_idx != 0)
+                            {
+                                image_name = std::string(scenes[scene_current_idx]) + ".png";
+                            }
+
+                            if (scene_current_idx == 1)
+                            {
+                                image_width = 600;
+                                aspect_ratio_current_idx = 3;
+                                samples_per_pixel = 30;
+                                max_depth = 10;
+                                vfov = 20;
+                                ARRAY3_ASSIGN(lookfrom, 10, 3, 10);
+                                ARRAY3_ASSIGN(lookat, 0, 0, 0);
+                                ARRAY3_ASSIGN(vup, 0, 1, 0);
+                                ARRAY3_ASSIGN(background, .7f, .8f, 1);
+                            }
+                            else if (scene_current_idx == 2)
+                            {
+                                image_width = 600;
+                                aspect_ratio_current_idx = 0;
+                                samples_per_pixel = 30;
+                                max_depth = 10;
+                                vfov = 40;
+                                ARRAY3_ASSIGN(lookfrom, 278, 278, -800);
+                                ARRAY3_ASSIGN(lookat, 278, 278, 0);
+                                ARRAY3_ASSIGN(vup, 0, 1, 0);
+                                ARRAY3_ASSIGN(background, 0, 0, 0);
+                            }
+                            else if (scene_current_idx == 3)
+                            {
+                                image_width = 600;
+                                aspect_ratio_current_idx = 3;
+                                samples_per_pixel = 30;
+                                max_depth = 10;
+                                vfov = 20;
+                                ARRAY3_ASSIGN(lookfrom, 13, 2, 3);
+                                ARRAY3_ASSIGN(lookat, 0, 0, 0);
+                                ARRAY3_ASSIGN(vup, 0, 1, 0);
+                                ARRAY3_ASSIGN(background, .7f, .8f, 1);
+                            }
+                            else if (scene_current_idx == 4)
+                            {
+                                image_width = 600;
+                                aspect_ratio_current_idx = 0;
+                                samples_per_pixel = 30;
+                                max_depth = 10;
+                                vfov = 40;
+                                ARRAY3_ASSIGN(lookfrom, 478, 278, -600);
+                                ARRAY3_ASSIGN(lookat, 278, 278, 0);
+                                ARRAY3_ASSIGN(vup, 0, 1, 0);
+                                ARRAY3_ASSIGN(background, 0, 0, 0);
+                            }
+                        }
+                        ImGui::EndCombo();
+                    }
+                    ImGui::SameLine();
+                    HelpMarker("Preset scene is made of implicit shape so no rasterizing for it.\n");
+                }
             }
 
-            if (ImGui::CollapsingHeader("command", ImGuiTreeNodeFlags_DefaultOpen))
+            if (ImGui::CollapsingHeader("Command", ImGuiTreeNodeFlags_DefaultOpen))
             {
                 ImVec2 window_pos = ImGui::GetWindowPos();
                 ImVec2 window_size = ImGui::GetWindowSize();
                 ImVec2 window_center = ImVec2(window_pos.x + window_size.x * .5f, window_pos.y + window_size.y * .5f);
 
-                // 选择光栅化模式
-                ImGui::Text("Rasterizing Roam");
+                if (!use_preset)
+                {
+                    // 选择光栅化模式
+                    ImGui::Text("Rasterizing Roam");
 
-                refresh_rasterizing |= ImGui::RadioButton("wireframe", &rastering_major_mode, RasteringModeFlags_Wireframe); ImGui::SameLine();
-                refresh_rasterizing |= ImGui::RadioButton("depth", &rastering_major_mode, RasteringModeFlags_Depth); ImGui::SameLine();
-                refresh_rasterizing |= ImGui::RadioButton("shade", &rastering_major_mode, RasteringModeFlags_Shade); ImGui::SameLine();
-                rastering_mode = rastering_major_mode;
+                    refresh_rasterizing |= ImGui::RadioButton("wireframe", &rastering_major_mode, RasteringModeFlags_Wireframe); ImGui::SameLine();
+                    refresh_rasterizing |= ImGui::RadioButton("depth", &rastering_major_mode, RasteringModeFlags_Depth); ImGui::SameLine();
+                    refresh_rasterizing |= ImGui::RadioButton("shade", &rastering_major_mode, RasteringModeFlags_Shade); ImGui::SameLine();
+                    HelpMarker("Directional Light from the up of the obj by default.\n"); ImGui::SameLine();
+                    rastering_mode = rastering_major_mode;
 
-                refresh_rasterizing |= ImGui::Checkbox("coordinate system", &show_coordinate_system);
-                if (show_coordinate_system)
-                    rastering_mode |= RasteringModeFlags_Coordinate_System;
-                else
-                    rastering_mode &= ~RasteringModeFlags_Coordinate_System;
+                    refresh_rasterizing |= ImGui::Checkbox("coordinate system", &show_coordinate_system);
+                    if (show_coordinate_system)
+                        rastering_mode |= RasteringModeFlags_Coordinate_System;
+                    else
+                        rastering_mode &= ~RasteringModeFlags_Coordinate_System;
+                }
 
                 // 光线追踪选项
                 ImGui::Text("Ray Tracing");
+                ImGui::SameLine();
+                HelpMarker("Single-sided Quad Light at the up of the obj by default.\n");
 
                 // 开始光线追踪
                 ImGui::BeginDisabled(tracing.load());                
                 if (ImGui::Button("Start") && !tracing.load())
                 {
+
                     if (!use_preset)
                     {
                         if (obj_current_idx == 0)
@@ -460,17 +583,14 @@ int main()
                             if (tracing_with_cornell_box)
                             {
                                 vfov = 20;
-                                float lookfrom_t[3] = { 0, -1, -12 };
-                                memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
-                                float lookat_t[3] = { 0, 0, 0 };
-                                memcpy(lookat, lookat_t, 3 * sizeof(float));
-                                float vup_t[3] = { 0, 1, 0 };
-                                memcpy(vup, vup_t, 3 * sizeof(float));
-                                float background_t[3] = { 1, 1, 1 };
-                                memcpy(background, background_t, 3 * sizeof(float));
+                                ARRAY3_ASSIGN(lookfrom, 0, -1, -12);
+                                ARRAY3_ASSIGN(lookat, 0, 0, 0);
+                                ARRAY3_ASSIGN(vup, 0, 1, 0);
+                                ARRAY3_ASSIGN(background, 1, 1, 1);
                             }
 
-                            t = std::thread(scene_obj_trace, std::cref(cam), std::cref(objs[obj_current_idx]), std::cref(maps[diffuse_map_current_idx]), std::cref(tracing_with_cornell_box));
+                            CHOOSE_MATERIAL(material);
+                            t = std::thread(scene_trace, std::cref(cam), std::cref(objs[obj_current_idx]), std::cref(material), std::cref(tracing_with_cornell_box));
                             //t = std::thread(scene_test_triangle, std::cref(cam));
 
                             if (t.joinable())
@@ -516,16 +636,6 @@ int main()
                 }
                 ImGui::EndDisabled();
 
-                ImGui::BeginDisabled(image_data_p2p == nullptr || *image_data_p2p == nullptr || tracing.load());
-                ImGui::SameLine();
-                if (ImGui::Button("Clear") && image_data_p2p != nullptr && *image_data_p2p != nullptr && !tracing.load())
-                {
-                    cam.clear();
-                    stop_rastering.store(false);
-                    refresh_rasterizing = true;
-                }
-                ImGui::EndDisabled();
-
                 ImGui::SameLine();
                 if (ImGui::Button("Save"))
                 {
@@ -544,102 +654,106 @@ int main()
                         add_info(image_name + " has been saved to ./output/ folder.");
                     }
                 }
-
-                ImGui::SameLine();
-                HelpMarker("Clear will discard Ray Tracing result and restart Rasterizing.\n");
             }
 
-            if (ImGui::CollapsingHeader("camera", ImGuiTreeNodeFlags_DefaultOpen))
+            if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen))
             {
-                // 输入图片宽度
-                refresh_rasterizing |= ImGui::InputInt("image width", &image_width);
                 ImGui::SameLine();
-                HelpMarker("256~1024\n");
-                if (image_width < 256)
-                    image_width = 256;
-                if (image_width > 1024)
-                    image_width = 1024;
+                HelpMarker("Interaction from the area is enabled only during rasterizating.\n");
 
-                // 选择图片宽高比
-                const char* combo_aspect_ratio = aspect_ratios[aspect_ratio_current_idx];
-                if (ImGui::BeginCombo("aspect ratio", combo_aspect_ratio, flags))
+                ImGui::BeginDisabled(tracing.load() || stop_rastering);
                 {
-                    for (int n = 0; n < IM_ARRAYSIZE(aspect_ratios); n++)
+                    // 输入图片宽度
+                    refresh_rasterizing |= ImGui::InputInt("image width", &image_width);
+                    ImGui::SameLine();
+                    HelpMarker("256~1024\n");
+                    if (image_width < 256)
+                        image_width = 256;
+                    if (image_width > 1024)
+                        image_width = 1024;
+
+                    // 选择图片宽高比
+                    const char* combo_aspect_ratio = aspect_ratios[aspect_ratio_current_idx];
+                    if (ImGui::BeginCombo("aspect ratio", combo_aspect_ratio, flags))
                     {
-                        const bool is_selected = (aspect_ratio_current_idx == n);
-                        if (ImGui::Selectable(aspect_ratios[n], is_selected))
+                        for (int n = 0; n < IM_ARRAYSIZE(aspect_ratios); n++)
                         {
-                            aspect_ratio_pre_idx = aspect_ratio_current_idx;
-                            aspect_ratio_current_idx = n;
-                            if (aspect_ratio_current_idx != aspect_ratio_pre_idx)
+                            const bool is_selected = (aspect_ratio_current_idx == n);
+                            if (ImGui::Selectable(aspect_ratios[n], is_selected))
                             {
-                                refresh_rasterizing = true;
+                                aspect_ratio_pre_idx = aspect_ratio_current_idx;
+                                aspect_ratio_current_idx = n;
+                                if (aspect_ratio_current_idx != aspect_ratio_pre_idx)
+                                {
+                                    refresh_rasterizing = true;
+                                }
                             }
+
+                            if (is_selected)
+                                ImGui::SetItemDefaultFocus();
                         }
-
-                        if (is_selected)
-                            ImGui::SetItemDefaultFocus();
+                        ImGui::EndCombo();
                     }
-                    ImGui::EndCombo();
-                }
-                switch (aspect_ratio_current_idx)
-                {
-                case 0: aspect_ratio = 1; break;
-                case 1: aspect_ratio = 4. / 3.; break;
-                case 2: aspect_ratio = 3. / 2.; break;
-                case 3: aspect_ratio = 16. / 9.; break;
-                case 4: aspect_ratio = 2; break;
-                }
+                    switch (aspect_ratio_current_idx)
+                    {
+                    case 0: aspect_ratio = 1; break;
+                    case 1: aspect_ratio = 4. / 3.; break;
+                    case 2: aspect_ratio = 3. / 2.; break;
+                    case 3: aspect_ratio = 16. / 9.; break;
+                    case 4: aspect_ratio = 2; break;
+                    }
 
-                // 设置vfov
-                refresh_rasterizing |= ImGui::DragInt("vfov", &vfov, 1, 1, 179, "%d°", ImGuiSliderFlags_AlwaysClamp);
-                ImGui::SameLine();
-                HelpMarker(
-                    "Drag to edit value.\n"
-                    "Hold SHIFT/ALT for faster/slower edit.\n"
-                    "Double-click or CTRL+click to input value.\n");
+                    // 设置vfov
+                    refresh_rasterizing |= ImGui::DragInt("vfov", &vfov, 1, 1, 179, "%d°", ImGuiSliderFlags_AlwaysClamp);
+                    ImGui::SameLine();
+                    HelpMarker(
+                        "Drag to edit value.\n"
+                        "Hold SHIFT/ALT for faster/slower edit.\n"
+                        "Double-click or CTRL+click to input value.\n");
 
-                // 设置背景颜色
-                refresh_rasterizing |= ImGui::ColorEdit3("background color", background);
-                ImGui::SameLine();
-                HelpMarker(
-                    "Just background for feature \"Rasterizing Roam - wireframe\"\n"
-                    "No effect on feature \"Rasterizing Roam - depth\".\n"
-                    "Both background and ambient for feature \"Rasterizing Roam - shade\".\n"
-                    "Background color when ray miss scene for \"Ray Tracing\".\n"
-                    "\n"
-                    "Click on the color square to open a color picker.\n"
-                    "Click and hold to use drag and drop.\n"
-                    "Right-click on the color square to show options.\n"
-                    "CTRL+click on individual component to input value.\n");
+                    // 设置背景颜色
+                    refresh_rasterizing |= ImGui::ColorEdit3("background color", background);
+                    ImGui::SameLine();
+                    HelpMarker(
+                        "Just background for feature \"Rasterizing Roam - wireframe\"\n"
+                        "No effect on feature \"Rasterizing Roam - depth\".\n"
+                        "Both background and ambient for feature \"Rasterizing Roam - shade\".\n"
+                        "Background color when ray miss scene for \"Ray Tracing\".\n"
+                        "\n"
+                        "Click on the color square to open a color picker.\n"
+                        "Click and hold to use drag and drop.\n"
+                        "Right-click on the color square to show options.\n"
+                        "CTRL+click on individual component to input value.\n");
 
-                // 输入spp
-                ImGui::InputInt("samples per pixel", &samples_per_pixel);
-                ImGui::SameLine();
-                HelpMarker("1~10000\n");
-                if (samples_per_pixel < 1)
-                    samples_per_pixel = 1;
-                if (samples_per_pixel > 10000)
-                    samples_per_pixel = 10000;
+                    // 输入spp
+                    ImGui::InputInt("samples per pixel", &samples_per_pixel);
+                    ImGui::SameLine();
+                    HelpMarker("1~10000\n");
+                    if (samples_per_pixel < 1)
+                        samples_per_pixel = 1;
+                    if (samples_per_pixel > 10000)
+                        samples_per_pixel = 10000;
 
-                // 输入最大深度
-                ImGui::InputInt("max depth", &max_depth);
-                ImGui::SameLine();
-                HelpMarker("1~400");
-                if (max_depth < 1)
-                    max_depth = 1;
-                if (max_depth > 400)
-                    max_depth = 400;
+                    // 输入最大深度
+                    ImGui::InputInt("max depth", &max_depth);
+                    ImGui::SameLine();
+                    HelpMarker("1~400");
+                    if (max_depth < 1)
+                        max_depth = 1;
+                    if (max_depth > 400)
+                        max_depth = 400;
 
-                // 设置相机外参
-                refresh_rasterizing |= ImGui::InputFloat3("lookfrom", lookfrom, "%.1f");
-                refresh_rasterizing |= ImGui::InputFloat3("lookat", lookat, "%.1f");
-                refresh_rasterizing |= ImGui::InputFloat3("vup", vup, "%.1f");
-                ImGui::SameLine();
-                HelpMarker("Up direction of the camera.\n");
+                    // 设置相机外参
+                    refresh_rasterizing |= ImGui::InputFloat3("lookfrom", lookfrom, "%.1f");
+                    refresh_rasterizing |= ImGui::InputFloat3("lookat", lookat, "%.1f");
+                    refresh_rasterizing |= ImGui::InputFloat3("vup", vup, "%.1f");
+                    ImGui::SameLine();
+                    HelpMarker("Up direction of the camera.\n");
+                }       
+                ImGui::EndDisabled();
             }
 
-            if (ImGui::CollapsingHeader("info", ImGuiTreeNodeFlags_DefaultOpen))
+            if (ImGui::CollapsingHeader("Info", ImGuiTreeNodeFlags_DefaultOpen))
             {
                 ImGui::BeginChild("info", ImVec2(0, 300),
                     ImGuiChildFlags_FrameStyle, ImGuiWindowFlags_HorizontalScrollbar);
@@ -661,7 +775,7 @@ int main()
             double interaction_delta = duration_cast<milliseconds>(steady_clock::now() - interaction_point).count() / 1e3;
             // 键鼠交互（点击图像进行交互，按ESC退出交互）
             // 光追时禁止
-            if (enter_interaction && !tracing.load())
+            if (enter_interaction && !tracing.load() && !stop_rastering)
             {
                 bool interacted = false;
 
@@ -726,12 +840,9 @@ int main()
                 {
                     // 更新相机参数的改变到UI上
                     vfov = cam.get_vfov();
-                    float lookfrom_t[3] = { cam.get_lookfrom().x(), cam.get_lookfrom().y(), cam.get_lookfrom().z() };
-                    memcpy(lookfrom, lookfrom_t, 3 * sizeof(float));
-                    float lookat_t[3] = { cam.get_lookat().x(), cam.get_lookat().y(), cam.get_lookat().z() };
-                    memcpy(lookat, lookat_t, 3 * sizeof(float));
-                    float vup_t[3] = { cam.get_vup().x(), cam.get_vup().y(), cam.get_vup().z() };
-                    memcpy(vup, vup_t, 3 * sizeof(float));
+                    ARRAY3_ASSIGN(lookfrom, cam.get_lookfrom().x(), cam.get_lookfrom().y(), cam.get_lookfrom().z());
+                    ARRAY3_ASSIGN(lookat, cam.get_lookat().x(), cam.get_lookat().y(), cam.get_lookat().z());
+                    ARRAY3_ASSIGN(vup, cam.get_vup().x(), cam.get_vup().y(), cam.get_vup().z());
 
                     refresh_rasterizing = true;
                 }
@@ -758,7 +869,8 @@ int main()
                     cam.clear();
                     if (!use_preset && obj_current_idx != 0)
                     {
-                        scene_obj_rasterize(cam, objs[obj_current_idx], maps[diffuse_map_current_idx], rastering_mode);
+                        CHOOSE_MATERIAL(material);
+                        scene_rasterize(cam, objs[obj_current_idx], material, rastering_mode);
                     }
                 }
                 refresh_rasterizing = false; // 置为false，下一帧重新判定
@@ -771,7 +883,8 @@ int main()
                 | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize
                 | ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
 
-            ImGui::Text("image size = %d x %d", cam.get_image_width(), cam.get_image_height());
+            ImGui::SeparatorText("Tracing Statistics");
+
             ImGui::Text(("hit count = " + format_num(hit_count.load())).c_str());
             ImGui::Text("average depth = %.2f", (double)hit_count.load() / (sample_count.load() + 1));
 
@@ -783,6 +896,25 @@ int main()
             auto duration_sec = duration_cast<seconds>(duration);
             ImGui::Text("total elapsed time = %d min %d sec", duration_min.count(), duration_sec.count() % 60);
 
+            ImGui::SeparatorTextEx(0, "Image", nullptr, ImGui::CalcTextSize(" (?)").x);
+            std::string image_size = 
+                "Click image to interact with mouse/keyborad and press ESC to exit interaction.\n"
+                "Interaction from mouse/keyborad is enabled only during rasterizating.\n\n"
+                + "Now size = "_str + std::to_string(cam.get_image_width()) + " x " + std::to_string(cam.get_image_height()) + "\n";
+            ImGui::SameLine();
+            HelpMarker(image_size.c_str());
+
+            ImGui::BeginDisabled(image_data_p2p == nullptr || *image_data_p2p == nullptr || tracing.load());
+            if (ImGui::Button("Clear") && image_data_p2p != nullptr && *image_data_p2p != nullptr && !tracing.load())
+            {
+                cam.clear();
+                stop_rastering.store(false);
+                refresh_rasterizing = true;
+            }
+            ImGui::EndDisabled();
+            ImGui::SameLine();
+            HelpMarker("Clear will discard Ray Tracing result and restart Rasterizing.\n");
+
             // 加载纹理以在UI实时显示渲染结果
             if (image_data_p2p != nullptr && *image_data_p2p != nullptr)
             {
@@ -791,9 +923,8 @@ int main()
                 ImVec4 border_col = ImVec4(0, 0, 0, 0);
                 // 处于交互状态时显示高亮边框
                 if (enter_interaction)
-                    border_col = ImVec4(.667, .8, .957, 1);
+                    border_col = ImVec4(.667, .8, .957, 1);                               
                 // 传递SRV GPU句柄，而不是CPU句柄。传递内部指针值, 转换为ImTextureID。
-                HelpMarker("Click image to interact and press ESC to exit interaction.\n");
                 ImGui::Image(
                     (ImTextureID)my_texture_srv_gpu_handle.ptr,
                     ImVec2((float)cam.get_image_width(), (float)cam.get_image_height()),

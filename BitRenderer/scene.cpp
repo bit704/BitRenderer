@@ -9,15 +9,15 @@ std::vector<Point3>    vertices;
 std::vector<Vec3>      normals;
 std::vector<Texcoord2> texcoords;
 
-void scene_obj_rasterize(const Camera& cam, const fs::path& obj_path, const fs::path& diffuse_map_path, const int& mode)
+void scene_rasterize(const Camera& cam, const fs::path& obj_path, const shared_ptr<Material>& material, const int& mode)
 {
     static std::vector<TriangleRasterize> triangles;
     static fs::path prev_obj_path;
-    static fs::path prev_diffuse_map_path;
+    static shared_ptr<Material> prev_material;
 
     // 避免每帧重复加载
     bool reload_obj = false;
-    bool reload_diffuse_map = false;
+    bool reload_material = false;
 
     if (prev_obj_path != obj_path)
     {
@@ -25,10 +25,11 @@ void scene_obj_rasterize(const Camera& cam, const fs::path& obj_path, const fs::
         reload_obj = true;
     }
 
-    if (prev_diffuse_map_path != diffuse_map_path)
+    if (prev_material != material)
     {
-        prev_diffuse_map_path = diffuse_map_path;
-        reload_diffuse_map = true;
+        prev_material = material;
+        reload_material = true;
+        std::cout << "test" << std::endl;
     }
 
     if (reload_obj)
@@ -40,23 +41,22 @@ void scene_obj_rasterize(const Camera& cam, const fs::path& obj_path, const fs::
         }
     }
 
-    if (reload_obj || reload_diffuse_map)
-    {
-        auto test = make_shared<Lambertian>(make_shared<ImageTexture>(diffuse_map_path.string()));
+    if (reload_obj || reload_material)
+    {        
         for(TriangleRasterize& tri : triangles)
-            tri.set_material(test);
+            tri.set_material(material);
     }
 
     cam.rasterize(triangles, mode);
     return;
 }
 
-void scene_obj_trace(const Camera& cam, const fs::path& obj_path, const fs::path& diffuse_map_path, const bool& tracing_with_cornell_box)
+void scene_trace(const Camera& cam, const fs::path& obj_path, const shared_ptr<Material>& material, const bool& tracing_with_cornell_box)
 {
     shared_ptr<HittableList> world = make_shared<HittableList>();
     HittableList triangles;
 
-    if (!prepare_trace_data(triangles, diffuse_map_path.string()))
+    if (!prepare_trace_data(triangles, material))
     {
         add_info(obj_path.string() + " failed to load for ray tracing.");
         return;
@@ -201,11 +201,9 @@ bool load_obj_internal(const char* filename, const char* basepath, bool triangul
 }
 
 // 为光线追踪准备数据
-bool prepare_trace_data(HittableList& triangles, const std::string diffuse_map_path)
+bool prepare_trace_data(HittableList& triangles, const shared_ptr<Material>& material)
 {
     // 光栅化预览已加载obj，不必再次加载
-
-    auto test = make_shared<Lambertian>(make_shared<ImageTexture>(diffuse_map_path));
 
     std::vector<shared_ptr<Hittable>> tris = std::vector<shared_ptr<Hittable>>(tot_fnum);
     ullong tri_index = 0;
@@ -246,7 +244,7 @@ bool prepare_trace_data(HittableList& triangles, const std::string diffuse_map_p
             int cn = idx_c.normal_index;
             int ct = idx_c.texcoord_index;
 
-            tris[tri_index + f] = make_shared<Triangle>(a, an, at, b, bn, bt, c, cn, ct, test);
+            tris[tri_index + f] = make_shared<Triangle>(a, an, at, b, bn, bt, c, cn, ct, material);
 
             index_offset += v_per_f;
         }

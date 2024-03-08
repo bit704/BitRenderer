@@ -1,0 +1,16 @@
+# Blender MTL File: 'None'
+# Material Count: 1
+
+newmtl barrel_stove
+Ns 489.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.000000 0.000000 0.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump textures\\barrel_stove_nor_gl_1k.jpg
+map_Kd textures\\barrel_stove_diff_1k.jpg
+map_Ns textures\\barrel_stove_rough_1k.jpg
+refl textures\\barrel_stove_metal_1k.jpg

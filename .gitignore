@@ -7,10 +7,12 @@
 imgui.ini
 
 **/load/*
+!**/load/source.txt
 !**/load/.gitkeep
 !**/load/earthmap.jpg
-*.obj    # Files built by Visual Studio，移动到此以取消对obj模型的忽略
-!**/load/spot
+*.obj    # Files built by Visual Studio，移动到此以取消对后续文件夹下的obj模型的忽略
+!**/load/spot/
+!**/load/barrel_stove_1k/
 
 .vscode
 .VSCodeCounter

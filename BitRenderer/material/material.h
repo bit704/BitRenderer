@@ -20,11 +20,10 @@ public:
     // 光追计算颜色
     // 因为计算颜色时不止对材质进行重要性采样，还会对光源等其它物体进行重要新采样，brdf和pdf值会改变，因此作为参数输入而不是直接内部计算
     virtual Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color = Color3(), double brdf = 0., double pdf = 1.)
-        const = 0;
+        = 0;
 
     // 光栅化计算颜色
-    virtual Color3 eval_color_rasterize(const Texcoord2& uv, const Vec3& normal, const Color3& light, const Color3& ambient, const Vec3& out, const Vec3& in = Vec3())
-        const
+    virtual Color3 eval_color_rasterize(const Texcoord2& uv, const Vec3& normal, const Color3& light, const Color3& ambient, const Vec3& out, const Vec3& in = Vec3())       
     {
         return { 0, 0, 0 };
     }
@@ -62,31 +61,21 @@ private:
     shared_ptr<Texture> albedo_;
 
 public:
+    Lambertian() : albedo_(std::make_shared<SolidColor>(Color3(0, 1, 0))) {}
+
     Lambertian(const Color3& a) : albedo_(std::make_shared<SolidColor>(a)) {}
 
     Lambertian(shared_ptr<Texture> a) : albedo_(a) {}
 
-    Lambertian(const Lambertian& other) : albedo_(other.albedo_) {}
-    Lambertian& operator=(const Lambertian& other)
-    {
-        albedo_ = other.albedo_;
-    }
-
-    Lambertian(Lambertian&& other) noexcept : albedo_(std::move(other.albedo_)) {};
-    Lambertian& operator=(Lambertian&& other) noexcept
-    {
-        albedo_ = std::move(other.albedo_);
-    }
-
 public:
     Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
-         const override
+         override
     {
         return albedo_->value(rec.u, rec.v, rec.p) * next_color * brdf / pdf;
     }
 
     Color3 eval_color_rasterize(const Texcoord2& uv, const Vec3& normal, const Color3& light, const Color3& ambient, const Vec3& out, const Vec3& in)
-        const override
+        override
     {
         return albedo_->value(uv.u(), uv.v()) * light * eval_brdf(normal, out) + ambient;
     }
@@ -100,7 +89,7 @@ public:
 
     // Lambertian模型不需要in
     // 默认参数是静态绑定，无法在子类重写的虚函数中改变父类的虚函数指定的默认参数，不必重复写上
-    // 这里加上默认参数是便于其它同类成员函数调用
+    // 这里重复写上默认参数是便于同类其它成员函数调用
     double eval_brdf(const Vec3& normal, const Vec3& out, const Vec3& in = Vec3())
         const override
     {
@@ -116,30 +105,109 @@ public:
     }
 };
 
+// 基于微表面的GGX镜面反射BRDF和Lambertian漫反射BRDF结合的材质模型
+class Microfacet : public Material
+{
+private:
+    shared_ptr<Texture> base_color_;
+    shared_ptr<Texture> metallic_;
+    shared_ptr<Texture> roughness_;
+    shared_ptr<Texture> normal_;
+    // 内部计算用参数
+    Color3 kd = Color3();
+    Color3 F0 = Color3(); 
+    double alpha = 0;
+
+public:
+    Microfacet() : 
+        // 图片中像素值为[0, 255]的整数，计算中统一使用[0,1]的浮点数
+        base_color_(make_shared<SolidColor>(Color3(0, 1, 0))),
+        metallic_(make_shared<SolidColor>(Color3(0, 0, 0))),
+        roughness_(make_shared<SolidColor>(Color3(.5, .5, .5))),
+        normal_(make_shared<SolidColor>(Color3(0, 0, 1)))
+    {}
+
+    void set_base_color(shared_ptr<Texture>&& base_color)
+    {
+        base_color_ = base_color;
+    }
+
+    void set_metallic(shared_ptr<Texture>&& metallic)
+    {
+        metallic_ = metallic;
+    }
+
+    void set_roughness(shared_ptr<Texture>&& roughness)
+    {
+        roughness_ = roughness;
+    }
+
+    void set_normal(shared_ptr<Texture>&& normal)
+    {
+        normal_ = normal;
+    }
+
+private:
+    void parameter_mapping(const double& u, const double& v)
+    {
+        static constexpr double dielectric_default_f0 = 0.04;
+
+        Color3 base_color_value = base_color_->value(u, v);
+        double metallic_value = metallic_->value(u, v)[0]; // metallic、roughness应为单通道贴图，若为三通道贴图，则三通道应相同
+        double roughness_value = roughness_->value(u, v)[0];
+        Vec3 normal_value = normal_->value(u, v);
+
+        kd = base_color_->value(u, v) * (1 - metallic_value);  // metallic为0代表非金属，1代表纯金属
+        F0 = base_color_->value(u, v) * metallic_value + dielectric_default_f0; // ks应为根据F0算出来的指定角度下的F
+        alpha = std::sqrt(roughness_value); // 贴图的粗糙度为BRDF使用的粗糙度alpha的平方        
+    }
+
+public:
+    Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
+        override
+    {
+        parameter_mapping(rec.u, rec.v);
+        return Color3();
+    }
+
+    Color3 eval_color_rasterize(const Texcoord2& uv, const Vec3& normal, const Color3& light, const Color3& ambient, const Vec3& out, const Vec3& in)
+        override
+    {
+        parameter_mapping(uv.u(), uv.v());
+        return Color3();
+    }
+
+    Ray sample_ray(const Ray& r_in, const HitRecord& rec)
+        const override
+    {
+        return Ray();
+    }
+
+    double eval_brdf(const Vec3& normal, const Vec3& out, const Vec3& in)
+        const override
+    {
+        return 0;
+    }
+
+    double eval_pdf(const Vec3& normal, const Vec3& out)
+        const override
+    {
+        return 0;
+    }
+};
+
 class Isotropic : public Material
 {
 private:
     shared_ptr<Texture> albedo_;
 
 public:
-    Isotropic(Color3 c) : albedo_(std::make_shared<SolidColor>(c)) {}
+    Isotropic(Color3 c) : albedo_(make_shared<SolidColor>(c)) {}
     Isotropic(shared_ptr<Texture> a) : albedo_(a) {}
-
-    Isotropic(const Isotropic& other) : albedo_(other.albedo_) {}
-    Isotropic& operator=(const Isotropic& other)
-    {
-        albedo_ = other.albedo_;
-    }
-
-    Isotropic(Isotropic&& other) noexcept : albedo_(std::move(other.albedo_)) {}
-    Isotropic& operator=(Isotropic&& other) noexcept
-    {
-        albedo_ = std::move(other.albedo_);
-    }
 
 public:
     Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
-        const override
+        override
     {
         return albedo_->value(rec.u, rec.v, rec.p) * next_color * brdf / pdf;
     }
@@ -168,7 +236,7 @@ public:
 class Metal : public Material
 {
 private:
-    Color3  albedo_;
+    Color3 albedo_;
     double fuzz_;
 
 public:
@@ -179,7 +247,7 @@ public:
 
 public:
     Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
-        const override
+        override
     {
         return albedo_ * next_color;
     }
@@ -205,7 +273,7 @@ public:
 
 public:
     Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
-        const override
+        override
     {
         return Color3({ 1., 1., 1. }) * next_color;
     }
@@ -270,7 +338,7 @@ public:
 
 public:
     Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, double brdf, double pdf)
-        const override
+        override
     {
         Color3 this_color;
         // 正面发光，背面剔除
