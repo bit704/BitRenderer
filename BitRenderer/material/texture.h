@@ -80,9 +80,9 @@ public:
     Color3 value(double u, double v, const Point3& p)
         const override
     {
-        // 纯红说明纹理没有读取成功
+        // 纹理图片读取失败返回纯红
         if (image_read_.get_image_height() <= 0) 
-            return Color3(1., 0., 0.);
+            return Color3(1, 0, 0);
 
         u = std::clamp(u, 0., 1.);
         //v = std::clamp(v, 0., 1.); // 不翻转v

@@ -48,7 +48,7 @@ extern const char*  kOutputPath; // 保存输出的位置
 extern std::atomic_ullong hit_count;      // 击中次数统计
 extern std::atomic_ullong sample_count;   // 采样次数统计
 extern std::atomic_bool   tracing;        // 标志是否正在渲染
-extern std::atomic_bool   stop_rastering; // 标志是否需要停止光栅化
+extern std::atomic_bool   stop_rastering; // 标志是否需要停止光栅化，光追过程中和光追完成但没有Clear结果时需要停止光栅化
 
 // 返回dir目录下（含递归目录）所有文件名满足rule的文件的路径
 std::vector<fs::path> traverse_path(std::string dir, std::regex rule);
@@ -61,6 +61,24 @@ enum RasteringModeFlags // 光栅化模式
     RasteringModeFlags_Depth = 1 << 2,
     RasteringModeFlags_Shade = 1 << 3,
 };
+
+enum MaterialTypeFlags // 材质类型
+{
+    MaterialTypeFlags_None = 0,
+    MaterialTypeFlags_Lambert = 1 << 0,
+    MaterialTypeFlags_Microfacet = 1 << 2,
+};
+
+#define CHOOSE_MATERIAL(material)                      \
+shared_ptr<Material> material;                         \
+if (material_type & MaterialTypeFlags_Lambert)         \
+    material = material_lambert;                       \
+else if (material_type & MaterialTypeFlags_Microfacet) \
+    material = material_microfacet
+
+#define ARRAY3_ASSIGN(array3, x, y, z)                    \
+static_assert((sizeof(array3) / sizeof(array3[0])) == 3); \
+array3[0] = x, array3[1] = y, array3[2] = z
 
 double degrees_to_radians(double degrees);
 
