@@ -117,7 +117,7 @@ Color3 Camera::ray_color(const Ray& r_in, const shared_ptr<Hittable>& world, con
         return hit_rec.material->eval_color_trace(hit_rec);
 
     // 下一条散射光线
-    Ray r_out = hit_rec.material->sample_ray(r_in, hit_rec);
+    Ray r_out = hit_rec.material->sample_ray(r_in, hit_rec, hit_rec.u, hit_rec.v);
 
     // 不用重要性采样
     if (hit_rec.material->skip_pdf_)
@@ -126,7 +126,7 @@ Color3 Camera::ray_color(const Ray& r_in, const shared_ptr<Hittable>& world, con
     double pdf;
     Color3 brdf;
     // 同时对光源和材质采样
-    pdf = hit_rec.material->eval_pdf(hit_rec.normal, r_out.get_direction(), r_in.get_direction());
+    pdf = hit_rec.material->eval_pdf(hit_rec.normal, r_out.get_direction(), r_in.get_direction(), hit_rec.u, hit_rec.v);
     if (light != nullptr)
     {
         auto light_pdf = std::make_shared<HittablePDF>(*light, hit_rec.p);
@@ -134,12 +134,12 @@ Color3 Camera::ray_color(const Ray& r_in, const shared_ptr<Hittable>& world, con
         if (random_double() < 0.5) // 按0.5的概率对光源采样r_out
             r_out = Ray(hit_rec.p, light_pdf->gen_direction(), r_in.get_time());
 
-        pdf = 0.5 * hit_rec.material->eval_pdf(hit_rec.normal,  r_out.get_direction(), r_in.get_direction())
+        pdf = 0.5 * hit_rec.material->eval_pdf(hit_rec.normal,  r_out.get_direction(), r_in.get_direction(), hit_rec.u, hit_rec.v)
             + 0.5 * light_pdf->value(r_out.get_direction()); // 按0.5的比例混合pdf值
     }
     brdf = hit_rec.material->eval_brdf(hit_rec.normal, r_out.get_direction(), r_in.get_direction(), hit_rec.u, hit_rec.v);
 
-    return hit_rec.material->eval_color_trace(hit_rec, ray_color(r_out, world, light, depth - 1), brdf, pdf, r_out);
+    return hit_rec.material->eval_color_trace(hit_rec, ray_color(r_out, world, light, depth - 1), brdf, pdf);
 }
 
 Ray Camera::get_ray(int i, int j, int s_i, int s_j)
@@ -491,7 +491,7 @@ Color3 Camera::interpolated_material(const TriangleRasterize& triangle, const do
             + gamma / triangle.vertex_[2].z() * triangle.normal_[2]);
 
     // HACK 恒定方向光
-    return triangle.material_->eval_color_rasterize(uv, normal, Color3(15, 15, 15), background_ * .1, Vec3(0, 1, 0));
+    return triangle.material_->eval_color_rasterize(uv, normal, Color3(3, 3, 3), background_ * .15, Vec3(0, 1, -1), -w_);
 }
 
 std::tuple<double, double, double> Camera::barycentric_coordinate(const TriangleRasterize& triangle, const double& x, const double& y)

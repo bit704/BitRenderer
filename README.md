@@ -37,7 +37,7 @@ UI按3:7纵向划分为**SETUP**界面和**RENDER**界面（自适应窗口大�
 
      Rasterizing Roam配置：可在**wireframe**、**depth**、**shade**三个光栅化模式中选择其一，并选择是否显示坐标系。
 
-     Ray Tracing配置：Start按钮开始光追，Abort按钮中止光追，Save按钮保存当前渲染结果（光栅化或光追）至`./BitRenderer/output/`文件夹。
+     Ray Tracing配置：Start按钮开始光追，Abort按钮中止光追。
 
    - Camera区域
 
@@ -73,8 +73,8 @@ UI按3:7纵向划分为**SETUP**界面和**RENDER**界面（自适应窗口大�
 
    - Image区域
 
-     - size：显示当前图像尺寸。
      - Clear按钮：清除光追结果并重新开始光栅化。
+     - Save按钮：保存当前渲染结果（光栅化或光追）至`./BitRenderer/output/`文件夹。
 
      图像实时显示当前渲染结果（光追过程中和光追结果未清除时显示光追图像，其它情况下显示光栅化图像）。
 

@@ -69,6 +69,11 @@ enum MaterialTypeFlags // 材质类型
     MaterialTypeFlags_Microfacet = 1 << 2,
 };
 
+#define BASE_COLOR_DEFAULT make_shared<SolidColor>(Color3(0, 1, 0))
+#define METALLIC_DEFAULT   make_shared<SolidColor>(Color3(0, 0, 0))
+#define ROUGHNESS_DEFAULT  make_shared<SolidColor>(Color3(.01, .01, .01))
+#define NORMAL_DEFAULT     make_shared<SolidColor>(Color3(0, 0, 1))
+
 #define CHOOSE_MATERIAL(material)                      \
 shared_ptr<Material> material;                         \
 if (material_type & MaterialTypeFlags_Lambert)         \

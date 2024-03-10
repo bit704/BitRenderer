@@ -141,7 +141,7 @@ public:
 	{
 		float l = norm();
 		for (int i = 0; i < n; ++i)
-			e_[i] /= l;;
+			e_[i] /= l;
 		return;
 	}
 
