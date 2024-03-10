@@ -123,9 +123,10 @@ Color3 Camera::ray_color(const Ray& r_in, const shared_ptr<Hittable>& world, con
     if (hit_rec.material->skip_pdf_)
         return hit_rec.material->eval_color_trace(hit_rec, ray_color(r_out, world, light, depth - 1));
 
-    double brdf, pdf;
+    double pdf;
+    Color3 brdf;
     // 同时对光源和材质采样
-    pdf = hit_rec.material->eval_pdf(hit_rec.normal, r_out.get_direction());
+    pdf = hit_rec.material->eval_pdf(hit_rec.normal, r_out.get_direction(), r_in.get_direction());
     if (light != nullptr)
     {
         auto light_pdf = std::make_shared<HittablePDF>(*light, hit_rec.p);
@@ -133,12 +134,12 @@ Color3 Camera::ray_color(const Ray& r_in, const shared_ptr<Hittable>& world, con
         if (random_double() < 0.5) // 按0.5的概率对光源采样r_out
             r_out = Ray(hit_rec.p, light_pdf->gen_direction(), r_in.get_time());
 
-        pdf = 0.5 * hit_rec.material->eval_pdf(hit_rec.normal, r_out.get_direction())
+        pdf = 0.5 * hit_rec.material->eval_pdf(hit_rec.normal,  r_out.get_direction(), r_in.get_direction())
             + 0.5 * light_pdf->value(r_out.get_direction()); // 按0.5的比例混合pdf值
     }
-    brdf = hit_rec.material->eval_brdf(hit_rec.normal, r_out.get_direction(), r_in.get_direction());
+    brdf = hit_rec.material->eval_brdf(hit_rec.normal, r_out.get_direction(), r_in.get_direction(), hit_rec.u, hit_rec.v);
 
-    return hit_rec.material->eval_color_trace(hit_rec, ray_color(r_out, world, light, depth - 1), brdf, pdf);
+    return hit_rec.material->eval_color_trace(hit_rec, ray_color(r_out, world, light, depth - 1), brdf, pdf, r_out);
 }
 
 Ray Camera::get_ray(int i, int j, int s_i, int s_j)
