@@ -29,7 +29,6 @@ void scene_rasterize(const Camera& cam, const fs::path& obj_path, const shared_p
     {
         prev_material = material;
         reload_material = true;
-        std::cout << "test" << std::endl;
     }
 
     if (reload_obj)
@@ -69,7 +68,7 @@ void scene_trace(const Camera& cam, const fs::path& obj_path, const shared_ptr<M
     add_info("BVH elapsed time: "_str + STR(duration_cast<milliseconds>(end - start).count()) + "ms");
 
     // 光源
-    auto lighting = make_shared<DiffuseLight>(Color3(15, 15, 15));
+    auto lighting = make_shared<DiffuseLight>(Color3(3, 3, 3));
     auto quad = make_shared<Quad>(Point3(-.5, 1.9, 2.5), Vec3(0, 0, -1), Vec3(1, 0, 0), lighting);
     world->add(quad);
     // 对光源几何体采样

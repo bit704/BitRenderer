@@ -19,7 +19,7 @@ public:
 
     // 光追计算颜色
     // 因为计算颜色时不止对材质进行重要性采样，还会对光源等其它物体进行重要新采样，brdf和pdf值会改变，因此作为参数输入而不是直接内部计算
-    virtual Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color = Color3(), Color3 brdf = Vec3(0, 0, 0), double pdf = 1., const Ray in = Ray())
+    virtual Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color = Color3(), const Color3& brdf = Vec3(), const double& pdf = 1)
         = 0;
 
     // 光栅化计算颜色
@@ -30,7 +30,7 @@ public:
 
     // 计算新的出射光线方向
     // 若传入光源则同时对光源和材质进行重要新采样
-    virtual Ray sample_ray(const Ray& r_in, const HitRecord& rec)
+    virtual Ray sample_ray(const Ray& r_in, const HitRecord& rec, const double& u = 0, const double& v = 0)
         const
     {
         return Ray();
@@ -40,14 +40,14 @@ public:
     // 对于光追，in为入射光线方向，out为弹射的出射光线方向（方向起点均为击中点）
     // 对于光栅化，in为着色点到相机方向，out为着色点到光源方向
     // 本质上是对应的
-    virtual Color3 eval_brdf(const Vec3& normal,  const Vec3& out, const Vec3& in = Vec3(), const double u = 0, const double v = 0 )
+    virtual Color3 eval_brdf(const Vec3& normal,  const Vec3& out, const Vec3& in = Vec3(), const double& u = 0, const double& v = 0)
     {
         return 0;
     }
 
     // 计算PDF值
     // 若传入光源则同时对光源和材质进行重要新采样
-    virtual double eval_pdf(const Vec3& normal, const Vec3& out, const Vec3& in)
+    virtual double eval_pdf(const Vec3& normal, const Vec3& out, const Vec3& in = Vec3(), const double& u = 0, const double& v = 0)
         const
     {
         return 0;
@@ -60,14 +60,14 @@ private:
     shared_ptr<Texture> albedo_;
 
 public:
-    Lambertian() : albedo_(std::make_shared<SolidColor>(Color3(0, 1, 0))) {}
+    Lambertian() : albedo_(BASE_COLOR_DEFAULT) {}
 
-    Lambertian(const Color3& a) : albedo_(std::make_shared<SolidColor>(a)) {}
+    Lambertian(const Color3& a) : albedo_(make_shared<SolidColor>(a)) {}
 
     Lambertian(shared_ptr<Texture> a) : albedo_(a) {}
 
 public:
-    Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, Color3 brdf, double pdf, const Ray in)
+    Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, const Color3& brdf, const double& pdf)
          override
     {
         return albedo_->value(rec.u, rec.v, rec.p) * next_color * brdf / pdf;
@@ -79,7 +79,7 @@ public:
         return albedo_->value(uv.u(), uv.v()) * light * eval_brdf(normal, out) + ambient;
     }
 
-    Ray sample_ray(const Ray& r_in, const HitRecord& rec)
+    Ray sample_ray(const Ray& r_in, const HitRecord& rec, const double& u, const double& v)
         const override
     {
         CosinePDF pdf(rec.normal);
@@ -89,14 +89,15 @@ public:
     // Lambertian模型不需要in
     // 默认参数是静态绑定，无法在子类重写的虚函数中改变父类的虚函数指定的默认参数，不必重复写上
     // 这里重复写上默认参数是便于同类其它成员函数调用
-    Color3 eval_brdf(const Vec3& normal, const Vec3& out, const Vec3& in = Vec3(), const double u = 0, const double v = 0)
+    Color3 eval_brdf(const Vec3& normal, const Vec3& out, const Vec3& in = Vec3(), const double& u = 0, const double& v = 0)
         override
     {
+        // 这里将余弦项从渲染方程移至BRDF求解函数中
         auto cosine = dot(normal, unit_vector(out));
-        return cosine < 0 ? Vec3(0, 0, 0) : Vec3(cosine / kPI, cosine / kPI, cosine / kPI);
+        return cosine < 0 ? Vec3() : Vec3(cosine / kPI, cosine / kPI, cosine / kPI);
     }
 
-    double eval_pdf(const Vec3& normal, const Vec3& out, const Vec3& in)
+    double eval_pdf(const Vec3& normal, const Vec3& out, const Vec3& in, const double& u, const double& v)
         const override
     {
         CosinePDF pdf(normal);
@@ -109,21 +110,17 @@ class Microfacet : public Material
 {
 private:
     shared_ptr<Texture> base_color_;
-    shared_ptr<Texture> metallic_;
+    shared_ptr<Texture> metallic_; // metallic、roughness应为单通道贴图，若为三通道贴图，则三通道应相同
     shared_ptr<Texture> roughness_;
     shared_ptr<Texture> normal_;
-    // 内部计算用参数
-    Color3 kd = Color3();
-    Color3 F0 = Color3(); 
-    double roughness = 0;
 
 public:
     Microfacet() : 
         // 图片中像素值为[0, 255]的整数，计算中统一使用[0,1]的浮点数
-        base_color_(make_shared<SolidColor>(Color3(0, 1, 0))),
-        metallic_(make_shared<SolidColor>(Color3(0, 0, 0))),
-        roughness_(make_shared<SolidColor>(Color3(.5, .5, .5))),
-        normal_(make_shared<SolidColor>(Color3(0, 0, 1)))
+        base_color_(BASE_COLOR_DEFAULT),
+        metallic_(METALLIC_DEFAULT),
+        roughness_(ROUGHNESS_DEFAULT),
+        normal_(NORMAL_DEFAULT)
     {}
 
     void set_base_color(shared_ptr<Texture>&& base_color)
@@ -146,149 +143,149 @@ public:
         normal_ = normal;
     }
 
-private:
-    void parameter_mapping(const double& u, const double& v)
-    {
-        static constexpr double dielectric_default_f0 = 0.04;
-
-        Color3 base_color_value = base_color_->value(u, v);
-        double metallic_value = metallic_->value(u, v)[0]; // metallic、roughness应为单通道贴图，若为三通道贴图，则三通道应相同
-        double roughness_value = roughness_->value(u, v)[0];
-        Vec3 normal_value = normal_->value(u, v);
-
-        kd = base_color_->value(u, v) * (1 - metallic_value);  // metallic为0代表非金属，1代表纯金属
-        F0 = base_color_->value(u, v) * metallic_value + dielectric_default_f0; // ks应为根据F0算出来的指定角度下的F
-        roughness = roughness_value; // 贴图的粗糙度为BRDF使用的粗糙度alpha的平方 改为直接使用roughness       
-    }
+// metallic为0代表非金属，1代表纯金属
+// ks应为根据F0算出来的指定角度下的F,  0.04为电介质的默认F0
+// 贴图的粗糙度为BRDF使用的粗糙度alpha的平方，直接使用roughness
+#define KD(u, v) Color3 kd = base_color_->value(u, v) * (1 - metallic_->value(u, v)[0])
+#define F0(u, v) Color3 F0 = base_color_->value(u, v) * metallic_->value(u, v)[0] + 0.04
+#define ROUGHNESS(u, v) double roughness = roughness_->value(u, v)[0]
+#define NORMAL_TANGENT_SPACE(u, v) Vec3 normal_tangent_space = normal_->value(u, v)
 
 public:
-    Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, Color3 brdf, double pdf, const Ray in)
+    Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, const Color3& brdf, const double& pdf)
         override
     {  
-        parameter_mapping(rec.u, rec.v);
-        float epsilon = 0.0001;
-        Vec3 in_dir = in.get_direction();
-        Vec3 n = rec.normal;
-        in_dir.normalize();
-        n.normalize();
-        return next_color * brdf * dot(in_dir, n) / (pdf + epsilon);
+        double epsilon = 1e-4;
+        return next_color * brdf / (pdf + epsilon);
     }
 
     Color3 eval_color_rasterize(const Texcoord2& uv, const Vec3& normal, const Color3& light, const Color3& ambient, const Vec3& out, const Vec3& in)
         override    
     {
-        parameter_mapping(uv.u(), uv.v());
         return  light * eval_brdf(normal, out, in, uv.u(), uv.v()) + ambient;
     }
 
-    Ray sample_ray(const Ray& r_in, const HitRecord& rec)
+    Ray sample_ray(const Ray& r_in, const HitRecord& rec, const double& u, const double& v)
         const override
     {
+        ROUGHNESS(u, v);
         // GGX重要性采样
         // 算法来源: https://zhuanlan.zhihu.com/p/505284731
-        float epsilon = 0.0001;
+        float epsilon = 1e-4;
         float k_1     = random_double(), k_2 = random_double();
         // 解theta与phi
-        float theta = acos(std::sqrt((1 - k_1) / (k_1 * (roughness - 1) + 1 + epsilon)));
+        float theta = acos(sqrt((1 - k_1) / (k_1 * (roughness - 1) + 1 + epsilon)));
         float phi   = 2 * kPI * k_2;
         // 局部坐标系
-        Vec3 localRay(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
+        Vec3 local_ray(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
         // 转换成世界坐标系
         Vec3 B, T;
         Vec3 N = rec.normal;
         N.normalize();
-        if (std::fabs( N.x()) > std::fabs( N.y()))
+        if (fabs(N.x()) > fabs(N.y()))
         {
-            T = Vec3(N.z(), 0.0f, -N.x());
-            T =  T / std::sqrt(N.x() * N.x() + N.z() * N.z());
+            T = Vec3(N.z(), 0, -N.x());
+            T =  T / sqrt(N.x() * N.x() + N.z() * N.z());
         }
         else 
         {
-            T = Vec3(0.0f, N.z(), -N.y());
-            T = T / std::sqrt(N.y() * N.y() + N.z() * N.z());
+            T = Vec3(0, N.z(), -N.y());
+            T = T / sqrt(N.y() * N.y() + N.z() * N.z());
         }
         T.normalize();
         B = cross(T, N);
         B.normalize();
-        Vec3 worldRay = localRay.x() * B + localRay.y() * T + localRay.z() * N;
+        Vec3 world_ray = local_ray.x() * B + local_ray.y() * T + local_ray.z() * N;
         // 采样结果为半程向量，根据入射向量计算反射向量
         Vec3 in = r_in.get_direction();
-        worldRay.normalize();
+        world_ray.normalize();
         in.normalize();
-        Vec3 sample_direction = (-2 * dot(in, worldRay) * worldRay + in);
+        Vec3 sample_direction = (-2 * dot(in, world_ray) * world_ray + in);
         sample_direction.normalize();
         return Ray(rec.p, sample_direction, 0);
     }
 
-    Color3 eval_brdf(const Vec3& normal, const Vec3& out, const Vec3& in, const double u, const double v)
+    Color3 eval_brdf(const Vec3& normal, const Vec3& out, const Vec3& in, const double& u, const double& v)
         override
     {   
-        parameter_mapping(u, v);
+        KD(u, v);
+        F0(u, v);
+        ROUGHNESS(u, v);
+
+        Vec3 in_n  = in;
+        Vec3 out_n = out;
+        Vec3 normal_n = normal;
         
-        Vec3 in_  = in;
-        Vec3 out_ = out;
-        Vec3 n = normal;
-        
-        in_.normalize();
-        out_.normalize();
-        n.normalize();
+        in_n.normalize();
+        out_n.normalize();
+        normal_n.normalize();
 
         // 微表面模型: https://zhuanlan.zhihu.com/p/606074595
         // f(i,o) = F(i,h) * G(i,o,h) * D(h) / 4(n,i)(n,o)
-        float cosalpha = dot(n, out_);
-        if (cosalpha > 0.0f)
+        double cos_alpha = dot(normal_n, out_n);
+        if (cos_alpha > 0)
         { 
-            float epsilon = 0.0001;
+            double epsilon = 1e-4;
             // 菲涅尔项F
             Vec3 F;
-            float cos_i = dot(n, -in_);
-            F = F0 + (Vec3(1., 1., 1.) - F0) * pow((1 - cos_i), 5);
+            double cos_i = dot(normal_n, -in_n);
+            F = F0 + (Vec3(1, 1, 1) - F0) * pow((1 - cos_i), 5);
             //std::cout << F << std::endl;
             // Shadowing masking G
-            auto uh = [&](Vec3 w)-> float
+            auto uh = [&](Vec3 w)-> double
                 {
-                    float theta_ = acos(dot(w, n));
-                    return (-1 + std::sqrt(1 + roughness * tan(theta_) * tan(theta_))) / 2;
+                    double theta_ = acos(dot(w, normal_n));
+                    return (-1 + sqrt(1 + roughness * tan(theta_) * tan(theta_))) / 2;
                 };
-            float G = 1 / (1 + uh(-in_) + uh(out_) + epsilon);
+            double G = 1 / (1 + uh(-in_n) + uh(out_n) + epsilon);
             // 法线分布 D
-            Vec3 h = -in_ + out_;
+            Vec3 h = -in_n + out_n;
             h.normalize();
-            float cos_theta = dot(h, n);
-            float D = roughness / kPI / (pow(((roughness - 1) * cos_theta * cos_theta + 1), 2) + epsilon);
+            double cos_theta = dot(h, normal_n);
+            double D = roughness / kPI / (pow(((roughness - 1) * cos_theta * cos_theta + 1), 2) + epsilon);
             
-            Vec3 specular = F * G * D / (4 * dot(n, -in_) * dot(n, out_) + epsilon);
-            Vec3 diffuse = (Vec3(1.0f, 1.0f, 1.0f) - F) * kd / kPI;
+            // 这里将余弦项从渲染方程移至BRDF求解函数中，消掉分母中的dot(normal_n, -in_n)
+            Vec3 specular = F * G * D / (4 * dot(normal_n, out_n) + epsilon);
+            Vec3 diffuse = (Vec3(1, 1, 1) - F) * kd / kPI * dot(normal_n, -in_n);
             return (diffuse + specular);
         }
         else
+        {
             return Vec3(0, 0, 0);
+        }
     }
 
-    double eval_pdf(const Vec3& normal, const Vec3& out, const Vec3& in )
+    double eval_pdf(const Vec3& normal, const Vec3& out, const Vec3& in, const double& u, const double& v)
         const override
     {
+        ROUGHNESS(u, v);
         // 需要将h的pdf转换为out的pdf
-        if (dot(out, normal) > 0.0f)
+        if (dot(out, normal) > 0)
         {
-            Vec3 in_  = in;
-            Vec3 out_ = out;
-            Vec3 n = normal;
-            in_.normalize();
-            out_.normalize();
-            n.normalize();
+            Vec3 in_n  = in;
+            Vec3 out_n = out;
+            Vec3 normal_n = normal;
+            in_n.normalize();
+            out_n.normalize();
+            normal_n.normalize();
 
-            Vec3 h = -in_ + out_;
+            Vec3 h = -in_n + out_n;
             h.normalize();
-            float  epsilon   = 0.0001;
-            float  cos_theta = dot(h, n);
-            float  d         = roughness / kPI / (pow(((roughness - 1) * cos_theta * cos_theta + 1), 2) + epsilon);
-            double pdf       = d * cos_theta / (4 * dot(-in_, h)  + epsilon);
+            double epsilon   = 1e-4;
+            double cos_theta = dot(h, normal_n);
+            double d         = roughness / kPI / (pow(((roughness - 1) * cos_theta * cos_theta + 1), 2) + epsilon);
+            double pdf       = d * cos_theta / (4 * dot(-in_n, h)  + epsilon);
             return pdf;
         }
         else
-            return 0.0f;
+        {
+            return 0;
+        }
     }
+#undef KD
+#undef F0
+#undef ROUGHNESS
+#undef NORMAL_TANGENT_SPACE
 };
 
 class Isotropic : public Material
@@ -301,26 +298,26 @@ public:
     Isotropic(shared_ptr<Texture> a) : albedo_(a) {}
 
 public:
-    Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, Color3 brdf, double pdf, const Ray in)
+    Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, const Color3& brdf, const double& pdf)
         override
     {
         return albedo_->value(rec.u, rec.v, rec.p) * next_color * brdf / pdf;
     }
 
-    Ray sample_ray(const Ray& r_in, const HitRecord& rec)
+    Ray sample_ray(const Ray& r_in, const HitRecord& rec, const double& u, const double& v)
         const override
     {
         SpherePDF pdf;
         return Ray(rec.p, pdf.gen_direction(), r_in.get_time());
     }
 
-    Color3 eval_brdf(const Vec3& normal, const Vec3& out, const Vec3& in, const double u = 0, const double v = 0)
+    Color3 eval_brdf(const Vec3& normal, const Vec3& out, const Vec3& in, const double& u, const double& v)
         override
     {
         return Vec3(1 / (4 * kPI), 1 / (4 * kPI), 1 / (4 * kPI));
     }
 
-    double eval_pdf(const Vec3& normal, const Vec3& out, const Vec3& in)
+    double eval_pdf(const Vec3& normal, const Vec3& out, const Vec3& in, const double& u, const double& v)
         const override
     {
         SpherePDF pdf;
@@ -341,13 +338,13 @@ public:
     }
 
 public:
-    Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, Color3 brdf, double pdf, const Ray in)
+    Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, const Color3& brdf, const double& pdf)
         override
     {
         return albedo_ * next_color;
     }
 
-    Ray sample_ray(const Ray& r_in, const HitRecord& rec)
+    Ray sample_ray(const Ray& r_in, const HitRecord& rec, const double& u, const double& v)
         const override
     {
         Vec3 reflected = reflect(unit_vector(r_in.get_direction()), rec.normal);
@@ -367,13 +364,13 @@ public:
     }
 
 public:
-    Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, Color3 brdf, double pdf, const Ray in)
+    Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, const Color3& brdf, const double& pdf)
         override
     {
         return Color3({ 1., 1., 1. }) * next_color;
     }
 
-    Ray sample_ray(const Ray& r_in, const HitRecord& rec)
+    Ray sample_ray(const Ray& r_in, const HitRecord& rec, const double& u, const double& v)
         const override
     {
         // 空气的折射率为1
@@ -432,7 +429,7 @@ public:
     }
 
 public:
-    Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, Color3 brdf, double pdf, const Ray in)
+    Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, const Color3& brdf, const double& pdf)
         override
     {
         Color3 this_color;

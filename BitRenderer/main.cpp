@@ -82,7 +82,7 @@ int main()
     ImGuiWindowFlags_ custom_window_flag = ImGuiWindowFlags_None;
     ImGuiInputTextFlags info_flag = ImGuiInputTextFlags_ReadOnly;
     ImVec4 clear_color = ImVec4(1.f, 1.f, 1.f, 1.f); // 窗口背景颜色
-    double proportion = .32; // SETUP界面和RENDER界面比例
+    double proportion = .35; // SETUP界面和RENDER界面比例
 
     /*
      * 渲染参数 
@@ -209,7 +209,7 @@ int main()
         int now_window_height = now_window_rect.bottom - now_window_rect.top;
         // 初始最大1920*1080
         now_window_width  = (std::min)(now_window_width, 1920);
-        now_window_height = (std::max)(now_window_height, 1080);
+        now_window_height = (std::min)(now_window_height, 1080);
 
         // 设置界面
         {
@@ -330,9 +330,19 @@ int main()
                                     refresh_rasterizing = true;
                                     // 更新material
                                     if (material_type & MaterialTypeFlags_Lambert)
-                                        material_lambert = make_shared<Lambertian>(make_shared<ImageTexture>(maps[base_color_map_current_idx].string()));
+                                    {
+                                        if(base_color_map_current_idx == 0)
+                                            material_lambert = make_shared<Lambertian>(BASE_COLOR_DEFAULT);
+                                        else
+                                            material_lambert = make_shared<Lambertian>(make_shared<ImageTexture>(maps[base_color_map_current_idx].string()));
+                                    }                                        
                                     else if (material_type & MaterialTypeFlags_Microfacet)
-                                        material_microfacet->set_base_color(make_shared<ImageTexture>(maps[base_color_map_current_idx].string()));
+                                    {
+                                        if (base_color_map_current_idx == 0)
+                                            material_microfacet->set_base_color(BASE_COLOR_DEFAULT);
+                                        else
+                                            material_microfacet->set_base_color(make_shared<ImageTexture>(maps[base_color_map_current_idx].string()));
+                                    }
                                 }
                             }
 
@@ -346,11 +356,12 @@ int main()
                         "Please place map anywhere in .\\load\\ folder.(JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC)\n"
                         "Available map will automatically show in this Checkbox.\n"
                         "\n"
-                        "For base color map, each pixel is (0,255,0) if choose None.\n"
-                        "For metallic map, each pixel is (0,0,0) if choose None.\n"
-                        "For roughness map, each pixel is (128,128,128) if choose None.\n"
-                        "For normal map, each pixel is (0,0,255) if choose None.\n"
-                        "For any map that fail to load, each pixel is (255,0,0).\n");
+                        "For base color map, each pixel is (0, 1, 0) if choose None.\n"
+                        "For metallic map, each pixel is (0, 0, 0) if choose None.\n"
+                        "For roughness map, each pixel is (.01, .01, .01) if choose None.\n"
+                        "For normal map, each pixel is (0, 0, 1) if choose None.\n"
+                        "For any map that fail to load, each pixel is (1, 0, 0).\n"
+                        "(value range is [0, 1])\n");
 
                     if(material_type & MaterialTypeFlags_Microfacet)
                     {
@@ -366,13 +377,16 @@ int main()
                                 {
                                     metallic_map_pre_idx = metallic_map_current_idx;
                                     metallic_map_current_idx = n;
-                                    if (metallic_map_pre_idx != roughness_map_current_idx)
+                                    if (metallic_map_pre_idx != metallic_map_current_idx)
                                     {
                                         // 选择新map时取消光栅化停止状态
                                         stop_rastering.store(false);
                                         refresh_rasterizing = true;
                                         // 更新material
-                                        material_microfacet->set_metallic(make_shared<ImageTexture>(maps[metallic_map_current_idx].string()));
+                                        if (metallic_map_current_idx == 0)
+                                            material_microfacet->set_metallic(METALLIC_DEFAULT);
+                                        else
+                                            material_microfacet->set_metallic(make_shared<ImageTexture>(maps[metallic_map_current_idx].string()));
                                     }
                                 }
 
@@ -400,7 +414,10 @@ int main()
                                         stop_rastering.store(false);
                                         refresh_rasterizing = true;
                                         // 更新material
-                                        material_microfacet->set_roughness(make_shared<ImageTexture>(maps[roughness_map_current_idx].string()));
+                                        if(roughness_map_current_idx == 0)
+                                            material_microfacet->set_roughness(ROUGHNESS_DEFAULT);
+                                        else
+                                            material_microfacet->set_roughness(make_shared<ImageTexture>(maps[roughness_map_current_idx].string()));
                                     }
                                 }
 
@@ -428,7 +445,10 @@ int main()
                                         stop_rastering.store(false);
                                         refresh_rasterizing = true;
                                         // 更新material
-                                        material_microfacet->set_normal(make_shared<ImageTexture>(maps[normal_map_current_idx].string()));
+                                        if(normal_map_current_idx == 0)
+                                            material_microfacet->set_normal(NORMAL_DEFAULT);
+                                        else
+                                            material_microfacet->set_normal(make_shared<ImageTexture>(maps[normal_map_current_idx].string()));
                                     }
                                 }
 
@@ -612,10 +632,10 @@ int main()
 
                             switch (scene_current_idx)
                             {
-                            case 1: t = std::thread(scene_checker, std::cref(cam)); break;
+                            case 1: t = std::thread(scene_checker,     std::cref(cam)); break;
                             case 2: t = std::thread(scene_cornell_box, std::cref(cam)); break;
-                            case 3: t = std::thread(scene_composite1, std::cref(cam)); break;
-                            case 4: t = std::thread(scene_composite2, std::cref(cam)); break;
+                            case 3: t = std::thread(scene_composite1,  std::cref(cam)); break;
+                            case 4: t = std::thread(scene_composite2,  std::cref(cam)); break;
                             }
 
                             if (t.joinable())
@@ -635,25 +655,6 @@ int main()
                     stop_rastering.store(true);
                 }
                 ImGui::EndDisabled();
-
-                ImGui::SameLine();
-                if (ImGui::Button("Save"))
-                {
-                    if (image_data_p2p == nullptr || *image_data_p2p == nullptr)
-                    {
-                        add_info("No Image.");
-                    }
-                    else if (tracing.load())
-                    {
-                        add_info("Still tracing!");
-                    }
-                    else
-                    {
-                        add_info("Saving...");
-                        cam.save_image();
-                        add_info(image_name + " has been saved to ./output/ folder.");
-                    }
-                }
             }
 
             if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen))
@@ -914,6 +915,25 @@ int main()
             ImGui::EndDisabled();
             ImGui::SameLine();
             HelpMarker("Clear will discard Ray Tracing result and restart Rasterizing.\n");
+
+            ImGui::SameLine();
+            if (ImGui::Button("Save"))
+            {
+                if (image_data_p2p == nullptr || *image_data_p2p == nullptr)
+                {
+                    add_info("No Image.");
+                }
+                else if (tracing.load())
+                {
+                    add_info("Still tracing!");
+                }
+                else
+                {
+                    add_info("Saving...");
+                    cam.save_image();
+                    add_info(image_name + " has been saved to ./output/ folder.");
+                }
+            }
 
             // 加载纹理以在UI实时显示渲染结果
             if (image_data_p2p != nullptr && *image_data_p2p != nullptr)
