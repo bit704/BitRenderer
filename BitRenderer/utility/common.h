@@ -71,15 +71,23 @@ enum MaterialTypeFlags // 材质类型
 
 #define BASE_COLOR_DEFAULT make_shared<SolidColor>(Color3(0, 1, 0))
 #define METALLIC_DEFAULT   make_shared<SolidColor>(Color3(0, 0, 0))
-#define ROUGHNESS_DEFAULT  make_shared<SolidColor>(Color3(.01, .01, .01))
-#define NORMAL_DEFAULT     make_shared<SolidColor>(Color3(0, 0, 1))
+#define ROUGHNESS_DEFAULT  make_shared<SolidColor>(Color3(.2, .2, .2))
+#define NORMAL_DEFAULT     make_shared<SolidColor>(Color3(.5, .5, 1))
 
 #define CHOOSE_MATERIAL(material)                      \
 shared_ptr<Material> material;                         \
 if (material_type & MaterialTypeFlags_Lambert)         \
+{                                                      \
     material = material_lambert;                       \
+}                                                      \
 else if (material_type & MaterialTypeFlags_Microfacet) \
-    material = material_microfacet
+{                                                      \
+    if (use_single_metallic_value)                     \
+        material_microfacet->set_metallic(make_shared<SolidColor>(Color3(metallic_value, metallic_value, metallic_value))); \
+    if (use_single_roughness_value)                    \
+        material_microfacet->set_roughness(make_shared<SolidColor>(Color3(roughness_value, roughness_value, roughness_value))); \
+    material = material_microfacet;                    \
+}
 
 #define ARRAY3_ASSIGN(array3, x, y, z)                    \
 static_assert((sizeof(array3) / sizeof(array3[0])) == 3); \

@@ -87,6 +87,15 @@ public:
 		return v;
 	}
 
+	Vec operator-(const double& d)
+		const
+	{
+		Vec<n> v = *this;
+		for (int i = 0; i < n; ++i)
+			v.e_[i] -= d;
+		return v;
+	}
+
 	Vec operator-()
 		const
 	{
