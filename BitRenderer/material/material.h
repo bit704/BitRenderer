@@ -52,6 +52,27 @@ public:
     {
         return 0;
     }
+    Vec3 to_world(const Vec3& local, const Vec3& normal)
+        const
+    {
+        Vec3 B, T;
+        Vec3 N = normal;
+        N.normalize();
+        if (fabs(N.x()) > fabs(N.y()))
+        {
+            T = Vec3(N.z(), 0, -N.x());
+            T = T / sqrt(N.x() * N.x() + N.z() * N.z());
+        }
+        else
+        {
+            T = Vec3(0, N.z(), -N.y());
+            T = T / sqrt(N.y() * N.y() + N.z() * N.z());
+        }
+        T.normalize();
+        B = cross(T, N);
+        B.normalize();
+        return local.x() * B + local.y() * T + local.z() * N;
+    }
 };
 
 class Lambertian : public Material
@@ -179,23 +200,7 @@ public:
         // 局部坐标系
         Vec3 local_ray(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
         // 转换成世界坐标系
-        Vec3 B, T;
-        Vec3 N = rec.normal;
-        N.normalize();
-        if (fabs(N.x()) > fabs(N.y()))
-        {
-            T = Vec3(N.z(), 0, -N.x());
-            T =  T / sqrt(N.x() * N.x() + N.z() * N.z());
-        }
-        else 
-        {
-            T = Vec3(0, N.z(), -N.y());
-            T = T / sqrt(N.y() * N.y() + N.z() * N.z());
-        }
-        T.normalize();
-        B = cross(T, N);
-        B.normalize();
-        Vec3 world_ray = local_ray.x() * B + local_ray.y() * T + local_ray.z() * N;
+        Vec3 world_ray = to_world(local_ray, rec.normal);
         // 采样结果为半程向量，根据入射向量计算反射向量
         Vec3 in = r_in.get_direction();
         world_ray.normalize();
@@ -211,6 +216,7 @@ public:
         KD(u, v);
         F0(u, v);
         ROUGHNESS(u, v);
+        NORMAL_TANGENT_SPACE(u, v);
 
         Vec3 in_n  = in;
         Vec3 out_n = out;
@@ -219,7 +225,9 @@ public:
         in_n.normalize();
         out_n.normalize();
         normal_n.normalize();
-
+        // 根据法线贴图转换法线方向
+        normal_n = to_world(normal_tangent_space, normal_n);
+        normal_n.normalize();
         // 微表面模型: https://zhuanlan.zhihu.com/p/606074595
         // f(i,o) = F(i,h) * G(i,o,h) * D(h) / 4(n,i)(n,o)
         double cos_alpha = dot(normal_n, out_n);
@@ -230,7 +238,6 @@ public:
             Vec3 F;
             double cos_i = dot(normal_n, -in_n);
             F = F0 + (Vec3(1, 1, 1) - F0) * pow((1 - cos_i), 5);
-            //std::cout << F << std::endl;
             // Shadowing masking G
             double alpha = roughness * roughness;
             double alpha2 = alpha * alpha;
@@ -240,17 +247,13 @@ public:
                     return (-1 + sqrt(1 + alpha2 * tan(theta_) * tan(theta_))) / 2;
                 };
             double G = 1 / (1 + uh(-in_n) + uh(out_n) + epsilon);
-            /*
-            double V = dot(normal_n, -in_n) * (dot(normal_n, out_n) * (1 - alpha) + alpha);
-            double L = dot(normal_n, out_n) * (dot(normal_n, -in_n) * (1 - alpha) + alpha);
-            double G = 0.5 / (V + L);*/
             // 法线分布 D
             Vec3 h = -in_n + out_n;
             h.normalize();
             double cos_theta = dot(h, normal_n);
             double D = alpha2 / kPI / (pow(((alpha2 - 1) * cos_theta * cos_theta + 1), 2) + epsilon);
             
-            // 这里将余弦项从渲染方程移至BRDF求解函数中，消掉分母中的dot(normal_n, -in_n)
+            // 这里将余弦项从渲染方程移至BRDF求解函数中，消掉分母中的dot(normal_n, out_n)
             Vec3 specular = F * G * D / (4 * dot(normal_n, -in_n) + epsilon);
             Vec3 diffuse = (Vec3(1, 1, 1) - F) * kd / kPI * dot(normal_n, out_n);
             return (diffuse + specular);
