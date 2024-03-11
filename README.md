@@ -10,11 +10,15 @@
 
 漫游确定合适相机位置后，可开启光线追踪离线渲染当前场景，渲染过程实时显示。光追采用蒙特卡洛路径追踪及BVH加速。
 
+![光栅化](./screenshot/20240311-01.jpg)
+
+![光追](./screenshot/20240311-02.jpg)
+
 ## 使用说明
 
 UI按3:7纵向划分为**SETUP**界面和**RENDER**界面（自适应窗口大小变化），另有悬浮的**STATUS**界面（可移动和折叠）。
 
-> 将鼠标悬停在UI界面的各`(?)`标志处可查看对应帮助信息。
+> 将鼠标悬停在UI界面的各个`(?)`标志处可查看相关详细信息。
 
 - SETUP界面
 
@@ -28,7 +32,9 @@ UI按3:7纵向划分为**SETUP**界面和**RENDER**界面（自适应窗口大�
 
        Lambert选项 / Microfacet (GGX+Lambert)选项：选择材质类型。
 
-       load base color map / load metallic map / load roughness map / load normal map下拉框：下载贴图（JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC）并置于`./BitRenderer/load/`文件夹（或其任意子文件夹）下，软件会在此处自动列出以供选择。当选择为None时，base color map默认全为(0,255,0)，metallic map默认全为(0,0,0)（三通道相同），roughness map默认全为(128,128,128)（三通道相同），normal map默认全为(0,0,255)。任何贴图加载失败时默认全为(255,0,0)。
+       load base color map / load metallic map / load roughness map / load normal map下拉框：下载贴图（JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC）并置于`./BitRenderer/load/`文件夹（或其任意子文件夹）下，软件会在此处自动列出以供选择。
+       
+       use single metallic value / use single roughness value复选框：勾选时使用单一值而不是贴图。
        
        tracing with cornell box复选框：勾选后光追时使用康奈尔盒包围obj，将自动设置相机至合适位置。
        

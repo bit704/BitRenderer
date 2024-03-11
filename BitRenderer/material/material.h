@@ -52,6 +52,9 @@ public:
     {
         return 0;
     }
+
+protected:
+    // 将切线空间的向量转移到世界空间
     Vec3 to_world(const Vec3& local, const Vec3& normal)
         const
     {
@@ -167,10 +170,11 @@ public:
 // metallic为0代表非金属，1代表纯金属
 // ks应为根据F0算出来的指定角度下的F,  0.04为电介质的默认F0
 // 贴图的粗糙度为BRDF使用的粗糙度alpha的平方，直接使用roughness
+// 法线贴图需要将值从[0,1]映射到[-1,1]
 #define KD(u, v) Color3 kd = base_color_->value(u, v) * (1 - metallic_->value(u, v)[0])
 #define F0(u, v) Color3 F0 = base_color_->value(u, v) * metallic_->value(u, v)[0] + 0.04
 #define ROUGHNESS(u, v) double roughness = roughness_->value(u, v)[0]
-#define NORMAL_TANGENT_SPACE(u, v) Vec3 normal_tangent_space = normal_->value(u, v)
+#define NORMAL_TANGENT_SPACE(u, v) Vec3 normal_tangent_space = normal_->value(u, v) * 2 - 1
 
 public:
     Color3 eval_color_trace(const HitRecord& rec, const Color3& next_color, const Color3& brdf, const double& pdf)
