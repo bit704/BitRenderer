@@ -174,7 +174,7 @@ public:
         float epsilon = 1e-4;
         float k_1     = random_double(), k_2 = random_double();
         // 解theta与phi
-        float theta = acos(sqrt((1 - k_1) / (k_1 * (roughness - 1) + 1 + epsilon)));
+        float theta = acos(sqrt((1 - k_1) / (k_1 * (roughness * roughness - 1) + 1 + epsilon)));
         float phi   = 2 * kPI * k_2;
         // 局部坐标系
         Vec3 local_ray(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
@@ -232,21 +232,27 @@ public:
             F = F0 + (Vec3(1, 1, 1) - F0) * pow((1 - cos_i), 5);
             //std::cout << F << std::endl;
             // Shadowing masking G
+            double alpha = roughness * roughness;
+            double alpha2 = alpha * alpha;
             auto uh = [&](Vec3 w)-> double
                 {
                     double theta_ = acos(dot(w, normal_n));
-                    return (-1 + sqrt(1 + roughness * tan(theta_) * tan(theta_))) / 2;
+                    return (-1 + sqrt(1 + alpha2 * tan(theta_) * tan(theta_))) / 2;
                 };
             double G = 1 / (1 + uh(-in_n) + uh(out_n) + epsilon);
+            /*
+            double V = dot(normal_n, -in_n) * (dot(normal_n, out_n) * (1 - alpha) + alpha);
+            double L = dot(normal_n, out_n) * (dot(normal_n, -in_n) * (1 - alpha) + alpha);
+            double G = 0.5 / (V + L);*/
             // 法线分布 D
             Vec3 h = -in_n + out_n;
             h.normalize();
             double cos_theta = dot(h, normal_n);
-            double D = roughness / kPI / (pow(((roughness - 1) * cos_theta * cos_theta + 1), 2) + epsilon);
+            double D = alpha2 / kPI / (pow(((alpha2 - 1) * cos_theta * cos_theta + 1), 2) + epsilon);
             
             // 这里将余弦项从渲染方程移至BRDF求解函数中，消掉分母中的dot(normal_n, -in_n)
-            Vec3 specular = F * G * D / (4 * dot(normal_n, out_n) + epsilon);
-            Vec3 diffuse = (Vec3(1, 1, 1) - F) * kd / kPI * dot(normal_n, -in_n);
+            Vec3 specular = F * G * D / (4 * dot(normal_n, -in_n) + epsilon);
+            Vec3 diffuse = (Vec3(1, 1, 1) - F) * kd / kPI * dot(normal_n, out_n);
             return (diffuse + specular);
         }
         else
@@ -273,7 +279,7 @@ public:
             h.normalize();
             double epsilon   = 1e-4;
             double cos_theta = dot(h, normal_n);
-            double d         = roughness / kPI / (pow(((roughness - 1) * cos_theta * cos_theta + 1), 2) + epsilon);
+            double d         = roughness * roughness / kPI / (pow(((roughness * roughness - 1) * cos_theta * cos_theta + 1), 2) + epsilon);
             double pdf       = d * cos_theta / (4 * dot(-in_n, h)  + epsilon);
             return pdf;
         }
