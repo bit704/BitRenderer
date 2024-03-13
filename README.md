@@ -4,11 +4,9 @@
 
 支持**光栅化**实时漫游和**光线追踪**离线渲染。
 
-采用金属粗糙度工作流，实现了基于微表面的GGX镜面反射BRDF和Lambertian漫反射BRDF结合的材质模型。
+采用金属粗糙度工作流，实现了基于微表面的GGX镜面反射BRDF和Lambertian漫反射BRDF相结合的材质模型。
 
-选择obj模型和贴图，在光栅化模式下进行漫游，有线框、深度、着色三种模式可选。
-
-漫游确定合适相机位置后，可开启光线追踪离线渲染当前场景，渲染过程实时显示。光追采用蒙特卡洛路径追踪及BVH加速。
+选择obj模型和贴图，在光栅化模式下进行漫游，有线框、深度、着色三种模式可选。漫游确定合适相机位置后，可开启光线追踪离线渲染当前场景，渲染过程实时显示。光追采用蒙特卡洛路径追踪及BVH加速，支持多重重要性采样。
 
 ![光栅化](./screenshot/20240311-01.jpg)
 
@@ -32,7 +30,7 @@ UI按3:7纵向划分为**SETUP**界面和**RENDER**界面（自适应窗口大�
 
        Lambert选项 / Microfacet (GGX+Lambert)选项：选择材质类型。
 
-       load base color map / load metallic map / load roughness map / load normal map下拉框：下载贴图（JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC）并置于`./BitRenderer/load/`文件夹（或其任意子文件夹）下，软件会在此处自动列出以供选择。
+       load **base color** map / load **metallic** map / load **roughness** map / load **normal** map下拉框：下载贴图（JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC）并置于`./BitRenderer/load/`文件夹（或其任意子文件夹）下，软件会在此处自动列出以供选择。法线贴图使用OpenGL标准。
        
        use single metallic value / use single roughness value复选框：勾选时使用单一值而不是贴图。
        

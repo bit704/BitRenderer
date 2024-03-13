@@ -37,8 +37,8 @@ public:
     }
 
     // 对于已知的入射和出射光线求解BRDF
-    // 对于光追，in为入射光线方向，out为弹射的出射光线方向（方向起点均为击中点）
-    // 对于光栅化，in为着色点到相机方向，out为着色点到光源方向
+    // 对于光追，in为入射光线方向（着色点为终点），out为弹射的出射光线方向（着色点为起点）
+    // 对于光栅化，in为相机方向（着色点为终点），out为光源方向（着色点为起点）
     // 本质上是对应的
     virtual Color3 eval_brdf(const Vec3& normal,  const Vec3& out, const Vec3& in = Vec3(), const double& u = 0, const double& v = 0)
     {
